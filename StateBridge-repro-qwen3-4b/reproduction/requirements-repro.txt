@@ -1,0 +1,11 @@
+# RTX 5090 requires a CUDA build with Blackwell support; upstream requests cu124.
+--extra-index-url https://download.pytorch.org/whl/cu128
+torch==2.7.1+cu128
+
+# Upstream only specifies transformers>=4.51.0. This near-minimum release is
+# frozen before looking at any reproduction accuracy.
+transformers==4.51.3
+datasets==3.6.0
+accelerate==1.7.0
+numpy==2.2.6
+tqdm==4.67.1

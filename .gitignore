@@ -1,0 +1,54 @@
+# Python and test caches
+**/__pycache__/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/*.py[cod]
+
+# Local environments and credentials
+.venv*/
+**/.venv/
+**/venv/
+**/.env
+**/.env.*
+!.env.example
+
+# IDE and OS files
+.idea/
+.vscode/
+.DS_Store
+
+# Models, tensor dumps, and caches
+**/*.pt
+**/*.pth
+**/*.ckpt
+**/*.safetensors
+**/*.bin
+**/*.arrow
+**/hf_cache/
+**/huggingface/
+**/.cache/
+
+# Generated experiment outputs
+**/artifacts/
+**/results/
+**/logs/
+**/logs_new/
+**/wandb/
+**/example_logs/
+**/reproduction/runs/
+**/reproduction/evidence/
+**/reproduction/reports/generated/
+
+# Pristine third-party checkouts are fetched on demand
+external/upstreams/
+
+# Local compatibility links from the original workstation layout
+/LatentMAS
+/LatentMAS-repro-qwen3-4b
+/data_external/
+
+# Runtime files
+*.log
+*.pid
+*.tmp

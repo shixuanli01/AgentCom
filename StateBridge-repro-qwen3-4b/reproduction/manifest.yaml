@@ -1,0 +1,92 @@
+experiment: statebridge_qwen3_4b_official_reproduction
+status_date: 2026-09-04
+
+source:
+  repository: https://github.com/YanwenPneg/StateBridge
+  commit: 3f6bf5442c6e8848555a6132516e6d36f35444fb
+  release: 0.1.0
+  paper: https://arxiv.org/abs/2608.13317
+
+model:
+  id: Qwen/Qwen3-4B
+  revision: 1cfa9a7208912126459214e8b04321603b3df60c
+
+hardware:
+  local: NVIDIA GeForce RTX 5090 32GB
+  paper: 2 x NVIDIA A100 80GB
+  local_gpu_count: 1
+
+environment:
+  python: 3.10.21
+  torch: 2.7.1+cu128
+  transformers: 4.51.3
+  datasets: 3.6.0
+  accelerate: 1.7.0
+  numpy: 2.2.6
+  upstream_constraints:
+    torch: cu124 index, unpinned version
+    transformers: '>=4.51.0'
+
+method:
+  architecture: sequential
+  agents: [planner, critic, refiner, judger]
+  temperature: 0.6
+  top_p: 0.95
+  max_prefix_tokens: 64
+  snap_ratio: 0.3
+  adaptive_reg: 0.001
+  prefix_strategy: scale
+  prefix_scale: 1.0
+  use_hook: true
+  enable_thinking: true
+  local_seed: 42
+
+targets:
+  arc_challenge:
+    rows: 1172
+    max_new_tokens: 2048
+    paper_score_percent: 93.7
+    paper_implied_correct: 1098
+  medqa:
+    rows: 300
+    max_new_tokens: 8192
+    paper_score_percent: 70.3
+    paper_implied_correct: 211
+  gsm8k:
+    rows: 1319
+    max_new_tokens: 2048
+    paper_score_percent: 89.8
+    paper_implied_correct: 1184
+  mbppplus:
+    rows: 378
+    max_new_tokens: 4096
+    paper_score_percent: 75.9
+    paper_implied_correct: 287
+  humanevalplus:
+    rows: 164
+    max_new_tokens: 4096
+    paper_score_percent: 82.3
+    paper_implied_correct: 135
+
+dataset_revisions_observed_2026_09_04:
+  gsm8k: 740312add88f781978c0658806c59bc2815b9866
+  allenai_ai2_arc: 210d026faf9955653af8916fad021475a3f00453
+  evalplus_mbppplus: b2d74c91837c3f2a20c1299ae98133cbe7cfa077
+  evalplus_humanevalplus: d32357cf319e50e9c8d8dab5ea876c72b0fd321b
+  bundled_medqa_sha256: d4f09708b623a7750013b22c607495eb8872bbef7a3f50990b7279c8fd87ec8d
+
+canonical_loader_hashes:
+  arc_challenge: e5f26d489a59a1cf0e77ed86ce732a321026a13d294d25582bfcff2129372be6
+  medqa: ddee8dc64d3b2a1e5061c409c68d626109237640009168838a038db29efe802c
+  gsm8k: d4dc07c3663ff83bd918b0367c2e204f868b533fab374257b59fa98781310a3f
+  mbppplus: dc7ea4f39786d622a132e82509f3e2b588d676d9f2bf181dbce21db9d4201d90
+  humanevalplus: 2669a4b46e251fe9198fcf811dbdbeff6e7d184622ca4891b57a72cd5342dfd9
+
+unidentified_author_settings:
+  - random seed
+  - exact torch version
+  - exact transformers version
+  - exact datasets package version
+  - exact Hugging Face dataset revisions used for runtime-downloaded datasets
+  - whether the table is one run or an aggregation
+  - deterministic assignment of examples to the two paper GPUs
