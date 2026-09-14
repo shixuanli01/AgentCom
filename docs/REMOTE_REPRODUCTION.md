@@ -88,6 +88,35 @@ These tests do not download Qwen3-4B.
 
 ## 5. Smoke Runs
 
+### Trajectory Memory Relay
+
+TMR is the active method. It requires no training and adds no trainable
+parameters. Run both transport variants with one item before starting a full
+queue:
+
+```bash
+cd methods/AgentCom-StateBridge
+
+PYTHONPATH=. python -m agentcom.tmr_eval \
+  --communication-method tmr \
+  --tmr-selection last64 \
+  --run-dir artifacts/tmr_v1/smoke_last64_seed42 \
+  --limit 1
+
+PYTHONPATH=. python -m agentcom.tmr_eval \
+  --communication-method tmr \
+  --tmr-selection coverage64 \
+  --coverage-scope full \
+  --run-dir artifacts/tmr_v1/smoke_coverage64_seed42 \
+  --limit 1
+```
+
+Inspect `summary.json`, `diagnostics.jsonl`, and the item record. Every handoff
+must report three `[1,64,2560]` memories for Qwen3-4B and startup must print
+`num_new_trainable_parameters=0`.
+
+### StateBridge controls
+
 Run the frozen last-`K` control:
 
 ```bash
@@ -111,6 +140,39 @@ python -m methods.state_bridge \
 ```
 
 ## 6. Full MedQA Runs
+
+### TMR queue
+
+Run `tmr_last64` first and `tmr_coverage64` second:
+
+```bash
+cd methods/AgentCom-StateBridge
+mkdir -p artifacts/tmr_v1
+tmux new-session -d -s tmr-medqa \
+  'bash scripts/run_tmr_medqa300.sh artifacts/tmr_v1 \
+   > artifacts/tmr_v1/server_queue.log 2>&1'
+
+tail -f artifacts/tmr_v1/server_queue.log
+```
+
+The queue writes one atomic record per item, so the same command resumes after
+an interruption. Generated traces and hidden-state diagnostics remain under
+ignored `artifacts/` and must not be committed.
+
+The TMR run does not require an existing baseline result. To generate paired
+StateBridge metrics during the run, provide a previously produced multipath
+summary:
+
+```bash
+export BASELINE=/path/to/medqa_qwen3_4b_m5_seed42/summary.json
+bash scripts/run_tmr_medqa300.sh artifacts/tmr_v1
+```
+
+Without `BASELINE`, method accuracy, latency, entropy, gate, and norm metrics
+are still recorded; paired fields are null. The same per-item/per-role seed is
+used regardless of sharding or resume order.
+
+### Earlier selection experiment
 
 Turning-point intervention:
 

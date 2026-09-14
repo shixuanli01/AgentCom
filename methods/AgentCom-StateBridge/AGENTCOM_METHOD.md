@@ -31,10 +31,21 @@ interface while preserving these evidence requirements:
 
 ## Current checkpoint
 
-The current minimal intervention challenges StateBridge's fixed last-64 state
-selection. `last_k` remains the exact control. `turning_point` scores changes
-along the final-layer hidden-state trajectory, selects the top 64 positions,
-restores chronological order, and sends those states through the unchanged
-StateBridge alignment and receiver injection path.
+The active method is **Trajectory Memory Relay (TMR)**, a training-free
+alternative to StateBridge's final-layer Procrustes prefix. It captures a
+single Planner trajectory at layers 11, 23, and 35 and exposes that trajectory
+to each Receiver through the model's own frozen attention projections. No
+learned projector, extra decoding path, or additional model is introduced.
 
-See `experiments/TURNING_POINT_SELECTION.md` and `PATCH_LEDGER.md`.
+The first controlled comparison keeps the communication budget at `K=64`:
+
+- `tmr_last64`: the last 64 valid Planner positions from each captured layer;
+- `tmr_coverage64`: 48 chronological coverage representatives plus a
+  16-position tail anchor.
+
+The upstream-style StateBridge path remains available as the frozen conceptual
+control through `--communication-method statebridge`. Generated traces and
+results must remain outside Git.
+
+See `experiments/TMR_V1_PROTOCOL_ZH.md` for the frozen v1 protocol and
+`experiments/README.md` for launch commands.

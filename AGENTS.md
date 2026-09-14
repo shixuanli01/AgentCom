@@ -14,8 +14,8 @@ This repository has one active method and one frozen control.
 ## Repository Boundaries
 
 - All new method work belongs in `methods/AgentCom-StateBridge/`.
-- `StateBridge-repro-qwen3-4b/` is the frozen upstream control. Do not add the
-  turning-point selector or other active-method changes to it.
+- `StateBridge-repro-qwen3-4b/` is the frozen upstream control. Do not add TMR
+  or other active-method changes to it.
 - Generated files belong in ignored `artifacts/`, `results/`, `logs_new/`, or
   `reproduction/runs/` directories.
 - Do not reintroduce historical Task 5-14, LatentMAS, KVComm, or C2C code into
@@ -23,29 +23,31 @@ This repository has one active method and one frozen control.
 
 ## Current Experiment
 
-The sole intervention is hidden-state position selection:
+The active method is training-free Trajectory Memory Relay:
 
-- control: `last_k`;
-- intervention: `turning_point`;
-- fixed communication budget: `K=64`;
-- turning-point window: `8`;
+- transport control: StateBridge post-think last-64 + Procrustes prefix;
+- transport intervention: `tmr_last64` native external memory;
+- selection intervention: `tmr_coverage64` with 48 coverage + 16 tail states;
+- source/receiver layers: `11,23,35`;
+- fixed communication budget: `K=64` per layer;
 - model/task: Qwen3-4B on MedQA 300;
 - seed: `42`;
-- alignment and receiver interface: unchanged from StateBridge.
+- prompts, parser, decoding, roles, and LLM-call count: unchanged.
 
-The turning-point score at position `t` is `1 - cosine(left_mean, right_mean)`
-over equal local windows. The top `K` positions are restored to chronological
-order before the standard StateBridge Procrustes alignment.
+TMR uses frozen native Q/K/V/O attention without RoPE or positional IDs on the
+external memory. It adds an entropy gate and a fixed `0.25` residual norm cap.
+No training or new parameters are allowed.
 
 Relevant files:
 
-- `methods/AgentCom-StateBridge/methods/state_bridge.py`
-- `methods/AgentCom-StateBridge/tests/test_state_selection.py`
-- `methods/AgentCom-StateBridge/experiments/README.md`
+- `methods/AgentCom-StateBridge/methods/trajectory_memory_relay.py`
+- `methods/AgentCom-StateBridge/agentcom/tmr_eval.py`
+- `methods/AgentCom-StateBridge/tests/test_trajectory_memory_relay.py`
+- `methods/AgentCom-StateBridge/experiments/TMR_V1_PROTOCOL_ZH.md`
 
 ## Scientific Guardrails
 
-- Do not tune the selector on full test accuracy.
+- Do not tune selection, gate, layers, or norm cap on full test accuracy.
 - Keep model, data order, prompt, seed, parser, decoding, and `K` identical in
   the control and intervention.
 - Report exact counts and paired per-item changes, not only percentages.

@@ -1,12 +1,23 @@
 import torch
 
-from methods.state_bridge import select_hidden_states, turning_point_scores
+from methods.state_bridge import (
+    extract_new_tokens_from_inputs_embeds,
+    select_hidden_states,
+    turning_point_scores,
+)
 
 
 def _sequence(length: int, width: int = 3):
     hidden = torch.arange(length * width, dtype=torch.float32).reshape(1, length, width)
     tokens = torch.arange(length, dtype=torch.long).reshape(1, length)
     return hidden, tokens
+
+
+def test_inputs_embeds_generation_does_not_drop_prompt_length() -> None:
+    sequences = torch.tensor([[10, 11, 12, 13]])
+    generated, length = extract_new_tokens_from_inputs_embeds(sequences)
+    assert length == 4
+    assert torch.equal(generated, sequences)
 
 
 def test_last_k_reproduces_original_indices():

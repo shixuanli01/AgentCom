@@ -1,12 +1,14 @@
-# AgentCom-StateBridge
+# AgentCom: Trajectory Memory Relay
 
-This repository contains the current AgentCom research built on StateBridge.
-It focuses on improving which hidden states are communicated between agents
-while keeping the original StateBridge alignment and receiver interface fixed.
+This repository contains the active **Trajectory Memory Relay (TMR)** research
+and a frozen StateBridge control. TMR is a completely training-free latent
+communication method for homogeneous LLM multi-agent systems.
 
-The current experiment replaces StateBridge's fixed last-`K` selection with an
-optional trajectory turning-point selector. Both methods transmit exactly
-`K=64` states; only the selected token positions differ.
+Instead of mapping final-layer states back into token-input embedding space,
+TMR exposes native hidden states as position-free external memory. The receiver
+reads that memory with its own frozen Q/K/V/O attention projections. TMR adds no
+trainable parameters, pseudo tokens, Procrustes alignment, vocabulary snapping,
+or extra LLM calls.
 
 Large model weights, Hugging Face caches, generated traces, and result files
 are intentionally excluded from Git.
@@ -15,7 +17,7 @@ are intentionally excluded from Git.
 
 | Path | Role |
 |---|---|
-| `methods/AgentCom-StateBridge/` | Active implementation, tests, and experiment plans |
+| `methods/AgentCom-StateBridge/` | Active TMR implementation, evaluator, tests, and protocols |
 | `StateBridge-repro-qwen3-4b/` | Frozen upstream StateBridge control and reproduction protocol |
 | `docs/REMOTE_REPRODUCTION.md` | Fresh-server installation and run commands |
 | `AGENTS.md` | Instructions and scientific guardrails for coding agents |
@@ -40,20 +42,15 @@ export HF_HOME=/data/$USER/huggingface
 export HF_DATASETS_CACHE=$HF_HOME/datasets
 ```
 
-Run a one-item turning-point smoke:
+Run the tests and a one-item TMR-last64 smoke:
 
 ```bash
 cd methods/AgentCom-StateBridge
-python -m methods.state_bridge \
-  --model Qwen/Qwen3-4B \
-  --task medqa \
-  --gpus 0 \
-  --seed 42 \
-  --limit 1 \
-  --max_prefix_tokens 64 \
-  --selection_method turning_point \
-  --turning_point_window_size 8 \
-  --selection_diagnostics
+PYTHONPATH=. python -m agentcom.tmr_eval \
+  --communication-method tmr \
+  --tmr-selection last64 \
+  --run-dir artifacts/tmr_v1/smoke_last64_seed42 \
+  --limit 1
 ```
 
 ## Current Controlled Comparison
@@ -66,12 +63,30 @@ The authoritative MedQA comparison holds these variables fixed:
 - prompt topology: sequential Planner, Critic, Refiner, Judger;
 - decoding: temperature `0.6`, top-p `0.95`;
 - message budget: `K=64`;
-- alignment regularization: `0.001`;
-- vocabulary anchoring: `0.3`.
+- source/receiver layers: `11,23,35`;
+- entropy gate: enabled;
+- TMR residual norm cap: `0.25`.
 
-The control uses `--selection_method last_k`. The intervention uses
-`--selection_method turning_point --turning_point_window_size 8`. No other
-method, model, prompt, or decoding change belongs in this comparison.
+The frozen StateBridge control maps post-thinking last-64 final-layer states to
+input embeddings with whitened Procrustes alignment. `tmr_last64` preserves the
+same position-selection semantics and changes only transport. `tmr_coverage64`
+keeps TMR transport fixed and selects 48 facility-location representatives plus
+16 final-tail anchors from the full trajectory.
+
+Run both MedQA300 variants sequentially:
+
+```bash
+cd methods/AgentCom-StateBridge
+tmux new-session -d -s tmr-medqa \
+  'bash scripts/run_tmr_medqa300.sh artifacts/tmr_v1 \
+   > artifacts/tmr_v1/server_queue.log 2>&1'
+tail -f artifacts/tmr_v1/server_queue.log
+```
+
+Runs are durable at item boundaries. Re-running the command resumes completed
+records. If an existing StateBridge multipath `summary.json` is available, set
+`BASELINE=/path/to/summary.json` before launching to produce paired metrics;
+otherwise TMR runs normally and baseline fields remain null.
 
 ## Data
 
@@ -88,6 +103,7 @@ commands.
 - [Repository manifest](docs/REPOSITORY_MANIFEST.md)
 - [Method boundary](methods/AgentCom-StateBridge/AGENTCOM_METHOD.md)
 - [Current experiment index](methods/AgentCom-StateBridge/experiments/README.md)
+- [TMR V1 protocol](methods/AgentCom-StateBridge/experiments/TMR_V1_PROTOCOL_ZH.md)
 
 ## License
 

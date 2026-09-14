@@ -22,6 +22,15 @@ School of Computer Science, University of Sheffield
 
 ---
 
+> **AgentCom development branch.** The active experiment in this checkout is
+> the training-free **Trajectory Memory Relay (TMR)** method. Start with the
+> repository root `README.md`, then read
+> [`experiments/TMR_V1_PROTOCOL_ZH.md`](experiments/TMR_V1_PROTOCOL_ZH.md).
+> The StateBridge documentation below is retained as the upstream reference
+> and control description.
+
+---
+
 ## Overview
 
 Multi-agent LLM systems communicate in text. Turning a sender's continuous hidden state into discrete tokens throws away everything token identities cannot express.

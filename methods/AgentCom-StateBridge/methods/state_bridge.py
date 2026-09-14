@@ -104,6 +104,15 @@ def strip_thinking(text: str) -> str:
     return text.strip()
 
 
+def extract_new_tokens_from_inputs_embeds(
+    sequences: torch.Tensor,
+) -> Tuple[torch.Tensor, int]:
+    """Return generated-only IDs from HuggingFace `inputs_embeds` generation."""
+    if sequences.ndim != 2:
+        raise ValueError("Generated sequences must have shape [batch, tokens]")
+    return sequences, int(sequences.shape[1])
+
+
 class HiddenStateCapture:
     """Capture last-layer hidden states via forward hook.
     
@@ -440,6 +449,67 @@ class StateBridge:
             
         return prefix_embeds
 
+    def _prepare_handoff(
+        self,
+        *,
+        raw_hidden: torch.Tensor,
+        raw_token_ids: torch.Tensor,
+        filtered_hidden: torch.Tensor,
+        filtered_token_ids: torch.Tensor,
+        incoming_prefix: Optional[torch.Tensor],
+        agent_role: str,
+    ) -> Tuple[torch.Tensor, Dict]:
+        """Select, align, and package one sender trajectory for the next agent."""
+        del raw_hidden, raw_token_ids, incoming_prefix
+        candidate_hidden = filtered_hidden
+        candidate_length = candidate_hidden.shape[1]
+        selected_hidden, selected_token_ids, selected_indices = select_hidden_states(
+            candidate_hidden,
+            filtered_token_ids,
+            k=self.max_prefix_tokens,
+            method=self.selection_method,
+            window_size=self.turning_point_window_size,
+        )
+        diagnostic = {
+            "T": candidate_length,
+            "K": len(selected_indices),
+            "method": self.selection_method,
+            "window_size": self.turning_point_window_size,
+            "selected_indices": selected_indices,
+            "selected_tokens": self.model.tokenizer.convert_ids_to_tokens(
+                selected_token_ids[0].tolist()
+            ),
+        }
+        if self.selection_method == "turning_point":
+            scores = turning_point_scores(
+                candidate_hidden,
+                window_size=self.turning_point_window_size,
+            )
+            diagnostic["turning_point_scores"] = scores.tolist()
+            diagnostic["selected_scores"] = [
+                float(scores[index]) for index in selected_indices
+            ]
+
+        aligned_embeds = self._align_hidden_sequence(
+            selected_hidden, selected_token_ids
+        )
+        if self.collect_viz:
+            target = self.embedding_layer(selected_token_ids).float()
+            self.viz_data[agent_role].append(
+                {
+                    "e_t": target.reshape(-1, self.hidden_size).detach().cpu(),
+                    "h_t": selected_hidden.float()
+                    .reshape(-1, self.hidden_size)
+                    .detach()
+                    .cpu(),
+                    "e_t1": aligned_embeds.float()
+                    .reshape(-1, self.hidden_size)
+                    .detach()
+                    .cpu(),
+                }
+            )
+        return self._process_prefix(aligned_embeds), diagnostic
+
     def _generate_with_prefix(
         self,
         prompt_embeds: torch.Tensor,
@@ -488,8 +558,6 @@ class StateBridge:
             full_embeds = prompt_embeds
             full_mask = prompt_mask
 
-        input_len = full_embeds.shape[1]
-        
         # Hidden state capture via forward hook
         capture = None
         hook_handle = None
@@ -513,7 +581,7 @@ class StateBridge:
                 gen_outputs = self.model.model.generate(
                     inputs_embeds=full_embeds,
                     attention_mask=full_mask,
-                    max_new_tokens=input_len + self.max_new_tokens,
+                    max_new_tokens=self.max_new_tokens,
                     temperature=self.temperature,
                     top_p=self.top_p,
                     do_sample=True,
@@ -526,23 +594,12 @@ class StateBridge:
                 hook_handle.remove()
         
         seqs = gen_outputs.sequences
-        total_len = seqs.shape[1]
-        actual_gen = total_len - full_embeds.shape[1] if total_len > full_embeds.shape[1] else total_len
-        
-        if total_len < input_len:
-            gen_len = total_len
-            gen_token_ids = seqs
-        else:
-            gen_len = total_len - input_len
-            gen_token_ids = seqs[:, input_len:] if gen_len > 0 else seqs[:, :0]
+        gen_token_ids, gen_len = extract_new_tokens_from_inputs_embeds(seqs)
+        actual_gen = gen_len
         
         texts = []
-        for idx, seq in enumerate(seqs):
-            if total_len < input_len:
-                new_tokens = seq
-            else:
-                new_tokens = seq[input_len:] if gen_len > 0 else seq
-            text = self.model.tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
+        for seq in gen_token_ids:
+            text = self.model.tokenizer.decode(seq, skip_special_tokens=True).strip()
             text = strip_thinking(text)
             texts.append(text)
         
@@ -695,49 +752,21 @@ class StateBridge:
                     filtered_hidden = gen_hidden_seq
                     filtered_token_ids = gen_token_ids
 
-                candidate_hidden = filtered_hidden
-                candidate_length = candidate_hidden.shape[1]
-                filtered_hidden, filtered_token_ids, selected_indices = (
-                    select_hidden_states(
-                        candidate_hidden,
-                        filtered_token_ids,
-                        k=self.max_prefix_tokens,
-                        method=self.selection_method,
-                        window_size=self.turning_point_window_size,
-                    )
-                )
-
-                if self.selection_diagnostics:
-                    selection_diagnostic = {
-                        "sample_id": item.get("idx", -1),
-                        "hop": f"{agent.role}_to_{self.agents[agent_idx + 1].role}",
-                        "T": candidate_length,
-                        "K": len(selected_indices),
-                        "method": self.selection_method,
-                        "window_size": self.turning_point_window_size,
-                        "selected_indices": selected_indices,
-                        "selected_tokens": self.model.tokenizer.convert_ids_to_tokens(
-                            filtered_token_ids[0].tolist()
-                        ),
-                    }
-                    if self.selection_method == "turning_point":
-                        scores = turning_point_scores(
-                            candidate_hidden,
-                            window_size=self.turning_point_window_size,
-                        )
-                        selection_diagnostic["turning_point_scores"] = scores.tolist()
-                        selection_diagnostic["selected_scores"] = [
-                            float(scores[index]) for index in selected_indices
-                        ]
-                
                 if filtered_hidden.shape[1] > 0:
-                    aligned_embeds = self._align_hidden_sequence(filtered_hidden, filtered_token_ids)
-                    if self.collect_viz:
-                        _et = self.embedding_layer(filtered_token_ids).float().reshape(-1, self.hidden_size).detach().cpu()
-                        _ht = filtered_hidden.float().reshape(-1, self.hidden_size).detach().cpu()
-                        _et1 = aligned_embeds.float().reshape(-1, self.hidden_size).detach().cpu()
-                        self.viz_data[agent.role].append({"e_t": _et, "h_t": _ht, "e_t1": _et1})
-                    current_prefix = self._process_prefix(aligned_embeds)
+                    current_prefix, handoff_diagnostic = self._prepare_handoff(
+                        raw_hidden=gen_hidden_seq,
+                        raw_token_ids=gen_token_ids,
+                        filtered_hidden=filtered_hidden,
+                        filtered_token_ids=filtered_token_ids,
+                        incoming_prefix=current_prefix,
+                        agent_role=agent.role,
+                    )
+                    if self.selection_diagnostics:
+                        selection_diagnostic = {
+                            "sample_id": item.get("idx", -1),
+                            "hop": f"{agent.role}_to_{self.agents[agent_idx + 1].role}",
+                            **handoff_diagnostic,
+                        }
                 align_time = time.time() - align_start
             
             if agent.role == "judger":
