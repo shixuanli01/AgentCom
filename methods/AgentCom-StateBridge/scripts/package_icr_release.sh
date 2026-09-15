@@ -40,7 +40,10 @@ link_manifest_rel="${link_manifest#"$REPO_ROOT/"}"
     -I 'zstd -T0 -10' \
     -cf "$archive" "$ARTIFACTS_REL" "$manifest_rel" "$link_manifest_rel"
 )
-sha256sum "$archive" > "$archive.sha256"
+(
+  cd "$OUTPUT_DIR"
+  sha256sum "$(basename "$archive")"
+) > "$archive.sha256"
 
 echo "archive=$archive"
 echo "archive_bytes=$(stat -c %s "$archive")"
