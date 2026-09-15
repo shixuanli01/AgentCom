@@ -1,0 +1,8 @@
+condition,correction_rate,preservation_rate
+none,0.0,1.0
+other_statebridge,0.029411764705882353,0.9411764705882353
+other_text,0.029411764705882353,1.0
+self_statebridge,0.0,1.0
+self_text,0.0,1.0
+true_statebridge,0.7941176470588235,0.08823529411764706
+true_text,0.8529411764705882,0.35294117647058826

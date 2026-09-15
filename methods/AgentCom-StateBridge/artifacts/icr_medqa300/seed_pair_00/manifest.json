@@ -1,0 +1,55 @@
+{
+  "analysis": {
+    "bootstrap_cluster": "item_id (both directions retained)",
+    "bootstrap_iterations": 10000,
+    "bootstrap_seed": 20260914,
+    "new_model_inference": false,
+    "version": "communication_first_step1_v2"
+  },
+  "answer_parser_version": "icr.protocol.parse_medqa_answer@ICR-MEDQA300-V2",
+  "benchmark_name": "medqa300",
+  "communication_conditions": [
+    "true_statebridge",
+    "self_statebridge",
+    "other_statebridge",
+    "none",
+    "true_text",
+    "self_text",
+    "other_text"
+  ],
+  "cuda_version": "12.8",
+  "dataset_item_count": 300,
+  "dataset_revision": "ddee8dc64d3b2a1e5061c409c68d626109237640009168838a038db29efe802c",
+  "dataset_source": "repository-bundled data/medqa.json",
+  "dataset_split": "fixed 300-item diagnostic subset",
+  "generation_config": {
+    "do_sample": true,
+    "max_new_tokens": 8192,
+    "temperature": 0.6,
+    "top_k": null,
+    "top_p": 0.95
+  },
+  "git_commit_hash": "c16c8dab029fd84dc1e7fdaf3d4dec37c83dc6c1",
+  "git_dirty_status": "M docs/REMOTE_REPRODUCTION.md\n M methods/AgentCom-StateBridge/agentcom/tmr_eval.py\n M methods/AgentCom-StateBridge/tests/test_tmr_eval.py\n?? methods/AgentCom-StateBridge/icr/\n?? methods/AgentCom-StateBridge/scripts/run_icr_medqa300_parallel.sh\n?? methods/AgentCom-StateBridge/scripts/run_icr_prebeliefs_4gpu.sh\n?? methods/AgentCom-StateBridge/scripts/run_icr_revisions_4gpu.sh\n?? methods/AgentCom-StateBridge/scripts/run_icr_smoke_4gpu.sh\n?? methods/AgentCom-StateBridge/scripts/run_tmr_last64_4gpu.sh\n?? methods/AgentCom-StateBridge/scripts/run_tmr_medqa300_4gpu.sh\n?? methods/AgentCom-StateBridge/tests/test_icr.py\n?? methods/AgentCom-StateBridge/tests/test_icr_analysis_v2.py",
+  "global_seed": 42,
+  "gpu_model_and_driver": [
+    "NVIDIA GeForce RTX 5090, 595.71.05",
+    "NVIDIA GeForce RTX 5090, 595.71.05",
+    "NVIDIA GeForce RTX 5090, 595.71.05",
+    "NVIDIA GeForce RTX 5090, 595.71.05"
+  ],
+  "model_name": "Qwen/Qwen3-4B",
+  "model_revision": "1cfa9a7208912126459214e8b04321603b3df60c",
+  "prompt_template_versions": {
+    "revision": "icr_v2_statebridge_front_injection",
+    "statebridge_injection": "front_of_user_turn_before_question"
+  },
+  "replication_id": "seed_pair_00",
+  "run_id": "medqa300_seed_pair_00",
+  "source_artifact": "/workspace/AgentCom/methods/AgentCom-StateBridge/artifacts/icr_medqa300_v2_sourcefront_seed42",
+  "source_config_fingerprint": "af1a85ec0c1c43724e14c642f72db42d0a4d964ea852b16cc97b6d582f04e88a",
+  "timestamp": "2026-09-14T21:11:29.820961+00:00",
+  "tokenizer_revision": "1cfa9a7208912126459214e8b04321603b3df60c",
+  "torch_version": "2.7.1+cu128",
+  "transformers_version": "4.51.3"
+}

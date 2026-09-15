@@ -1,0 +1,11 @@
+condition,correction_rate,preservation_rate
+none,0.03125,0.9375
+other_latentmas,0.03125,0.96875
+other_statebridge,0.0625,0.90625
+other_text,0.0,1.0
+self_latentmas,0.0,0.96875
+self_statebridge,0.03125,1.0
+self_text,0.03125,1.0
+true_latentmas,0.3125,0.71875
+true_statebridge,0.9375,0.21875
+true_text,0.84375,0.34375

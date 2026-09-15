@@ -1,0 +1,17 @@
+condition,count,denominator,matrix,rate,transition
+true_text,151,600,correctness,0.25166666666666665,wrong_to_wrong
+true_text,27,600,correctness,0.045,wrong_to_correct
+true_text,401,600,correctness,0.6683333333333333,correct_to_correct
+true_text,21,600,correctness,0.035,correct_to_wrong
+true_text,20,86,sender_receiver_answer_disagreement,0.23255813953488372,keeps_receiver_answer
+true_text,66,86,sender_receiver_answer_disagreement,0.7674418604651163,adopts_sender_answer
+true_text,0,86,sender_receiver_answer_disagreement,0.0,changes_to_third_answer
+true_text,0,86,sender_receiver_answer_disagreement,0.0,invalid_post_answer
+true_statebridge,148,600,correctness,0.24666666666666667,wrong_to_wrong
+true_statebridge,30,600,correctness,0.05,wrong_to_correct
+true_statebridge,397,600,correctness,0.6616666666666666,correct_to_correct
+true_statebridge,25,600,correctness,0.041666666666666664,correct_to_wrong
+true_statebridge,9,86,sender_receiver_answer_disagreement,0.10465116279069768,keeps_receiver_answer
+true_statebridge,77,86,sender_receiver_answer_disagreement,0.8953488372093024,adopts_sender_answer
+true_statebridge,0,86,sender_receiver_answer_disagreement,0.0,changes_to_third_answer
+true_statebridge,0,86,sender_receiver_answer_disagreement,0.0,invalid_post_answer

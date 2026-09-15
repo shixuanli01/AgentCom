@@ -1,0 +1,58 @@
+{
+  "analysis": {
+    "bootstrap_cluster": "item_id (both directions retained)",
+    "bootstrap_iterations": 10000,
+    "bootstrap_seed": 20260914,
+    "new_model_inference": false,
+    "version": "communication_first_step1_v2"
+  },
+  "answer_parser_version": "icr.protocol.parse_medqa_answer@ICR-MEDQA300-V2",
+  "benchmark_name": "medqa300",
+  "communication_conditions": [
+    "none",
+    "true_text",
+    "self_text",
+    "other_text",
+    "true_statebridge",
+    "self_statebridge",
+    "other_statebridge",
+    "true_latentmas",
+    "self_latentmas",
+    "other_latentmas"
+  ],
+  "cuda_version": "12.8",
+  "dataset_item_count": 300,
+  "dataset_revision": "ddee8dc64d3b2a1e5061c409c68d626109237640009168838a038db29efe802c",
+  "dataset_source": "repository-bundled data/medqa.json",
+  "dataset_split": "fixed 300-item diagnostic subset",
+  "generation_config": {
+    "do_sample": true,
+    "max_new_tokens": 8192,
+    "temperature": 0.6,
+    "top_k": null,
+    "top_p": 0.95
+  },
+  "git_commit_hash": "d32780ccd87bde20c9a4477eeedc08113bd64f81",
+  "git_dirty_status": "",
+  "global_seed": 42,
+  "gpu_model_and_driver": [
+    "NVIDIA GeForce RTX 5090, 595.71.05",
+    "NVIDIA GeForce RTX 5090, 595.71.05",
+    "NVIDIA GeForce RTX 5090, 595.71.05",
+    "NVIDIA GeForce RTX 5090, 595.71.05"
+  ],
+  "model_name": "Qwen/Qwen3-4B",
+  "model_revision": "1cfa9a7208912126459214e8b04321603b3df60c",
+  "prompt_template_versions": {
+    "revision": "icr_v2_statebridge_front_injection",
+    "statebridge_injection": "front_of_user_turn_before_question"
+  },
+  "replication_id": "seed_pair_01",
+  "run_id": "medqa300_seed_pair_01",
+  "source_artifact": "/workspace/AgentCom/methods/AgentCom-StateBridge/artifacts/icr_medqa300/seed_pair_01",
+  "source_config_fingerprint": "b7d60ded0e2aaf8832642eff801453df35ee1cbbfd4f4f256b4ec42fea256cc4",
+  "timestamp": "2026-09-15T07:50:46.155594+00:00",
+  "tokenizer_revision": "1cfa9a7208912126459214e8b04321603b3df60c",
+  "torch_version": "2.7.1+cu128",
+  "transformers_version": "4.51.3"
+}
