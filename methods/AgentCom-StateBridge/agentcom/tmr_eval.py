@@ -303,6 +303,29 @@ def _baseline_items(summary: Mapping[str, Any]) -> Dict[int, Dict[str, Any]]:
     return result
 
 
+def shard_indexed_items(
+    indexed_items: Sequence[tuple[int, Mapping[str, Any]]],
+    *,
+    num_shards: int,
+    shard_index: int,
+) -> list[tuple[int, Mapping[str, Any]]]:
+    """Select a deterministic, balanced execution shard.
+
+    Sharding changes only which process evaluates an item. Per-item role seeds
+    remain derived from the original dataset index, so process count and resume
+    order cannot change generation inputs.
+    """
+    if num_shards < 1:
+        raise ValueError("--num-shards must be at least 1")
+    if not 0 <= shard_index < num_shards:
+        raise ValueError("--shard-index must be in [0, --num-shards)")
+    return [
+        item
+        for position, item in enumerate(indexed_items)
+        if position % num_shards == shard_index
+    ]
+
+
 def aggregate_records(
     records: Sequence[Mapping[str, Any]],
     baseline: Mapping[int, Mapping[str, Any]],
@@ -389,6 +412,7 @@ class EvaluationRunner:
         run_dir: Path,
         manifest_fingerprint: str,
         baseline: Mapping[int, Mapping[str, Any]],
+        expected_item_ids: Sequence[int],
     ) -> None:
         self.pipeline = pipeline
         self.communication_method = communication_method
@@ -397,6 +421,7 @@ class EvaluationRunner:
         self.run_dir = run_dir
         self.manifest_fingerprint = manifest_fingerprint
         self.baseline = baseline
+        self.expected_item_ids = frozenset(int(item_id) for item_id in expected_item_ids)
         self.stop_requested = False
 
     def request_stop(self, signum: int, frame: Any) -> None:
@@ -432,11 +457,15 @@ class EvaluationRunner:
 
     def write_summary(self, *, status: str) -> Dict[str, Any]:
         records = self.records()
+        completed_item_ids = {int(record["item_index"]) for record in records}
+        if status == "complete" and completed_item_ids != self.expected_item_ids:
+            status = "running"
         metrics = aggregate_records(records, self.baseline)
         summary = {
             "status": status,
             "manifest_fingerprint": self.manifest_fingerprint,
             "updated_at": datetime.now().isoformat(),
+            "expected_records": len(self.expected_item_ids),
             "completed_records": len(records),
             "metrics": metrics,
         }
@@ -621,6 +650,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--start-index", type=int, default=0)
     parser.add_argument("--limit", type=int)
     parser.add_argument("--item-ids", nargs="+", type=int)
+    parser.add_argument("--num-shards", type=int, default=1)
+    parser.add_argument("--shard-index", type=int, default=0)
     parser.add_argument("--run-dir", type=Path, required=True)
     parser.add_argument(
         "--baseline-summary",
@@ -665,6 +696,13 @@ def main() -> Dict[str, Any]:
         raise ValueError("The selected dataset slice is empty")
     if any(not 0 <= item_id < len(data) for item_id, _ in selected):
         raise ValueError("Selected item ID is outside the dataset")
+    execution_items = shard_indexed_items(
+        selected,
+        num_shards=cli.num_shards,
+        shard_index=cli.shard_index,
+    )
+    if not execution_items:
+        raise ValueError("The selected execution shard is empty")
 
     baseline_summary: Dict[str, Any] = {}
     baseline: Dict[int, Dict[str, Any]] = {}
@@ -735,12 +773,14 @@ def main() -> Dict[str, Any]:
         run_dir=cli.run_dir,
         manifest_fingerprint=manifest["fingerprint"],
         baseline=baseline,
+        expected_item_ids=[item_id for item_id, _ in selected],
     )
     runner.log(
         f"start method={cli.communication_method} selection={cli.tmr_selection} "
-        f"items={len(selected)} model={cli.model}"
+        f"items={len(execution_items)}/{len(selected)} model={cli.model} "
+        f"shard={cli.shard_index}/{cli.num_shards}"
     )
-    summary = runner.run(selected)
+    summary = runner.run(execution_items)
     runner.log(f"finished status={summary['status']} metrics={summary['metrics']}")
     return summary
 

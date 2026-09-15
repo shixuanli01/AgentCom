@@ -155,6 +155,19 @@ tmux new-session -d -s tmr-medqa \
 tail -f artifacts/tmr_v1/server_queue.log
 ```
 
+On a four-GPU host, the item-stable role seeds allow both variants to run as
+four shards each without changing generation inputs. Two Qwen3-4B workers share
+each 32 GB GPU to use otherwise idle compute capacity:
+
+```bash
+cd methods/AgentCom-StateBridge
+bash scripts/run_tmr_medqa300_4gpu.sh artifacts/tmr_v1
+```
+
+The eight workers share one run directory per variant and write distinct
+atomic item records. A run is marked complete only after all 300 expected
+records are present.
+
 The queue writes one atomic record per item, so the same command resumes after
 an interruption. Generated traces and hidden-state diagnostics remain under
 ignored `artifacts/` and must not be committed.
