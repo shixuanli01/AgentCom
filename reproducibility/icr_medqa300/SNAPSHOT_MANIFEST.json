@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "snapshot_date_utc": "2026-09-15",
+  "repository": "https://github.com/shixuanli01/AgentCom.git",
+  "branch": "main",
+  "analysis_commit": "f53f71b30c64b947e22aca6da49fa23151d065e8",
+  "report_commit": "88a58d4da87d22516bcac01ff1e1e888feb255df",
+  "release": {
+    "tag": "icr-medqa300-20260915",
+    "url": "https://github.com/shixuanli01/AgentCom/releases/tag/icr-medqa300-20260915",
+    "archive": "icr-artifacts-20260915.tar.zst",
+    "archive_bytes": 633298758,
+    "archive_sha256": "504ba13a3038c64e0560c9e2840e826a8cb1d5bc462c9f0c874a376b87d5eb5d",
+    "regular_file_count": 25088,
+    "archive_entry_count": 25313,
+    "symlink_count": 6
+  },
+  "model": {
+    "name": "Qwen/Qwen3-4B",
+    "revision": "1cfa9a7208912126459214e8b04321603b3df60c",
+    "tokenizer_revision": "1cfa9a7208912126459214e8b04321603b3df60c"
+  },
+  "dataset": {
+    "path": "methods/AgentCom-StateBridge/data/medqa.json",
+    "full_file_sha256": "d4f09708b623a7750013b22c607495eb8872bbef7a3f50990b7279c8fd87ec8d",
+    "selected_300_sha256": "ddee8dc64d3b2a1e5061c409c68d626109237640009168838a038db29efe802c",
+    "selected_items": 300
+  },
+  "runtime": {
+    "python": "3.10.21",
+    "torch": "2.7.1+cu128",
+    "transformers": "4.51.3",
+    "cuda": "12.8",
+    "gpu": "4 x NVIDIA GeForce RTX 5090 32607 MiB",
+    "driver": "595.71.05"
+  },
+  "formal_scope": {
+    "text_statebridge_seed_pairs": ["seed_pair_00", "seed_pair_01", "seed_pair_02"],
+    "text_statebridge_directional_condition_records": 12600,
+    "latentmas_seed_pairs": ["seed_pair_00", "seed_pair_01"],
+    "all_channel_directional_condition_records": 12000,
+    "items_per_seed": 300,
+    "directions": ["A_to_B", "B_to_A"],
+    "bootstrap_iterations": 10000,
+    "bootstrap_cluster": "item_id"
+  },
+  "known_exclusions": {
+    "seed_pair_03": "partial, preserved but excluded from formal pooled estimates",
+    "seed_pair_04": "partial, preserved but excluded from formal pooled estimates",
+    "cross_benchmark_step_4": "not run"
+  },
+  "security": {
+    "credentials_included": false,
+    "environment_variables_included": false
+  }
+}
