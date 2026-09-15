@@ -39,6 +39,7 @@
 **/reproduction/runs/
 **/reproduction/evidence/
 **/reproduction/reports/generated/
+/.release-assets/
 
 # Pristine third-party checkouts are fetched on demand
 external/upstreams/

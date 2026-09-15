@@ -1,4 +1,4 @@
-"""Pooled five-seed MedQA300 analysis with item-clustered uncertainty."""
+"""Pooled multi-seed MedQA300 analysis with item-clustered uncertainty."""
 
 from __future__ import annotations
 
@@ -50,7 +50,7 @@ def main() -> None:
     cli = parser.parse_args()
 
     base_root = cli.base_root.resolve()
-    output = base_root / "pooled_5seed"
+    output = base_root / f"pooled_{len(cli.replications)}seed"
     all_rows: list[dict[str, Any]] = []
     pooled_cases = []
     per_seed_metrics = []
@@ -60,6 +60,13 @@ def main() -> None:
         root = base_root / replication_id
         summary_path = root / "analysis_v2/summary.json"
         revision_path = root / "revisions/merged.jsonl"
+        if not revision_path.is_file():
+            # seed_pair_00 preserves its frozen Step-1 records under the
+            # analysis snapshot while its live revisions directory is used by
+            # later LatentMAS runs.
+            archived_revision_path = root / "analysis/revisions/merged.jsonl"
+            if archived_revision_path.is_file():
+                revision_path = archived_revision_path
         case_path = root / "analysis_v2/per_direction_cases.parquet"
         if not summary_path.is_file() or not revision_path.is_file() or not case_path.is_file():
             raise RuntimeError(f"Incomplete replication artifact: {root}")
@@ -79,9 +86,12 @@ def main() -> None:
         for line in revision_path.read_text(encoding="utf-8").splitlines():
             if line:
                 row = json.loads(line)
+                if row["condition"] not in CONDITIONS:
+                    continue
                 row["replication_id"] = replication_id
                 all_rows.append(row)
-        pooled_cases.append(pd.read_parquet(case_path))
+        seed_cases = pd.read_parquet(case_path)
+        pooled_cases.append(seed_cases[seed_cases["condition"].isin(CONDITIONS)])
 
     expected = len(cli.replications) * cli.expected_items * 2 * len(CONDITIONS)
     keys = {
@@ -290,7 +300,7 @@ def main() -> None:
     )
 
     lines = [
-        "# ICR MedQA300 — pooled five-seed analysis",
+        f"# ICR MedQA300 — pooled {len(cli.replications)}-seed analysis",
         "",
         f"Pooled {len(cli.replications)} seed pairs and {len(all_rows):,} directional-condition records. Confidence intervals resample item IDs and retain all replications and both directions.",
         "",
