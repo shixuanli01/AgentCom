@@ -6,13 +6,22 @@ write outputs into this directory; generated runs will use an ignored
 
 ## Current Experiment
 
+- [EGR V1 method freeze (Chinese)](EGR_V1_METHOD_FREEZE_ZH.md)
+- [EGR V1 cross-benchmark report (Chinese)](EGR_CROSS_BENCHMARK_REPORT_ZH.md)
+- [Cross-benchmark first-wave protocol (Chinese)](CROSS_BENCHMARK_FIRST_WAVE_ZH.md)
+- [EGR MedQA300 report (Chinese)](EGR_MEDQA300_REPORT_ZH.md)
+- [Structured Latent Relay V1 (Chinese)](SLR_V1_PROTOCOL_ZH.md)
 - [Trajectory Memory Relay V1 (Chinese)](TMR_V1_PROTOCOL_ZH.md)
 - [Turning-point hidden-state selection](TURNING_POINT_SELECTION.md)
 - [Single-path MedQA communication sweep (Chinese)](SINGLE_PATH_MEDQA_SWEEP_ZH.md)
 
-TMR is the active controlled comparison. `tmr_last64` isolates native external
-memory transport from StateBridge's Procrustes pseudo-token transport.
-`tmr_coverage64` then changes only source-position selection.
+The current communication audit is EGR V1 over the frozen ICR prebeliefs. EGR
+is explicitly a receiver-side evidence-integration protocol, not a latent
+transport replacement; transport comparisons and receiver-policy comparisons
+are reported separately. SLR is the newest controlled latent method. It separates a 48-slot unordered
+exploratory memory from a 16-slot ordered predictive decision trace. TMR remains
+an active baseline: `tmr_last64` isolates native external memory transport,
+while `tmr_coverage64` changes only source-position selection.
 
 ## Direct Predecessors
 

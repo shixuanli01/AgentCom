@@ -17,10 +17,10 @@ from prompts import EMBEDDING_HINT_MARKER
 
 from .channels import CommunicationMessage
 from .protocol import (
-    INDEPENDENT_SOLVER_PROMPT,
-    REVISION_BASE,
     SYSTEM_PROMPT,
-    parse_medqa_answer,
+    independent_solver_prompt,
+    parse_task_answer,
+    revision_prompt,
     reset_rng,
     sha256_text,
 )
@@ -45,11 +45,12 @@ class ICRRuntime:
         max_new_tokens: int,
         temperature: float,
         top_p: float,
+        task: str = "medqa",
     ) -> None:
         args = argparse.Namespace(
             model=model_name,
             model_name=model_name,
-            task="medqa",
+            task=task,
             prompt="sequential",
             batch_size=1,
         )
@@ -58,6 +59,7 @@ class ICRRuntime:
         self.max_new_tokens = max_new_tokens
         self.temperature = temperature
         self.top_p = top_p
+        self.task = task
         self.bridge = StateBridge(
             self.model,
             max_new_tokens=max_new_tokens,
@@ -130,7 +132,7 @@ class ICRRuntime:
     @torch.no_grad()
     def generate_prebelief(self, question: str, *, seed: int) -> dict[str, Any]:
         reset_rng(seed)
-        user_content = INDEPENDENT_SOLVER_PROMPT.format(question=question)
+        user_content = independent_solver_prompt(self.task, question)
         prompt = self._render(user_content)
         input_ids, attention_mask, _, clean_prompt = self._encode_prompt(prompt, None)
         prompt_embeds = self.embedding_layer(input_ids)
@@ -165,7 +167,7 @@ class ICRRuntime:
         result = {
             "reasoning_text": reasoning_text,
             "raw_response": raw_response,
-            "parsed_answer": parse_medqa_answer(reasoning_text),
+            "parsed_answer": parse_task_answer(self.task, reasoning_text),
             "generation_seed": seed,
             "generated_token_ids": token_ids[0].detach().cpu().tolist(),
             "generation_length": int(token_ids.shape[1]),
@@ -209,7 +211,8 @@ class ICRRuntime:
             external = "Use the external message above as evidence if it is relevant."
         else:
             raise RuntimeError("Non-none communication message has no payload")
-        user_content = REVISION_BASE.format(
+        user_content = revision_prompt(
+            getattr(self, "task", "medqa"),
             question=question,
             receiver_prior_reasoning=receiver_reasoning,
             receiver_prior_answer=(receiver_answer or "UNPARSEABLE"),
@@ -222,7 +225,7 @@ class ICRRuntime:
     ) -> tuple[torch.Tensor, int, int, str]:
         """Rebuild the exact cached Phase-1 token trajectory without sampling."""
         sender_prompt = self._render(
-            INDEPENDENT_SOLVER_PROMPT.format(question=str(source["question"]))
+            independent_solver_prompt(self.task, str(source["question"]))
         )
         encoded_prompt = self.model.tokenizer(
             sender_prompt, return_tensors="pt", add_special_tokens=False
@@ -367,7 +370,7 @@ class ICRRuntime:
         result = {
             "response": response,
             "raw_response": raw_response,
-            "parsed_answer": parse_medqa_answer(response),
+            "parsed_answer": parse_task_answer(self.task, response),
             "revision_seed": seed,
             "generated_token_ids": generated_ids[0].detach().cpu().tolist(),
             "generation_length": int(generated_ids.shape[1]),
@@ -463,7 +466,7 @@ class ICRRuntime:
         result = {
             "response": response,
             "raw_response": raw_response,
-            "parsed_answer": parse_medqa_answer(response),
+            "parsed_answer": parse_task_answer(self.task, response),
             "revision_seed": seed,
             "generated_token_ids": generated_ids[0].detach().cpu().tolist(),
             "generation_length": int(generated_ids.shape[1]),

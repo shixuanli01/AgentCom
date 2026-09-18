@@ -88,6 +88,34 @@ These tests do not download Qwen3-4B.
 
 ## 5. Smoke Runs
 
+### ICR and EGR cross-benchmark smoke
+
+The current EGR V1 method is frozen in
+`methods/AgentCom-StateBridge/experiments/EGR_V1_METHOD_FREEZE_ZH.md`. It reuses
+the ICR prebelief cache and must not be interpreted as a pure latent-channel
+comparison.
+
+```bash
+cd methods/AgentCom-StateBridge
+PYTHONPATH=. WORKERS_PER_GPU=2 BENCHMARK_LIMIT=2 \
+  bash scripts/run_cross_benchmark_first_wave.sh arc_challenge \
+  artifacts/cross_benchmark/smoke_arc2
+```
+
+Inspect `cross_benchmark_analysis/report.{md,json}` before starting 300 items.
+For a fixed random sample:
+
+```bash
+PYTHONPATH=. WORKERS_PER_GPU=2 BENCHMARK_SAMPLE_SIZE=300 \
+  BENCHMARK_SELECTION_SEED=42 \
+  bash scripts/run_cross_benchmark_first_wave.sh gsm8k
+```
+
+The script runs prebelief generation, no-message/Text/StateBridge/LatentMAS
+revisions, deterministic evidence filtering, EGR Contrast, the permutation gate
+when valid for the task, and paired analysis. MBPP+/HumanEval+ intentionally
+skip permutation because source-string equality is not behavioral equivalence.
+
 ### Trajectory Memory Relay
 
 TMR is the active method. It requires no training and adds no trainable

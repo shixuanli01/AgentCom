@@ -12,13 +12,13 @@ from typing import Any
 
 import torch
 
-from methods.state_bridge import load_dataset_by_name
-
 from . import CONDITIONS, PROTOCOL
+from .benchmarks import SPECS, benchmark_spec, load_benchmark, select_item_ids
 from .protocol import (
     atomic_write_json,
     atomic_write_jsonl,
-    canonical_answer,
+    answer_is_correct,
+    canonical_gold,
     prebelief_seed,
     sha256_json,
 )
@@ -29,12 +29,15 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=f"{PROTOCOL} phase 1")
     parser.add_argument("--artifact-root", type=Path, required=True)
     parser.add_argument("--model", default="Qwen/Qwen3-4B")
+    parser.add_argument("--task", choices=sorted(SPECS), default="medqa")
     parser.add_argument("--global-seed", type=int, default=42)
     parser.add_argument("--replication-id")
     parser.add_argument("--temperature", type=float, default=0.6)
     parser.add_argument("--top-p", type=float, default=0.95)
-    parser.add_argument("--max-new-tokens", type=int, default=8192)
+    parser.add_argument("--max-new-tokens", type=int)
     parser.add_argument("--limit", type=int)
+    parser.add_argument("--sample-size", type=int)
+    parser.add_argument("--selection-seed", type=int, default=42)
     parser.add_argument("--item-ids", nargs="+", type=int)
     parser.add_argument("--rank", type=int)
     parser.add_argument("--world-size", type=int)
@@ -51,11 +54,21 @@ def rank_and_world(cli: argparse.Namespace) -> tuple[int, int]:
 
 def build_config(cli: argparse.Namespace, selected_ids: list[int], data: list[dict]) -> dict[str, Any]:
     stable = {
-        "protocol": PROTOCOL,
-        "dataset": "medqa",
+        "protocol": PROTOCOL if cli.task == "medqa" else "ICR-MCQ-CROSSBENCH-V1",
+        "dataset": cli.task,
+        "benchmark": benchmark_spec(cli.task).label,
         "dataset_rows": len(data),
         "selected_item_ids": selected_ids,
         "dataset_sha256": sha256_json(data),
+        "selection": {
+            "mode": (
+                "explicit_ids" if cli.item_ids else
+                "seeded_sample" if cli.sample_size is not None else
+                "prefix" if cli.limit is not None else "full"
+            ),
+            "sample_size": cli.sample_size,
+            "selection_seed": cli.selection_seed if cli.sample_size is not None else None,
+        },
         "model": cli.model,
         "global_seed": cli.global_seed,
         "generation": {
@@ -98,14 +111,17 @@ def ensure_config(path: Path, candidate: dict[str, Any]) -> dict[str, Any]:
 
 def main() -> None:
     cli = parse_args()
+    if cli.max_new_tokens is None:
+        cli.max_new_tokens = benchmark_spec(cli.task).default_max_new_tokens
     rank, world = rank_and_world(cli)
-    data = [dict(row) for row in load_dataset_by_name("medqa")]
-    if cli.item_ids:
-        selected_ids = list(cli.item_ids)
-    else:
-        selected_ids = list(range(len(data)))[: cli.limit]
-    if not selected_ids or any(not 0 <= index < len(data) for index in selected_ids):
-        raise ValueError("Selected MedQA item IDs are empty or invalid")
+    data = load_benchmark(cli.task)
+    selected_ids = select_item_ids(
+        len(data),
+        item_ids=cli.item_ids,
+        limit=cli.limit,
+        sample_size=cli.sample_size,
+        selection_seed=cli.selection_seed,
+    )
     config = ensure_config(cli.artifact_root / "config.json", build_config(cli, selected_ids, data))
     assigned_ids = selected_ids[rank::world]
     stop_requested = False
@@ -127,6 +143,7 @@ def main() -> None:
         max_new_tokens=cli.max_new_tokens,
         temperature=cli.temperature,
         top_p=cli.top_p,
+        task=cli.task,
     )
     records_dir = cli.artifact_root / "prebeliefs" / f"rank{rank}" / "records"
     message_directory = str(
@@ -158,17 +175,21 @@ def main() -> None:
             relative_prefix = Path(message_directory) / f"rank{rank}" / f"item_{item_id:04d}_{agent_id}.safetensors"
             prefix_path = cli.artifact_root / relative_prefix
             atomic_save_prefix(prefix_path, generated.pop("prefix"))
-            gold = canonical_answer(item.get("gold"))
+            gold = canonical_gold(cli.task, item.get("gold"))
             record = {
                 "status": "complete",
                 "config_fingerprint": config["fingerprint"],
                 "item_id": item_id,
                 "agent_id": agent_id,
                 "replication_id": cli.replication_id or "seed_pair_00",
+                "benchmark": config["benchmark"],
+                "task": cli.task,
                 "question": str(item["question"]),
                 "gold": gold,
                 **generated["record"],
-                "correct": generated["record"]["parsed_answer"] == gold,
+                "correct": answer_is_correct(
+                    cli.task, generated["record"]["parsed_answer"], gold
+                ),
                 "statebridge_prefix_file": str(relative_prefix),
                 "statebridge_prefix_shape": list(generated["record"]["statebridge"]["K"] and [1, generated["record"]["statebridge"]["K"], runtime.bridge.hidden_size]),
                 "statebridge_prefix_dtype": str(runtime.bridge.dtype).replace("torch.", ""),

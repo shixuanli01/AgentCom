@@ -19,6 +19,7 @@ from .prebeliefs import rank_and_world
 from .protocol import (
     atomic_write_json,
     atomic_write_jsonl,
+    answer_is_correct,
     classify_pair,
     other_item_id,
     parse_conditions,
@@ -124,6 +125,7 @@ def main() -> None:
         max_new_tokens=int(config["generation"]["max_new_tokens"]),
         temperature=float(config["generation"]["temperature"]),
         top_p=float(config["generation"]["top_p"]),
+        task=str(config.get("dataset", "medqa")),
     )
     suffix = f"_{cli.output_tag}" if cli.output_tag else ""
     shard_name = f"rank{rank}{suffix}"
@@ -261,6 +263,8 @@ def main() -> None:
                 "direction": direction,
                 "condition": condition,
                 "replication_id": config.get("replication_id") or "seed_pair_00",
+                "benchmark": config.get("benchmark", "medqa300"),
+                "task": config.get("dataset", "medqa"),
                 "sender_agent_id": sender_id,
                 "receiver_agent_id": receiver_id,
                 "sender_pre_answer": sender["parsed_answer"],
@@ -276,7 +280,9 @@ def main() -> None:
                 "communication_payload": message.diagnostics,
                 **generated,
                 "receiver_post_answer": post_answer,
-                "receiver_post_correct": post_answer == gold,
+                "receiver_post_correct": answer_is_correct(
+                    str(config.get("dataset", "medqa")), post_answer, gold
+                ),
                 "answer_changed": post_answer != receiver["parsed_answer"],
                 "followed_sender": post_answer == sender["parsed_answer"],
                 "completed_at": datetime.now().isoformat(),

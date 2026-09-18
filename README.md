@@ -1,8 +1,9 @@
-# AgentCom: Trajectory Memory Relay
+# AgentCom: Communication Audits and Training-Free Latent Relays
 
-This repository contains the active **Trajectory Memory Relay (TMR)** research
-and a frozen StateBridge control. TMR is a completely training-free latent
-communication method for homogeneous LLM multi-agent systems.
+This repository contains controlled communication audits and training-free
+latent communication research built around a frozen StateBridge control. The
+current evaluation track is **Independent -> Communicate -> Revise (ICR)** with
+**Evidence-Grounded Revision (EGR)**; TMR remains the active latent-method track.
 
 Instead of mapping final-layer states back into token-input embedding space,
 TMR exposes native hidden states as position-free external memory. The receiver
@@ -54,6 +55,40 @@ PYTHONPATH=. python -m agentcom.tmr_eval \
 ```
 
 ## Current Controlled Comparison
+
+### ICR and EGR
+
+ICR generates two independent beliefs per item and evaluates both directional
+handoffs under matched receiver revision semantics. Its channel controls are
+no-message, full text, StateBridge, and LatentMAS, with self/other controls for
+causal audits. EGR adds deterministic claim-suppressed evidence and symmetric
+contrast adjudication. EGR is a receiver policy, not a latent transport, so its
+system-level scores are not reported as pure channel wins.
+
+The frozen EGR V1 definition and current MedQA/ARC/GSM8K results are documented
+in:
+
+- [EGR V1 method freeze](methods/AgentCom-StateBridge/experiments/EGR_V1_METHOD_FREEZE_ZH.md)
+- [EGR cross-benchmark report](methods/AgentCom-StateBridge/experiments/EGR_CROSS_BENCHMARK_REPORT_ZH.md)
+- [Cross-benchmark protocol](methods/AgentCom-StateBridge/experiments/CROSS_BENCHMARK_FIRST_WAVE_ZH.md)
+
+Run a two-item smoke before a sampled benchmark:
+
+```bash
+cd methods/AgentCom-StateBridge
+PYTHONPATH=. WORKERS_PER_GPU=2 BENCHMARK_LIMIT=2 \
+  bash scripts/run_cross_benchmark_first_wave.sh gsm8k \
+  artifacts/cross_benchmark/smoke_gsm8k_2
+
+PYTHONPATH=. WORKERS_PER_GPU=2 BENCHMARK_SAMPLE_SIZE=300 \
+  bash scripts/run_cross_benchmark_first_wave.sh gsm8k
+```
+
+Generated traces remain under ignored `artifacts/`; completed summary reports
+should be transcribed into versioned experiment documents with exact counts and
+freeze fingerprints.
+
+### TMR
 
 The authoritative MedQA comparison holds these variables fixed:
 
