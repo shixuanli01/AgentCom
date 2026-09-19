@@ -515,12 +515,27 @@ def main() -> None:
         if line
     ]
     conditions = tuple(config["completed_revision_conditions"])
-    expected = len(config["selected_item_ids"]) * 2 * len(conditions)
     keys = {(row["item_id"], row["direction"], row["condition"]) for row in rows}
-    if len(rows) != expected or len(keys) != expected:
+    if len(keys) != len(rows):
+        raise RuntimeError(f"Duplicate revision keys: rows={len(rows)} unique={len(keys)}")
+    # Every condition must cover exactly the same directional pairs, whether or
+    # not a both-correct subsample removed some of them. Without a subsample the
+    # run must still be the full item x direction grid.
+    per_condition = {
+        condition: {(i, d) for i, d, c in keys if c == condition}
+        for condition in conditions
+    }
+    reference = per_condition[conditions[0]]
+    mismatched = [c for c, pairs in per_condition.items() if pairs != reference]
+    if mismatched:
+        raise RuntimeError(f"Conditions cover different directional pairs: {mismatched}")
+    keep_one_in = int((config.get("both_correct_sampling") or {}).get("keep_one_in", 1))
+    if keep_one_in <= 1 and len(reference) != len(config["selected_item_ids"]) * 2:
         raise RuntimeError(
-            f"Incomplete/non-unique source revisions: rows={len(rows)} unique={len(keys)} expected={expected}"
+            f"Incomplete run: {len(reference)} directional pairs, "
+            f"expected {len(config['selected_item_ids']) * 2}"
         )
+
     by_condition: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for row in rows:
         by_condition[row["condition"]].append(row)

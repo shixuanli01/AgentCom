@@ -25,7 +25,6 @@ from .parsing_v3 import (
     parse_numeric_answer,
 )
 from .prompts_v3 import PROMPT_VERSION
-from .prompts_v3 import independent_solver_prompt as _v3_solver_prompt
 from .prompts_v3 import revision_prompt as _v3_revision_prompt
 
 
@@ -253,9 +252,41 @@ def answer_is_correct(task: str, prediction: Any, gold: Any) -> bool:
     )
 
 
+GPQA_LAYER_DISAMBIGUATION = (
+    "\n\nAnswer with a label from the final A-D list, not with the lowercase "
+    "a)-d) items quoted inside those options."
+)
+
+
 def independent_solver_prompt(task: str, question: str) -> str:
-    """ICR-V3 independent-solve prompt; the output contract closes the prompt."""
-    return _v3_solver_prompt(task, question)
+    """Phase-1 prompt, byte-identical to V2 so prebeliefs stay comparable.
+
+    V3 rewrote this template and asked for *concise* reasoning, which V2 never
+    did. Independent-solve accuracy on MedQA fell from 72.17% to 67.67% and the
+    A/B correctness-disagreement subset -- the only place CR and PR can be
+    measured -- shrank from 70 to 56 directional cases. Phase 1 is therefore
+    restored verbatim; only phase 2 carries the V3 alignment changes.
+
+    GPQA is the single deviation. Its question text carries two option layers,
+    lowercase a)-d) content quoted inside an uppercase A-D submission list, and
+    the gold label refers to the outer list. V2 never ran GPQA under ICR, so
+    there is no baseline to match, and the ambiguity would silently misgrade.
+    """
+    if task == "medqa":
+        template = INDEPENDENT_SOLVER_PROMPT
+    elif task == "gsm8k":
+        template = NUMERIC_INDEPENDENT_SOLVER_PROMPT
+    elif task in {"mbppplus", "humanevalplus"}:
+        template = CODE_INDEPENDENT_SOLVER_PROMPT
+    else:
+        template = GENERAL_INDEPENDENT_SOLVER_PROMPT
+    prompt = template.format(question=question)
+    if task == "gpqa":
+        marker = "replacing A with one of A, B, C, or D."
+        prompt = prompt.replace(
+            marker, marker + GPQA_LAYER_DISAMBIGUATION, 1
+        )
+    return prompt
 
 
 def revision_prompt(

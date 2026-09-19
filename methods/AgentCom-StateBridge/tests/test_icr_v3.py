@@ -237,3 +237,49 @@ def test_arc_structural_exclusion_counts_trailing_options():
     data = [{"question": four}, {"question": five}, {"question": three}]
     assert structural_exclusions("arc_challenge", data) == [1, 2]
     assert structural_exclusions("gsm8k", data) == []
+
+
+# --- Phase 1 is V2 verbatim -----------------------------------------------
+
+
+def test_phase1_prompts_are_byte_identical_to_v2():
+    """V3 rewrote phase 1 and asked for concise reasoning, which V2 never did.
+
+    Independent-solve accuracy fell and the A/B disagreement subset shrank, so
+    phase 1 is restored verbatim. These assertions keep it that way.
+    """
+    from icr import protocol
+
+    assert protocol.independent_solver_prompt(
+        "medqa", "Q?"
+    ) == protocol.INDEPENDENT_SOLVER_PROMPT.format(question="Q?")
+    assert protocol.independent_solver_prompt(
+        "gsm8k", "Q?"
+    ) == protocol.NUMERIC_INDEPENDENT_SOLVER_PROMPT.format(question="Q?")
+    assert protocol.independent_solver_prompt(
+        "arc_challenge", "Q?"
+    ) == protocol.GENERAL_INDEPENDENT_SOLVER_PROMPT.format(question="Q?")
+    assert protocol.independent_solver_prompt(
+        "humanevalplus", "Q?"
+    ) == protocol.CODE_INDEPENDENT_SOLVER_PROMPT.format(question="Q?")
+
+
+def test_phase1_never_asks_for_concise_reasoning():
+    from icr import protocol
+
+    for task in ("medqa", "gpqa", "arc_challenge", "gsm8k", "humanevalplus"):
+        assert "concise" not in protocol.independent_solver_prompt(task, "Q?").lower()
+
+
+def test_gpqa_is_the_only_phase1_deviation_and_disambiguates_its_layers():
+    from icr import protocol
+
+    gpqa = protocol.independent_solver_prompt("gpqa", "Q?")
+    general = protocol.GENERAL_INDEPENDENT_SOLVER_PROMPT.format(question="Q?")
+    assert gpqa != general
+    assert gpqa == general.replace(
+        "replacing A with one of A, B, C, or D.",
+        "replacing A with one of A, B, C, or D." + protocol.GPQA_LAYER_DISAMBIGUATION,
+        1,
+    )
+    assert "final A-D list" in gpqa

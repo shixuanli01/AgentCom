@@ -51,6 +51,37 @@ def merge_prebeliefs(root: Path, *, require_complete: bool) -> list[dict[str, An
     return rows
 
 
+def _expected_directional_pairs(root, config, keep_one_in: int):
+    """Directional pairs a run should contain, honouring both-correct sampling."""
+    pairs = [
+        (int(item_id), direction)
+        for item_id in config["selected_item_ids"]
+        for direction in ("A_to_B", "B_to_A")
+    ]
+    if keep_one_in <= 1:
+        return pairs
+    import json as _json
+
+    correct = {
+        (int(row["item_id"]), str(row["agent_id"])): bool(row["correct"])
+        for row in (
+            _json.loads(line)
+            for line in (root / "prebeliefs" / "merged.jsonl")
+            .read_text(encoding="utf-8")
+            .splitlines()
+            if line
+        )
+    }
+    kept = []
+    for item_id, direction in pairs:
+        sender, receiver = ("A", "B") if direction == "A_to_B" else ("B", "A")
+        both_correct = correct[(item_id, sender)] and correct[(item_id, receiver)]
+        if both_correct and item_id % keep_one_in != 0:
+            continue
+        kept.append((item_id, direction))
+    return kept
+
+
 def merge_revisions(root: Path, *, require_complete: bool) -> list[dict[str, Any]]:
     config = json.loads((root / "config.json").read_text(encoding="utf-8"))
     rows = _deduplicate(
@@ -61,10 +92,17 @@ def merge_revisions(root: Path, *, require_complete: bool) -> list[dict[str, Any
         conditions = config.get("revision_conditions_requested")
         if not conditions:
             raise RuntimeError("config.json does not declare requested revision conditions")
+        # A both-correct subsample is part of the run definition, so the
+        # records it skips must not count as missing. The skipped set is
+        # derived from the frozen prebeliefs, never from the revision records,
+        # so an absent record can still be told apart from a skipped one.
+        keep_one_in = int(
+            (config.get("both_correct_sampling") or {}).get("keep_one_in", 1)
+        )
+        expected_pairs = _expected_directional_pairs(root, config, keep_one_in)
         expected = {
             (item_id, direction, condition)
-            for item_id in config["selected_item_ids"]
-            for direction in ("A_to_B", "B_to_A")
+            for item_id, direction in expected_pairs
             for condition in conditions
         }
         actual = {

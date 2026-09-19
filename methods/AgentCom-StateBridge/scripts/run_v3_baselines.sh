@@ -9,6 +9,7 @@
 #   WORKERS_PER_GPU   worker processes per GPU (default 1)
 #   BENCHMARK_LIMIT   first N items only, for smoke runs
 #   LATENT_STEPS      LatentMAS latent steps (default 10)
+#   BOTH_CORRECT_SAMPLE  keep one in N both-correct items (default 10)
 #   PYTHON            interpreter (default: repo venv)
 #
 # Runs are durable at item boundaries; re-running resumes completed records.
@@ -27,6 +28,7 @@ PYTHON="${PYTHON:-$DEFAULT_PYTHON}"
 REPLICATION_ID="${REPLICATION_ID:-seed_pair_00}"
 CONDITIONS="none,true_text,true_statebridge,true_latentmas"
 LATENT_STEPS="${LATENT_STEPS:-10}"
+BOTH_CORRECT_SAMPLE="${BOTH_CORRECT_SAMPLE:-10}"
 read -r -a GPUS <<< "${CUDA_DEVICES:-0 1 2 3}"
 WORKERS_PER_GPU="${WORKERS_PER_GPU:-1}"
 WORLD=$(( ${#GPUS[@]} * WORKERS_PER_GPU ))
@@ -101,7 +103,8 @@ fi
 
 echo "[$TASK] phase 2: revisions for $CONDITIONS"
 launch_phase icr.revisions --conditions "$CONDITIONS" \
-  --latent-steps "$LATENT_STEPS" --global-resume --output-tag v3
+  --latent-steps "$LATENT_STEPS" --both-correct-sample "$BOTH_CORRECT_SAMPLE" \
+  --global-resume --output-tag v3
 "$PYTHON" -m icr.merge --artifact-root "$ARTIFACT_ROOT" \
   --phase revisions --require-complete
 

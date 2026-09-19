@@ -108,6 +108,7 @@ def build_config(
             "receiver_injection_position": "message_slot_after_receiver_prior",
         },
         "revision_conditions": list(CONDITIONS),
+        "solver_prompt_version": "icr_v2_phase1_verbatim",
         "revision_prompt_version": PROMPT_VERSION,
         "answer_parser_version": "icr.parsing_v3@ICR-V3",
         "other_mapping_offset": 137,

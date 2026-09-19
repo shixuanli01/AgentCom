@@ -48,6 +48,15 @@ def parse_args() -> argparse.Namespace:
         help="Optional selected-item subset (used by resumable smoke runs)",
     )
     parser.add_argument(
+        "--both-correct-sample", type=int, default=1,
+        help=(
+            "Keep one in N both-correct items (1 keeps all). Communication has "
+            "almost no room to change an item both agents already answered "
+            "correctly, so a deterministic item_id %% N subsample keeps SCR "
+            "measured instead of assumed while removing most of the cost."
+        ),
+    )
+    parser.add_argument(
         "--global-resume", action="store_true",
         help="Resume completed keys from every revision shard, enabling safe resharding",
     )
@@ -98,6 +107,11 @@ def main() -> None:
         existing_conditions = list(config.get("revision_conditions_requested", []))
         combined_conditions = list(dict.fromkeys((*existing_conditions, *conditions)))
         config["revision_conditions_requested"] = combined_conditions
+        config["both_correct_sampling"] = {
+            "keep_one_in": int(cli.both_correct_sample),
+            "rule": "item_id % keep_one_in == 0",
+            "label_free": True,
+        }
         atomic_write_json(config_path, config)
         fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)
 
@@ -178,6 +192,12 @@ def main() -> None:
             config.get("replication_id"),
         )
         pair_class = classify_pair(bool(sender["correct"]), bool(receiver["correct"]))
+        if (
+            cli.both_correct_sample > 1
+            and pair_class == "both_correct"
+            and item_id % cli.both_correct_sample != 0
+        ):
+            continue
 
         for condition in conditions:
             record_path = records_dir / f"item_{item_id:04d}_{direction}_{condition}.json"

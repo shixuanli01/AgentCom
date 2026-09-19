@@ -60,7 +60,8 @@ def test_selection_modes_are_mutually_exclusive():
 
 def test_gsm8k_uses_numeric_output_contract_and_parser():
     assert benchmark_spec("gsm8k").default_max_new_tokens == 2048
-    assert "\\boxed{N}" in independent_solver_prompt("gsm8k", "2 + 3?")
+    # Phase 1 is V2 verbatim; phase 2 carries the V3 per-task output contract.
+    assert "\\boxed{NUMBER}" in independent_solver_prompt("gsm8k", "2 + 3?")
     assert parse_task_answer("gsm8k", "Therefore \\boxed{5}.") == "5"
     assert answer_is_correct("gsm8k", "5", "5")
     assert not answer_is_correct("gsm8k", None, "5")
