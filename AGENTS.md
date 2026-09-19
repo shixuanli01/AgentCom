@@ -23,27 +23,50 @@ This repository has one active method and one frozen control.
 
 ## Current Experiment
 
-The active method is training-free Trajectory Memory Relay:
+The active track is the **ICR-V3 baseline sweep**: four communication channels
+on the full test set of every benchmark, one replication.
 
-- transport control: StateBridge post-think last-64 + Procrustes prefix;
-- transport intervention: `tmr_last64` native external memory;
-- selection intervention: `tmr_coverage64` with 48 coverage + 16 tail states;
-- source/receiver layers: `11,23,35`;
-- fixed communication budget: `K=64` per layer;
-- model/task: Qwen3-4B on MedQA 300;
-- seed: `42`;
-- prompts, parser, decoding, roles, and LLM-call count: unchanged.
+- channels: `none`, `true_text`, `true_statebridge`, `true_latentmas`;
+- benchmarks: MedQA 300, ARC-Challenge 1,165, GSM8K 1,319, GPQA-Diamond 198,
+  HumanEval+ 164;
+- model/seed: Qwen3-4B, global seed 42, replication `seed_pair_00`;
+- decoding: temperature 0.6, top-p 0.95.
 
-TMR uses frozen native Q/K/V/O attention without RoPE or positional IDs on the
-external memory. It adds an entropy gate and a fixed `0.25` residual norm cap.
-No training or new parameters are allowed.
+V3 exists because V2 compared channels under visibly different prompts: the
+latent marker sat at the front of the user turn while the Text message sat
+mid-prompt, and only the latent conditions received an extra "use the external
+message as evidence" instruction. V3 fixes one five-block template
+
+    [Task / Question] -> [Receiver's own prior] -> [External information]
+    -> [How to integrate] -> [Output format]
+
+with a single condition-varying slot, adds a per-dataset output contract, and
+repairs five scoring defects. Read
+`methods/AgentCom-StateBridge/experiments/ICR_V3_PROTOCOL_ZH.md` before
+changing any of it.
+
+Do not alter the V3 prompts, the message slot position, the output contracts,
+or the parser while a sweep is in flight. Any change to them is a new protocol
+version with its own artifact root, never an edit of a completed run.
 
 Relevant files:
 
-- `methods/AgentCom-StateBridge/methods/trajectory_memory_relay.py`
-- `methods/AgentCom-StateBridge/agentcom/tmr_eval.py`
-- `methods/AgentCom-StateBridge/tests/test_trajectory_memory_relay.py`
-- `methods/AgentCom-StateBridge/experiments/TMR_V1_PROTOCOL_ZH.md`
+- `methods/AgentCom-StateBridge/icr/prompts_v3.py`
+- `methods/AgentCom-StateBridge/icr/parsing_v3.py`
+- `methods/AgentCom-StateBridge/icr/channels.py`
+- `methods/AgentCom-StateBridge/icr/runtime.py`
+- `methods/AgentCom-StateBridge/scripts/run_v3_baselines.sh`
+- `methods/AgentCom-StateBridge/tests/test_icr_v3.py`
+
+Adding a communication channel: subclass `CommunicationChannel` in
+`icr/channels.py`, register it in `make_channel()`, add the condition name to
+`CONDITIONS` in `icr/__init__.py`, and render its payload through
+`external_block()` in `icr/prompts_v3.py` so the visible text stays matched.
+Copy the alignment assertions from `tests/test_icr_v3.py` for the new
+condition; they catch prompt asymmetry before any GPU time is spent.
+
+Earlier tracks, retained as history: EGR (receiver-side evidence policy) and
+TMR (training-free latent transport).
 
 ## Scientific Guardrails
 

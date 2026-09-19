@@ -2,14 +2,20 @@
 
 This repository contains controlled communication audits and training-free
 latent communication research built around a frozen StateBridge control. The
-current evaluation track is **Independent -> Communicate -> Revise (ICR)** with
-**Evidence-Grounded Revision (EGR)**; TMR remains the active latent-method track.
+evaluation framework is **Independent -> Communicate -> Revise (ICR)**: two
+agents answer each item independently, then each revises once after receiving
+the other's message through one communication channel.
 
-Instead of mapping final-layer states back into token-input embedding space,
-TMR exposes native hidden states as position-free external memory. The receiver
-reads that memory with its own frozen Q/K/V/O attention projections. TMR adds no
-trainable parameters, pseudo tokens, Procrustes alignment, vocabulary snapping,
-or extra LLM calls.
+The current track is **ICR-V3**, a full-test-set baseline sweep of four
+channels — no-message, full text, StateBridge, and LatentMAS — under prompts
+that are byte-identical across conditions apart from the message payload
+itself. V2 compared channels under visibly different prompts, which confounded
+transport with prompt position and wording; see the
+[ICR-V3 protocol](methods/AgentCom-StateBridge/experiments/ICR_V3_PROTOCOL_ZH.md)
+for the exact diff, the per-dataset output contracts, and the scoring fixes.
+
+Earlier tracks are retained as history: **EGR** (a receiver-side evidence
+policy) and **TMR** (a training-free latent transport).
 
 Large model weights, Hugging Face caches, generated traces, and result files
 are intentionally excluded from Git.
@@ -18,7 +24,8 @@ are intentionally excluded from Git.
 
 | Path | Role |
 |---|---|
-| `methods/AgentCom-StateBridge/` | Active TMR implementation, evaluator, tests, and protocols |
+| `methods/AgentCom-StateBridge/icr/` | ICR framework: protocol, channels, runtime, analysis |
+| `methods/AgentCom-StateBridge/` | Method implementations, evaluators, tests, and protocols |
 | `StateBridge-repro-qwen3-4b/` | Frozen upstream StateBridge control and reproduction protocol |
 | `docs/REMOTE_REPRODUCTION.md` | Fresh-server installation and run commands |
 | `AGENTS.md` | Instructions and scientific guardrails for coding agents |
@@ -43,20 +50,51 @@ export HF_HOME=/data/$USER/huggingface
 export HF_DATASETS_CACHE=$HF_HOME/datasets
 ```
 
-Run the tests and a one-item TMR-last64 smoke:
+Run the tests and a two-item baseline smoke:
 
 ```bash
 cd methods/AgentCom-StateBridge
-PYTHONPATH=. python -m agentcom.tmr_eval \
-  --communication-method tmr \
-  --tmr-selection last64 \
-  --run-dir artifacts/tmr_v1/smoke_last64_seed42 \
-  --limit 1
+pytest -q tests
+
+BENCHMARK_LIMIT=2 CUDA_DEVICES="0" \
+  bash scripts/run_v3_baselines.sh medqa artifacts/icr_v3/smoke_medqa2
 ```
+
+Inspect `artifacts/icr_v3/smoke_medqa2/analysis_v2/summary.md` before starting
+a full set.
 
 ## Current Controlled Comparison
 
-### ICR and EGR
+### ICR-V3 baselines
+
+Four channels are evaluated on the full test set of every benchmark, one
+replication, with `self`/`other` causal controls deferred to a later ablation:
+
+| Benchmark | Items | Note |
+|---|---:|---|
+| MedQA | 300 | the upstream paper's fixed subset; no larger set is bundled |
+| ARC-Challenge | 1,165 | 7 of 1,172 excluded by option count alone, see the protocol |
+| GSM8K | 1,319 | full test split |
+| GPQA-Diamond | 198 | full set |
+| HumanEval+ | 164 | full set |
+
+Conditions are `none`, `true_text`, `true_statebridge`, and `true_latentmas`.
+Their revision prompts are byte-identical apart from the message payload, which
+`tests/test_icr_v3.py` asserts directly. The LatentMAS KV cache remains a
+front-anchored causal prefix because its positions are baked in on the sender
+side; that residual asymmetry is a declared comparison boundary rather than an
+implementation choice.
+
+```bash
+cd methods/AgentCom-StateBridge
+bash scripts/run_v3_baselines.sh gsm8k          # all GPUs, resumable
+bash scripts/run_v3_baselines.sh arc_challenge
+```
+
+Runs are durable at item boundaries; re-running resumes completed records.
+Results land in `artifacts/icr_v3/<task>_full_seed42/analysis_v2/`.
+
+### ICR-V2 and EGR (earlier track)
 
 ICR generates two independent beliefs per item and evaluates both directional
 handoffs under matched receiver revision semantics. Its channel controls are
@@ -89,6 +127,12 @@ should be transcribed into versioned experiment documents with exact counts and
 freeze fingerprints.
 
 ### TMR
+
+Instead of mapping final-layer states back into token-input embedding space,
+TMR exposes native hidden states as position-free external memory. The receiver
+reads that memory with its own frozen Q/K/V/O attention projections. TMR adds no
+trainable parameters, pseudo tokens, Procrustes alignment, vocabulary snapping,
+or extra LLM calls.
 
 The authoritative MedQA comparison holds these variables fixed:
 
@@ -134,6 +178,9 @@ commands.
 ## Documentation
 
 - [Coding-agent instructions](AGENTS.md)
+- [ICR-V3 protocol: prompts, output contracts, scoring fixes](methods/AgentCom-StateBridge/experiments/ICR_V3_PROTOCOL_ZH.md)
+- [ICR protocol and prompt record (V2)](docs/ICR_PROTOCOL_AND_PROMPTS.md)
+- [ICR experiment ledger](docs/ICR_EXPERIMENT_LEDGER.md)
 - [Remote reproduction runbook](docs/REMOTE_REPRODUCTION.md)
 - [Repository manifest](docs/REPOSITORY_MANIFEST.md)
 - [Method boundary](methods/AgentCom-StateBridge/AGENTCOM_METHOD.md)

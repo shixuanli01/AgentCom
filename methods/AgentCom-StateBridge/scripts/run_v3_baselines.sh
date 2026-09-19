@@ -21,7 +21,9 @@ case "$TASK" in
 esac
 
 ARTIFACT_ROOT="${2:-artifacts/icr_v3/${TASK}_full_seed42}"
-PYTHON="${PYTHON:-/workspace/AgentCom/.venv-agentcom/bin/python}"
+DEFAULT_PYTHON=/workspace/AgentCom/.venv-agentcom/bin/python
+[[ -x "$DEFAULT_PYTHON" ]] || DEFAULT_PYTHON=python
+PYTHON="${PYTHON:-$DEFAULT_PYTHON}"
 REPLICATION_ID="${REPLICATION_ID:-seed_pair_00}"
 CONDITIONS="none,true_text,true_statebridge,true_latentmas"
 LATENT_STEPS="${LATENT_STEPS:-10}"
