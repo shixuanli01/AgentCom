@@ -36,6 +36,12 @@ if [[ -n "${BENCHMARK_LIMIT:-}" ]]; then
   SELECTION_ARGS=(--limit "$BENCHMARK_LIMIT")
 fi
 
+# StateBridge's vocabulary anchoring normalizes the whole embedding matrix in
+# one allocation, a multi-GiB transient on top of each worker's steady state.
+# Expandable segments keep that spike from fragmenting the pool when several
+# workers share a GPU.
+export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"
+
 mkdir -p "$ARTIFACT_ROOT/logs"
 pids=()
 
