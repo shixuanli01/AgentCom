@@ -76,6 +76,22 @@ class ICRRuntime:
             args=args,
         )
         self.embedding_layer = self.model.model.get_input_embeddings()
+        self._embedding_mean_norm_value: Optional[torch.Tensor] = None
+
+    def _embedding_mean_norm(self) -> torch.Tensor:
+        """Mean row norm of the input embedding matrix, computed once.
+
+        Upcasting the whole embedding matrix to float32 costs a multi-GiB
+        transient allocation. The value is a constant of the frozen model, so
+        it is computed on first use and reused for every LatentMAS handoff
+        instead of being recomputed inside each revision.
+        """
+        if self._embedding_mean_norm_value is None:
+            self._embedding_mean_norm_value = (
+                self.embedding_layer.weight.detach().float().norm(dim=1).mean()
+            )
+            torch.cuda.empty_cache()
+        return self._embedding_mean_norm_value
 
     def _render(self, user_content: str) -> str:
         prompt = self.model.render_chat(
@@ -283,12 +299,16 @@ class ICRRuntime:
             use_cache=True,
             output_hidden_states=True,
             return_dict=True,
+            # Only the last position's hidden state is used, so materializing
+            # vocabulary logits for every source token wastes several GiB on a
+            # long sender trajectory. The cache and hidden states are unchanged.
+            logits_to_keep=1,
         )
         past = outputs.past_key_values
         last_hidden = outputs.hidden_states[-1][:, -1, :]
         # The official implementation applies identity realignment followed by
         # input-embedding mean-norm matching when realignment is disabled.
-        target_norm = self.embedding_layer.weight.detach().float().norm(dim=1).mean()
+        target_norm = self._embedding_mean_norm()
         for _ in range(latent_steps):
             latent = last_hidden.float()
             latent = latent * (
