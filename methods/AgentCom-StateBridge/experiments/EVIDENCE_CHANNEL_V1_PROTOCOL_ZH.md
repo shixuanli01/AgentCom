@@ -37,6 +37,11 @@ prior reasoning/answer，并使用冻结的 `icr_v3_mid_injection` revision prom
 `true_evidence` 与 `true_text` 的可见 prompt wrapper、message slot、revision seed
 和单次 Receiver generation 完全相同；唯一变化是 external message body。
 
+Phase 2 对 `both-correct` item 使用冻结的 `item_id % 10 == 0` 抽样规则。其余
+`both-correct` pair 不进入任何 communication condition；这节约主要推理开销，同时
+保留 10% 样本用于估计 SCR，而不是把“路由器跳过后保持正确”误报为通信方法的保护
+能力。所有对照方法必须使用相同 pair 集合。
+
 ## 4. 数据与对照
 
 - benchmark：MedQA300；

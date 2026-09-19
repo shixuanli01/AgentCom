@@ -10,6 +10,7 @@ WORKERS="${WORKERS_PER_GPU:-2}"
 LIMIT="${MEDQA_LIMIT:-300}"
 REPLICATION_ID="${REPLICATION_ID:-seed_pair_00}"
 PREBELIEF_SOURCE_ROOT="${PREBELIEF_SOURCE_ROOT:-}"
+BOTH_CORRECT_SAMPLE="${BOTH_CORRECT_SAMPLE:-10}"
 
 mkdir -p "$ARTIFACT_ROOT/logs"
 pids=()
@@ -186,7 +187,8 @@ print("single-item evidence-only verification: PASS")
 PY
 fi
 
-launch icr.revisions --conditions true_evidence --global-resume \
+launch icr.revisions --conditions true_evidence \
+  --both-correct-sample "$BOTH_CORRECT_SAMPLE" --global-resume \
   --output-tag evidence_only_v1
 "$PYTHON" -m icr.merge --artifact-root "$ARTIFACT_ROOT" \
   --phase revisions --require-complete
