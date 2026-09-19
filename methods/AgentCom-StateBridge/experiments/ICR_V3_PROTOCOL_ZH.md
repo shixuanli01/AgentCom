@@ -5,8 +5,9 @@
 状态：**协议已冻结并实现。** 生成结果必须单独标注 smoke、partial 或 full。
 
 目的：把 `none / true_text / true_statebridge / true_latentmas` 四个 baseline
-在五个数据集的**完整测试集**上跑出可冻结的数值。V3 只修正 V2 中已确认的
-prompt 不对称与判分缺陷，不引入新方法、不改变 ICR 的科学问题。
+跑出可冻结的数值。V3 在**模型侧的唯一变化**是 Phase 2 的通信/修订 prompt：
+Phase 1 独立 reasoning prompt 与 V2 逐字一致。Parser、结构性排除和
+`both-correct` 抽样属于评估与算力协议，不是 reasoning prompt 改动。
 
 ---
 
@@ -18,11 +19,15 @@ prompt 不对称与判分缺陷，不引入新方法、不改变 ICR 的科学�
 | 2 | 删除 latent 条件独有的 `Use the external message above as evidence if it is relevant.` | V2 只给 latent 这条额外指令，Text 没有 |
 | 3 | 引导句统一为 `An external message from another reasoning process is available.` | V2 的 `You may now have access to…` 措辞含糊 |
 | 4 | 整合指令改为条件中性措辞 | V2 在 `none` 下仍引用 "the external information"、"another message exists" |
-| 5 | 答案格式抽成 per-dataset 的 `{answer_format}` 段，且置于末尾 | V2 的答案格式写死为 A-D，且 Phase-1 中它位于题目之前 |
+| 5 | Phase 2 答案格式按数据集约束 | 防止非 MedQA benchmark 被 A-D 契约误判；Phase 1 仍保持 V2 原文 |
 | 6 | 判分层修复 S1-S4（见 §5） | GSM8K 千分位逗号导致评分反转；MCQ boxed 解析过严 |
 | 7 | ARC-Challenge 预注册剔除 7 道非四选项题 | 全集含 3 道五选项、4 道三选项，与 A-D 输出契约不符 |
 
-V2 的 Text 条件布局**未改变**；改动集中在 latent 侧与判分侧。
+因此所谓 V3 prompt，专指 A→B/B→A 的 Receiver prompt。它明确区分：
+
+1. Receiver 自己上一轮的 reasoning 与 answer；
+2. 本轮从另一 reasoning process 获得的 external message；
+3. Receiver 应比较两者后修订，而不是从头重做或盲从消息。
 
 `revision_prompt_version = "icr_v3_mid_injection"`，protocol 名 `ICR-V3`。
 V3 与 V2 的 artifact 根目录分开，不得混入同一 pooled 估计。
@@ -41,30 +46,35 @@ Phase 2 修订 prompt 固定为五段，顺序不变：
 [Output format]                per-dataset 答案格式
 ```
 
-Phase 1 独立作答同样以 `[Output format]` 结尾，保证两阶段的输出契约一致。
+Phase 1 不使用这个五段模板，继续使用 V2 独立作答 prompt。
 
 ---
 
 ## 3. 完整模板
 
-### 3.1 Phase 1 · 独立作答
+### 3.1 Phase 1 · 独立作答（V2 原文，MedQA）
 
 ```text
 You are an independent problem-solving agent.
 
-Solve the following {task_noun} carefully and independently.
-Reason from the evidence in the problem.
+Solve the medical multiple-choice question carefully and independently.
+
+Reason from the evidence in the question.
 Do not assume another agent will review your answer.
 
-Problem:
-{question}
+At the end, return exactly one final option in benchmark-compatible form: \boxed{A}, replacing A with one of A, B, C, or D.
 
-{answer_format}
+Your response should contain:
+1. your reasoning
+2. your final answer
+
+Medical multiple-choice question:
+{question}
 ```
 
-`{task_noun}`：medqa = `medical multiple-choice question`；gpqa / arc_challenge =
-`multiple-choice question`；gsm8k = `math word problem`；mbppplus / humanevalplus =
-`programming problem`。
+其他任务同样调用 V2 对应的原始 MCQ、numeric 或 code 模板。GPQA 因题面存在
+内外两层选项，额外加入一条选项层级消歧说明；它没有 V2 ICR baseline，因此不构成
+对既有结果的 prompt 变更。
 
 ### 3.2 Phase 2 · 修订（选择题与数学题）
 
