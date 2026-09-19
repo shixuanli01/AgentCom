@@ -1,6 +1,7 @@
 """Independent -> Communicate -> Revise evaluation framework."""
 
-PROTOCOL = "ICR-MEDQA300-V2"
+PROTOCOL = "ICR-MEDQA300-V2"  # legacy V2 runs
+PROTOCOL_V3 = "ICR-V3"
 CONDITIONS = (
     "none",
     "true_text",

@@ -12,8 +12,15 @@ from typing import Any
 
 import torch
 
-from . import CONDITIONS, PROTOCOL
-from .benchmarks import SPECS, benchmark_spec, load_benchmark, select_item_ids
+from . import CONDITIONS, PROTOCOL_V3
+from .benchmarks import (
+    SPECS,
+    benchmark_spec,
+    load_benchmark,
+    select_item_ids,
+    structural_exclusions,
+)
+from .prompts_v3 import PROMPT_VERSION
 from .protocol import (
     atomic_write_json,
     atomic_write_jsonl,
@@ -26,7 +33,7 @@ from .runtime import ICRRuntime, atomic_save_prefix
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description=f"{PROTOCOL} phase 1")
+    parser = argparse.ArgumentParser(description=f"{PROTOCOL_V3} phase 1")
     parser.add_argument("--artifact-root", type=Path, required=True)
     parser.add_argument("--model", default="Qwen/Qwen3-4B")
     parser.add_argument("--task", choices=sorted(SPECS), default="medqa")
@@ -52,13 +59,24 @@ def rank_and_world(cli: argparse.Namespace) -> tuple[int, int]:
     return rank, world
 
 
-def build_config(cli: argparse.Namespace, selected_ids: list[int], data: list[dict]) -> dict[str, Any]:
+def build_config(
+    cli: argparse.Namespace,
+    selected_ids: list[int],
+    data: list[dict],
+    excluded_ids: list[int],
+) -> dict[str, Any]:
     stable = {
-        "protocol": PROTOCOL if cli.task == "medqa" else "ICR-MCQ-CROSSBENCH-V1",
+        "protocol": PROTOCOL_V3,
         "dataset": cli.task,
         "benchmark": benchmark_spec(cli.task).label,
         "dataset_rows": len(data),
         "selected_item_ids": selected_ids,
+        "excluded_item_ids": excluded_ids,
+        "exclusion_rule": (
+            "arc_challenge: trailing option count != 4 (label-free, pre-registered)"
+            if excluded_ids
+            else None
+        ),
         "dataset_sha256": sha256_json(data),
         "selection": {
             "mode": (
@@ -87,10 +105,11 @@ def build_config(cli: argparse.Namespace, selected_ids: list[int], data: list[di
             "prefix_scale": 1.0,
             "use_hook": True,
             "algorithm_source": "methods/state_bridge.py (unmodified)",
-            "receiver_injection_position": "front_of_user_turn_before_question",
+            "receiver_injection_position": "message_slot_after_receiver_prior",
         },
         "revision_conditions": list(CONDITIONS),
-        "revision_prompt_version": "icr_v2_statebridge_front_injection",
+        "revision_prompt_version": PROMPT_VERSION,
+        "answer_parser_version": "icr.parsing_v3@ICR-V3",
         "other_mapping_offset": 137,
     }
     if cli.replication_id is not None:
@@ -122,7 +141,18 @@ def main() -> None:
         sample_size=cli.sample_size,
         selection_seed=cli.selection_seed,
     )
-    config = ensure_config(cli.artifact_root / "config.json", build_config(cli, selected_ids, data))
+    excluded_ids = structural_exclusions(cli.task, data)
+    if excluded_ids:
+        removed = sorted(set(selected_ids) & set(excluded_ids))
+        selected_ids = [value for value in selected_ids if value not in set(excluded_ids)]
+        print(
+            f"[ICR prebeliefs] structural exclusion removed {len(removed)} items: {removed}",
+            flush=True,
+        )
+    config = ensure_config(
+        cli.artifact_root / "config.json",
+        build_config(cli, selected_ids, data, excluded_ids),
+    )
     assigned_ids = selected_ids[rank::world]
     stop_requested = False
 

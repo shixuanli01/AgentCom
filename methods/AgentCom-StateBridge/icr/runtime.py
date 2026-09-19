@@ -16,6 +16,7 @@ from models import ModelWrapper
 from prompts import EMBEDDING_HINT_MARKER
 
 from .channels import CommunicationMessage
+from .prompts_v3 import external_block
 from .protocol import (
     SYSTEM_PROMPT,
     independent_solver_prompt,
@@ -190,25 +191,23 @@ class ICRRuntime:
         receiver_answer: Optional[str],
         message: CommunicationMessage,
     ) -> str:
-        latent_preamble = ""
+        # ICR-V3: every condition shares one template and one message slot, which
+        # sits between the receiver's prior and the integration rules. Only the
+        # payload differs, so the visible text of the StateBridge and LatentMAS
+        # conditions is byte-identical and the Text condition differs from them
+        # only in the message body.
+        #
+        # The StateBridge prefix is spliced at the marker's token position. The
+        # LatentMAS KV cache cannot be: its RoPE positions are baked in on the
+        # sender side and `generate` has no mid-sequence cache API, so it stays a
+        # front-anchored causal prefix. That asymmetry is a declared comparison
+        # boundary, documented in experiments/ICR_V3_PROTOCOL_ZH.md section 7.
         if message.condition == "none":
-            external = "No external message is available."
+            block = external_block("none")
         elif message.text is not None:
-            external = (
-                "You may now have access to an external message from another "
-                "reasoning process.\n\nExternal message:\n" + message.text
-            )
+            block = external_block(message.condition, sender_reasoning=message.text)
         elif message.prefix is not None or message.trajectory is not None:
-            # Match the official StateBridge receiver topology: the continuous
-            # message is inserted near the beginning of the user turn, before
-            # the question and task instructions.  Keep the visible wording
-            # modality-neutral for the ICR controls.
-            latent_preamble = (
-                "You may now have access to an external message from another "
-                "reasoning process.\n\nExternal message:\n" + EMBEDDING_HINT_MARKER
-                + "\n\n"
-            )
-            external = "Use the external message above as evidence if it is relevant."
+            block = external_block(message.condition)
         else:
             raise RuntimeError("Non-none communication message has no payload")
         user_content = revision_prompt(
@@ -216,9 +215,9 @@ class ICRRuntime:
             question=question,
             receiver_prior_reasoning=receiver_reasoning,
             receiver_prior_answer=(receiver_answer or "UNPARSEABLE"),
-            external_section=external,
+            external_block=block,
         )
-        return self._render(latent_preamble + user_content)
+        return self._render(user_content)
 
     def _latentmas_source_ids(
         self, source: Mapping[str, Any]

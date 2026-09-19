@@ -30,7 +30,9 @@ def test_prompt_templates_render_literal_boxed_answer_example():
     assert "\\boxed{A}" in revision
 
 
-def test_statebridge_marker_is_before_question_in_revision_user_turn():
+def test_statebridge_marker_sits_in_the_shared_message_slot():
+    # ICR-V3 places the message slot after the receiver's prior and before the
+    # integration rules, identically for every condition.
     # Avoid loading a model: build_revision_prompt only needs the pure render
     # method, which is replaced here by an identity function.
     from icr.runtime import ICRRuntime
@@ -48,8 +50,13 @@ def test_statebridge_marker_is_before_question_in_revision_user_turn():
             prefix=torch.zeros(1, 64, 8),
         ),
     )
-    assert prompt.index(EMBEDDING_HINT_MARKER) < prompt.index("QUESTION_SENTINEL")
     assert prompt.count(EMBEDDING_HINT_MARKER) == 1
+    assert (
+        prompt.index("QUESTION_SENTINEL")
+        < prompt.index("Your previous answer:")
+        < prompt.index(EMBEDDING_HINT_MARKER)
+        < prompt.index("Your task is to REVISE")
+    )
 
 
 def _row(item, direction, condition, sender, pre, post, sender_answer="a", pre_answer="b"):

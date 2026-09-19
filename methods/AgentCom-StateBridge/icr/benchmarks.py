@@ -9,6 +9,8 @@ from typing import Any, Mapping, Sequence
 
 from methods.state_bridge import load_dataset_by_name
 
+from .parsing_v3 import extract_numeric_gold
+
 
 @dataclass(frozen=True)
 class BenchmarkSpec:
@@ -44,7 +46,49 @@ def benchmark_spec(task: str) -> BenchmarkSpec:
 
 def load_benchmark(task: str) -> list[dict[str, Any]]:
     benchmark_spec(task)
-    return [dict(row) for row in load_dataset_by_name(task)]
+    rows = [dict(row) for row in load_dataset_by_name(task)]
+    if task == "gsm8k":
+        # Fix S1: the upstream `#### 2,125` gold is truncated to `2` by
+        # utils.extract_gold. Re-derive it from the preserved solution text
+        # instead of modifying that upstream helper.
+        for row in rows:
+            gold = extract_numeric_gold(str(row.get("solution") or ""))
+            if gold is not None:
+                row["gold"] = gold
+    return rows
+
+
+_TRAILING_OPTION_RE = re.compile(r"^\s*([A-Ea-e])\s*[.):]\s*\S")
+
+
+def trailing_option_labels(question: str) -> list[str]:
+    """Labels of the trailing option block, in order, or [] when absent."""
+    labels: list[str] = []
+    for line in reversed(question.splitlines()):
+        if not line.strip():
+            continue
+        match = _TRAILING_OPTION_RE.match(line)
+        if not match:
+            break
+        labels.append(match.group(1).lower())
+    return list(reversed(labels))
+
+
+def structural_exclusions(task: str, data: Sequence[Mapping[str, Any]]) -> list[int]:
+    """Pre-registered, label-free exclusions based only on question structure.
+
+    ARC-Challenge ships a handful of three- and five-option items whose answer
+    space cannot be expressed in the frozen A-D output contract. They are
+    excluded by option count alone, never by gold, prediction, or correctness.
+    Item IDs keep their original dataset indices so exclusions stay traceable.
+    """
+    if task != "arc_challenge":
+        return []
+    return [
+        index
+        for index, row in enumerate(data)
+        if len(trailing_option_labels(str(row["question"]))) != 4
+    ]
 
 
 def select_item_ids(

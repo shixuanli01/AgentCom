@@ -60,7 +60,7 @@ def test_selection_modes_are_mutually_exclusive():
 
 def test_gsm8k_uses_numeric_output_contract_and_parser():
     assert benchmark_spec("gsm8k").default_max_new_tokens == 2048
-    assert "\\boxed{NUMBER}" in independent_solver_prompt("gsm8k", "2 + 3?")
+    assert "\\boxed{N}" in independent_solver_prompt("gsm8k", "2 + 3?")
     assert parse_task_answer("gsm8k", "Therefore \\boxed{5}.") == "5"
     assert answer_is_correct("gsm8k", "5", "5")
     assert not answer_is_correct("gsm8k", None, "5")
@@ -69,9 +69,9 @@ def test_gsm8k_uses_numeric_output_contract_and_parser():
         question="2 + 3?",
         receiver_prior_reasoning="It is 4.",
         receiver_prior_answer="4",
-        external_section="External evidence: 2 + 3 = 5.",
+        external_block="External evidence: 2 + 3 = 5.",
     )
-    assert "numeric answer" in prompt
+    assert "no thousands separators" in prompt
     assert "A, B, C, or D" not in prompt
 
 

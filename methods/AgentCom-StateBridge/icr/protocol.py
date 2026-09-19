@@ -17,6 +17,16 @@ from utils import (
 )
 
 from . import CONDITIONS, DIRECTIONS
+from .parsing_v3 import (
+    CHOICE_LABELS,
+    normalize_numeric,
+    numeric_equal,
+    parse_choice_answer,
+    parse_numeric_answer,
+)
+from .prompts_v3 import PROMPT_VERSION
+from .prompts_v3 import independent_solver_prompt as _v3_solver_prompt
+from .prompts_v3 import revision_prompt as _v3_revision_prompt
 
 
 SYSTEM_PROMPT = "You are Qwen, created by Alibaba Cloud. You are a helpful assistant."
@@ -197,28 +207,30 @@ def reset_rng(seed: int) -> None:
 
 
 def parse_medqa_answer(text: str) -> Optional[str]:
+    """Legacy V2 multiple-choice parser, retained for reproducibility only."""
     value = normalize_answer(extract_gsm8k_answer(text))
     return value if value in set("abcd") else None
 
 
 def parse_multiple_choice_answer(text: str) -> Optional[str]:
-    """Parse the shared A-D output contract used by all current ICR tasks."""
+    """Legacy V2 alias. New runs use :func:`parse_task_answer`."""
     return parse_medqa_answer(text)
 
 
 def parse_task_answer(task: str, text: str) -> Optional[str]:
+    """ICR-V3 prediction parsing (see ``icr.parsing_v3`` for the fixed defects)."""
     if task == "gsm8k":
-        return normalize_answer(extract_gsm8k_answer(text))
+        return parse_numeric_answer(text)
     if task in {"mbppplus", "humanevalplus"}:
         return extract_markdown_python_block(text)
-    return parse_multiple_choice_answer(text)
+    return parse_choice_answer(text, CHOICE_LABELS)
 
 
 def canonical_gold(task: str, value: Any) -> Optional[str]:
     if task in {"mbppplus", "humanevalplus"}:
         return None if value is None else str(value)
     if task == "gsm8k":
-        return normalize_answer(None if value is None else str(value))
+        return normalize_numeric(None if value is None else str(value))
     return canonical_answer(value)
 
 
@@ -228,6 +240,10 @@ def answer_is_correct(task: str, prediction: Any, gold: Any) -> bool:
             return False
         passed, _ = run_with_timeout(f"{prediction}\n{gold}", timeout=10)
         return passed
+    if task == "gsm8k":
+        if prediction is None or gold is None:
+            return False
+        return numeric_equal(str(prediction), str(gold))
     normalized_prediction = canonical_gold(task, prediction)
     normalized_gold = canonical_gold(task, gold)
     return (
@@ -238,15 +254,8 @@ def answer_is_correct(task: str, prediction: Any, gold: Any) -> bool:
 
 
 def independent_solver_prompt(task: str, question: str) -> str:
-    if task == "medqa":
-        template = INDEPENDENT_SOLVER_PROMPT
-    elif task == "gsm8k":
-        template = NUMERIC_INDEPENDENT_SOLVER_PROMPT
-    elif task in {"mbppplus", "humanevalplus"}:
-        template = CODE_INDEPENDENT_SOLVER_PROMPT
-    else:
-        template = GENERAL_INDEPENDENT_SOLVER_PROMPT
-    return template.format(question=question)
+    """ICR-V3 independent-solve prompt; the output contract closes the prompt."""
+    return _v3_solver_prompt(task, question)
 
 
 def revision_prompt(
@@ -255,19 +264,19 @@ def revision_prompt(
     question: str,
     receiver_prior_reasoning: str,
     receiver_prior_answer: Optional[str],
-    external_section: str,
+    external_block: str,
 ) -> str:
-    if task == "gsm8k":
-        template = NUMERIC_REVISION_BASE
-    elif task in {"mbppplus", "humanevalplus"}:
-        template = CODE_REVISION_BASE
-    else:
-        template = REVISION_BASE
-    return template.format(
+    """ICR-V3 revision prompt.
+
+    ``external_block`` is the only condition-varying block and sits between the
+    receiver's prior and the integration rules.
+    """
+    return _v3_revision_prompt(
+        task,
         question=question,
         receiver_prior_reasoning=receiver_prior_reasoning,
-        receiver_prior_answer=receiver_prior_answer or "UNPARSEABLE",
-        external_section=external_section,
+        receiver_prior_answer=receiver_prior_answer,
+        external_block_text=external_block,
     )
 
 
