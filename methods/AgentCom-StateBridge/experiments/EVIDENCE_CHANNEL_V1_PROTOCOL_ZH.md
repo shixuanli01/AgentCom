@@ -79,3 +79,20 @@ CUDA_DEVICES="0 1 2 3" WORKERS_PER_GPU=1 \
 
 Launcher 会检查 V3 protocol、prompt version、MedQA300、`seed_pair_00` 和四个已完成
 baseline 条件；任何一项不匹配都会拒绝启动。
+
+## 7. 冻结 prebelief 的快速方法检查
+
+在 baseline artifact 尚未同步到本机时，可以复用既有的 600 条 A/B prebelief，只对
+Receiver 使用最新 `icr_v3_mid_injection` prompt：
+
+```bash
+PREBELIEF_SOURCE_ROOT=artifacts/icr_medqa300/seed_pair_00 \
+  WORKERS_PER_GPU=2 bash scripts/run_v3_evidence_only.sh \
+  artifacts/icr_v3/medqa300_legacy_prebelief_v3prompt_evidence_v1
+```
+
+该设置必须标记为 `ICR-V3-RECEIVER-FROZEN-PREBELIEF-V1`，而不能称为纯 ICR-V3。
+它不生成 Phase 1，只复制并哈希冻结 prebelief，然后执行 600 条 `true_evidence`
+revision。它可以衡量 Evidence 对这批固定轨迹的修订效果；要进行严格 channel
+比较，所有 baseline 必须复用完全相同的 prebelief，并使用同一个 V3 Receiver
+prompt、parser、revision seed 与 decoding 设置。

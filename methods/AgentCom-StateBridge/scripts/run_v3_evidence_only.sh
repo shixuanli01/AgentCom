@@ -9,6 +9,7 @@ GPU="${CUDA_DEVICE:-0}"
 WORKERS="${WORKERS_PER_GPU:-2}"
 LIMIT="${MEDQA_LIMIT:-300}"
 REPLICATION_ID="${REPLICATION_ID:-seed_pair_00}"
+PREBELIEF_SOURCE_ROOT="${PREBELIEF_SOURCE_ROOT:-}"
 
 mkdir -p "$ARTIFACT_ROOT/logs"
 pids=()
@@ -45,7 +46,85 @@ launch() {
 }
 
 echo "[Evidence V1] root=$ARTIFACT_ROOT limit=$LIMIT workers=$WORKERS gpu=$GPU"
-if [[ -f "$ARTIFACT_ROOT/config.json" ]] && \
+if [[ -n "$PREBELIEF_SOURCE_ROOT" ]]; then
+  "$PYTHON" - "$PREBELIEF_SOURCE_ROOT" "$ARTIFACT_ROOT" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+from icr import CONDITIONS
+from icr.prompts_v3 import PROMPT_VERSION
+from icr.protocol import atomic_write_json, sha256_json, sha256_text
+
+source = Path(sys.argv[1]).resolve()
+target = Path(sys.argv[2])
+source_config = json.loads((source / "config.json").read_text(encoding="utf-8"))
+merged_text = (source / "prebeliefs" / "merged.jsonl").read_text(encoding="utf-8")
+rows = [json.loads(line) for line in merged_text.splitlines() if line]
+selected_ids = [int(value) for value in source_config["selected_item_ids"]]
+expected = {
+    (item_id, agent_id)
+    for item_id in selected_ids
+    for agent_id in ("A", "B")
+}
+actual = {(int(row["item_id"]), str(row["agent_id"])) for row in rows}
+if source_config.get("dataset") != "medqa" or len(selected_ids) != 300:
+    raise SystemExit("Frozen source must be the 300-item MedQA cache")
+if actual != expected or len(rows) != 600:
+    raise SystemExit("Frozen source prebelief cache is incomplete")
+if any(row.get("status") != "complete" for row in rows):
+    raise SystemExit("Frozen source contains an incomplete prebelief")
+
+stable = {
+    "protocol": "ICR-V3-RECEIVER-FROZEN-PREBELIEF-V1",
+    "dataset": "medqa",
+    "benchmark": "medqa300",
+    "dataset_rows": int(source_config["dataset_rows"]),
+    "selected_item_ids": selected_ids,
+    "excluded_item_ids": [],
+    "exclusion_rule": None,
+    "dataset_sha256": source_config["dataset_sha256"],
+    "selection": {"mode": "frozen_prebelief_source"},
+    "model": source_config["model"],
+    "global_seed": int(source_config["global_seed"]),
+    "generation": source_config["generation"],
+    "statebridge": source_config["statebridge"],
+    "revision_conditions": list(CONDITIONS),
+    "revision_prompt_version": PROMPT_VERSION,
+    "answer_parser_version": "icr.parsing_v3@ICR-V3",
+    "other_mapping_offset": int(source_config["other_mapping_offset"]),
+    "replication_id": source_config.get("replication_id"),
+    "prebelief_source": {
+        "path": str(source),
+        "protocol": source_config["protocol"],
+        "config_fingerprint": source_config["fingerprint"],
+        "revision_prompt_version_at_source_creation": source_config.get(
+            "revision_prompt_version"
+        ),
+        "merged_jsonl_sha256": sha256_text(merged_text),
+        "records": len(rows),
+        "unique_prompt_sha256": len({row["prompt_sha256"] for row in rows}),
+    },
+}
+candidate = {**stable, "fingerprint": sha256_json(stable)}
+config_path = target / "config.json"
+if config_path.exists():
+    existing = json.loads(config_path.read_text(encoding="utf-8"))
+    if existing.get("fingerprint") != candidate["fingerprint"]:
+        raise SystemExit("Target contains a different frozen-source configuration")
+else:
+    atomic_write_json(config_path, candidate)
+prebelief_path = target / "prebeliefs" / "merged.jsonl"
+prebelief_path.parent.mkdir(parents=True, exist_ok=True)
+if prebelief_path.exists() and sha256_text(
+    prebelief_path.read_text(encoding="utf-8")
+) != candidate["prebelief_source"]["merged_jsonl_sha256"]:
+    raise SystemExit("Target prebelief copy differs from its declared frozen source")
+prebelief_path.write_text(merged_text, encoding="utf-8")
+print(json.dumps(candidate["prebelief_source"], indent=2, sort_keys=True))
+PY
+  echo "[Evidence V1] imported frozen prebelief source; no Phase-1 generation"
+elif [[ -f "$ARTIFACT_ROOT/config.json" ]] && \
   "$PYTHON" -m icr.merge --artifact-root "$ARTIFACT_ROOT" \
     --phase prebeliefs --require-complete \
     > "$ARTIFACT_ROOT/logs/prebelief_cache_check.log" 2>&1; then
@@ -57,7 +136,26 @@ else
     --phase prebeliefs --require-complete
 fi
 
-if (( LIMIT >= 2 )); then
+if [[ -n "$PREBELIEF_SOURCE_ROOT" ]]; then
+  "$PYTHON" - "$ARTIFACT_ROOT" > "$ARTIFACT_ROOT/logs/verification.log" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+config = json.loads((root / "config.json").read_text(encoding="utf-8"))
+rows = [
+    json.loads(line)
+    for line in (root / "prebeliefs" / "merged.jsonl").read_text(encoding="utf-8").splitlines()
+    if line
+]
+assert config["protocol"] == "ICR-V3-RECEIVER-FROZEN-PREBELIEF-V1"
+assert config["revision_prompt_version"] == "icr_v3_mid_injection"
+assert len(rows) == 600
+assert len({(row["item_id"], row["agent_id"]) for row in rows}) == 600
+print("frozen-prebelief/latest-receiver verification: PASS")
+PY
+elif (( LIMIT >= 2 )); then
   "$PYTHON" -m icr.verify --artifact-root "$ARTIFACT_ROOT" \
     > "$ARTIFACT_ROOT/logs/verification.log" 2>&1
 else
