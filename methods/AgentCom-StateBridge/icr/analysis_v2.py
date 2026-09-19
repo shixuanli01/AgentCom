@@ -490,13 +490,26 @@ def main() -> None:
         condition: condition_metrics(condition_rows)
         for condition, condition_rows in sorted(by_condition.items())
     }
+    # EXPECTED_REGRESSION holds the frozen numbers of exactly one run: the V2
+    # MedQA300 seed_pair_00 replication. Later protocols reuse the replication
+    # id, so the guard must also match the protocol, dataset, and item count.
+    is_frozen_v2_baseline = (
+        replication_id == "seed_pair_00"
+        and config.get("revision_prompt_version")
+        == "icr_v2_statebridge_front_injection"
+        and config.get("dataset", "medqa") == "medqa"
+        and len(config["selected_item_ids"]) == 300
+    )
     regression = (
         regression_check(metrics)
-        if replication_id == "seed_pair_00"
+        if is_frozen_v2_baseline
         else {
             "passed": True,
             "not_applicable": True,
-            "reason": "Only seed_pair_00 is the frozen numeric regression baseline.",
+            "reason": (
+                "The frozen numeric regression baseline is the V2 MedQA300 "
+                "seed_pair_00 replication only."
+            ),
         }
     )
     item_ids = sorted(int(item_id) for item_id in config["selected_item_ids"])
@@ -537,13 +550,23 @@ def main() -> None:
             "ci95": ci95(values),
         }
 
+    # Baseline-only runs carry no self/other controls, so every comparison is
+    # emitted if and only if both of its conditions were actually run.
+    available = set(boot)
     utility_defs = {
-        "text_ce": ("true_text", "none"),
-        "text_esv": ("true_text", "other_text"),
-        "text_oav": ("true_text", "self_text"),
-        "statebridge_ce": ("true_statebridge", "none"),
-        "statebridge_esv": ("true_statebridge", "other_statebridge"),
-        "statebridge_oav": ("true_statebridge", "self_statebridge"),
+        name: pair
+        for name, pair in {
+            "text_ce": ("true_text", "none"),
+            "text_esv": ("true_text", "other_text"),
+            "text_oav": ("true_text", "self_text"),
+            "statebridge_ce": ("true_statebridge", "none"),
+            "statebridge_esv": ("true_statebridge", "other_statebridge"),
+            "statebridge_oav": ("true_statebridge", "self_statebridge"),
+            "latentmas_ce": ("true_latentmas", "none"),
+            "latentmas_esv": ("true_latentmas", "other_latentmas"),
+            "latentmas_oav": ("true_latentmas", "self_latentmas"),
+        }.items()
+        if pair[0] in available and pair[1] in available
     }
     utility_rows = []
     utility_bootstrap = {}
@@ -584,6 +607,24 @@ def main() -> None:
             "true_vs_self": ("true_statebridge", "self_statebridge"),
             "true_vs_other": ("true_statebridge", "other_statebridge"),
         },
+        "latentmas": {
+            "true_vs_none": ("true_latentmas", "none"),
+            "true_vs_self": ("true_latentmas", "self_latentmas"),
+            "true_vs_other": ("true_latentmas", "other_latentmas"),
+        },
+    }
+    influence_defs = {
+        modality: {
+            name: pair
+            for name, pair in comparisons.items()
+            if pair[0] in available and pair[1] in available
+        }
+        for modality, comparisons in influence_defs.items()
+    }
+    influence_defs = {
+        modality: comparisons
+        for modality, comparisons in influence_defs.items()
+        if comparisons
     }
     for modality, comparisons in influence_defs.items():
         influence_bootstrap[modality] = {}
@@ -849,7 +890,13 @@ def main() -> None:
             f"- **Positive communication utility?** No on overall accuracy: StateBridge CE is {fmt(sb_utility['point_estimate'])}, 95% CI {fmt_ci(sb_utility['ci95'])}.",
             f"- **Sender-belief overwrite behavior?** The observed pattern is consistent with aggressive sender following: FCS={fmt(metrics['true_statebridge']['fcs'])}, FWS={fmt(metrics['true_statebridge']['fws'])}, FollowSelectivity={fmt(metrics['true_statebridge']['follow_selectivity'])}. This is a behavioral description of this run, not yet a cross-seed causal generalization.",
             "",
-            "The correction/destruction subsets each contain only 35 directional cases, so cross-seed replication remains necessary.",
+            (
+                "The correction subset contains "
+                f"{metrics['true_text']['cr_denominator']} directional cases and the "
+                "destruction subset contains "
+                f"{metrics['true_text']['pr_denominator']}, so cross-seed replication "
+                "remains necessary."
+            ),
             "",
         ]
     )
