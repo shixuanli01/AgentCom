@@ -113,6 +113,7 @@ def main() -> None:
         for direction in ("A_to_B", "B_to_A")
     ]
     assigned = directional_pairs[rank::world]
+    needs_other_source = any(condition.startswith("other_") for condition in conditions)
     stop_requested = False
 
     def request_stop(signum, _frame):
@@ -163,8 +164,13 @@ def main() -> None:
         sender_id, receiver_id = (("A", "B") if direction == "A_to_B" else ("B", "A"))
         sender = prebeliefs[(item_id, sender_id)]
         receiver = prebeliefs[(item_id, receiver_id)]
-        other_id = other_item_id(item_id, selected_ids, int(config["other_mapping_offset"]))
-        other_sender = prebeliefs[(other_id, sender_id)]
+        other_id = None
+        other_sender = None
+        if needs_other_source:
+            other_id = other_item_id(
+                item_id, selected_ids, int(config["other_mapping_offset"])
+            )
+            other_sender = prebeliefs[(other_id, sender_id)]
         seed = revision_seed(
             int(config["global_seed"]),
             item_id,
