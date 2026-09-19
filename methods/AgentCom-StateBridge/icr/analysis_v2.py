@@ -183,6 +183,47 @@ def condition_metrics(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     return result
 
 
+def evidence_payload_audit(
+    rows: Sequence[Mapping[str, Any]],
+) -> dict[str, Any] | None:
+    evidence_rows = [row for row in rows if row.get("condition") == "true_evidence"]
+    if not evidence_rows:
+        return None
+    payloads = [row.get("communication_payload") or {} for row in evidence_rows]
+    original_tokens = sum(int(payload.get("original_tokens", 0)) for payload in payloads)
+    evidence_tokens = sum(int(payload.get("tokens", 0)) for payload in payloads)
+    return {
+        "directional_messages": len(evidence_rows),
+        "explicit_answer_cue_present": sum(
+            bool(payload.get("explicit_answer_cue_present_after_filter"))
+            for payload in payloads
+        ),
+        "sender_answer_label_present": sum(
+            bool(payload.get("sender_answer_label_present_after_filter"))
+            for payload in payloads
+        ),
+        "sender_answer_text_present": sum(
+            bool(payload.get("sender_answer_text_present_after_filter"))
+            for payload in payloads
+        ),
+        "empty_messages": sum(
+            int(payload.get("characters", 0)) == 0 for payload in payloads
+        ),
+        "source_binding_mismatches": sum(
+            int(row.get("message_source_item_id", -1)) != int(row["item_id"])
+            or str(row.get("message_source_agent_id"))
+            != str(row.get("sender_agent_id"))
+            for row in evidence_rows
+        ),
+        "removed_span_count": sum(
+            int(payload.get("removed_span_count", 0)) for payload in payloads
+        ),
+        "original_tokens": original_tokens,
+        "evidence_tokens": evidence_tokens,
+        "token_retention_rate": safe_rate(evidence_tokens, original_tokens),
+    }
+
+
 def item_fraction_arrays(
     rows: Sequence[Mapping[str, Any]], item_ids: Sequence[int], metric: str
 ) -> tuple[np.ndarray, np.ndarray]:
@@ -550,6 +591,48 @@ def main() -> None:
             "ci95": ci95(values),
         }
 
+    evidence_pairwise = {}
+    if "true_evidence" in boot:
+        for reference in (
+            "none",
+            "true_text",
+            "true_statebridge",
+            "true_latentmas",
+        ):
+            if reference not in boot:
+                continue
+            paired = paired_rows(
+                by_condition["true_evidence"], by_condition[reference]
+            )
+            gained = sum(
+                bool(evidence_row["receiver_post_correct"])
+                and not bool(reference_row["receiver_post_correct"])
+                for evidence_row, reference_row in paired
+            )
+            lost = sum(
+                not bool(evidence_row["receiver_post_correct"])
+                and bool(reference_row["receiver_post_correct"])
+                for evidence_row, reference_row in paired
+            )
+            evidence_pairwise[reference] = {
+                "gained": gained,
+                "lost": lost,
+                "ties": len(paired) - gained - lost,
+                "metrics": {
+                    metric: {
+                        "point_estimate": safe_delta(
+                            metrics["true_evidence"][metric],
+                            metrics[reference][metric],
+                        ),
+                        "ci95": ci95(
+                            boot["true_evidence"][metric]
+                            - boot[reference][metric]
+                        ),
+                    }
+                    for metric in PAIRWISE_METRICS
+                },
+            }
+
     # Baseline-only runs carry no self/other controls, so every comparison is
     # emitted if and only if both of its conditions were actually run.
     available = set(boot)
@@ -565,6 +648,9 @@ def main() -> None:
             "latentmas_ce": ("true_latentmas", "none"),
             "latentmas_esv": ("true_latentmas", "other_latentmas"),
             "latentmas_oav": ("true_latentmas", "self_latentmas"),
+            "evidence_ce": ("true_evidence", "none"),
+            "evidence_esv": ("true_evidence", "other_evidence"),
+            "evidence_oav": ("true_evidence", "self_evidence"),
         }.items()
         if pair[0] in available and pair[1] in available
     }
@@ -612,6 +698,11 @@ def main() -> None:
             "true_vs_self": ("true_latentmas", "self_latentmas"),
             "true_vs_other": ("true_latentmas", "other_latentmas"),
         },
+        "evidence": {
+            "true_vs_none": ("true_evidence", "none"),
+            "true_vs_self": ("true_evidence", "self_evidence"),
+            "true_vs_other": ("true_evidence", "other_evidence"),
+        },
     }
     influence_defs = {
         modality: {
@@ -657,7 +748,14 @@ def main() -> None:
                 }
 
     transition_rows = []
-    for condition in ("true_text", "true_statebridge"):
+    for condition in (
+        "true_text",
+        "true_evidence",
+        "true_statebridge",
+        "true_latentmas",
+    ):
+        if condition not in by_condition:
+            continue
         condition_rows = by_condition[condition]
         transitions = {
             "wrong_to_wrong": lambda row: not row["receiver_pre_correct"]
@@ -792,6 +890,8 @@ def main() -> None:
         "conditions": metrics,
         "regression_baseline": regression,
         "text_minus_statebridge": pairwise,
+        "evidence_pairwise": evidence_pairwise,
+        "evidence_payload_audit": evidence_payload_audit(rows),
         "causal_utility": utility_bootstrap,
         "causal_influence": influence_bootstrap,
         "bootstrap": bootstrap_metrics["metadata"],
@@ -823,6 +923,7 @@ def main() -> None:
         {
             "metadata": bootstrap_metrics["metadata"],
             "text_minus_statebridge": pairwise,
+            "evidence_pairwise": evidence_pairwise,
             "causal_utility": utility_bootstrap,
             "causal_influence": influence_bootstrap,
         },
@@ -858,12 +959,63 @@ def main() -> None:
         "| Channel | Acc | CR | PR | SI | SRA | FCS | FWS | FollowSelectivity |",
         "|---|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
-    for label, condition in (("Text", "true_text"), ("StateBridge", "true_statebridge")):
+    display_conditions = (
+        ("No message", "none"),
+        ("Full Text", "true_text"),
+        ("Evidence", "true_evidence"),
+        ("StateBridge", "true_statebridge"),
+        ("LatentMAS", "true_latentmas"),
+    )
+    for label, condition in display_conditions:
+        if condition not in metrics:
+            continue
         value = metrics[condition]
         lines.append(
             f"| {label} | {fmt(value['accuracy'])} | {fmt(value['cr'])} | {fmt(value['pr'])} | "
             f"{fmt(value['si'])} | {fmt(value['sra'])} | {fmt(value['fcs'])} | "
             f"{fmt(value['fws'])} | {fmt(value['follow_selectivity'])} |"
+        )
+    if evidence_pairwise:
+        lines.extend(
+            [
+                "",
+                "## Evidence channel paired comparisons",
+                "",
+                "| Reference | Accuracy difference | 95% item-cluster bootstrap CI | Gained / Lost |",
+                "|---|---:|---:|---:|",
+            ]
+        )
+        labels = {
+            "none": "No message",
+            "true_text": "Full Text",
+            "true_statebridge": "StateBridge",
+            "true_latentmas": "LatentMAS",
+        }
+        for reference, comparison in evidence_pairwise.items():
+            accuracy = comparison["metrics"]["accuracy"]
+            lines.append(
+                f"| {labels[reference]} | {fmt(accuracy['point_estimate'])} | "
+                f"{fmt_ci(accuracy['ci95'])} | "
+                f"{comparison['gained']} / {comparison['lost']} |"
+            )
+        audit = evidence_payload_audit(rows)
+        assert audit is not None
+        lines.extend(
+            [
+                "",
+                "## Evidence payload audit",
+                "",
+                f"- Directional messages: {audit['directional_messages']}",
+                f"- Explicit answer cues retained: {audit['explicit_answer_cue_present']}",
+                f"- Sender answer labels retained: {audit['sender_answer_label_present']}",
+                f"- Sender answer texts retained: {audit['sender_answer_text_present']}",
+                f"- Empty messages: {audit['empty_messages']}",
+                f"- Source-binding mismatches: {audit['source_binding_mismatches']}",
+                f"- Token retention: {fmt(audit['token_retention_rate'])}",
+                "",
+                "Answer-label/text presence is diagnostic leakage, not proof that the "
+                "payload is verified or answer-blind evidence.",
+            ]
         )
     lines.extend(
         [

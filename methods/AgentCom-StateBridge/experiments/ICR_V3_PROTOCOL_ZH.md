@@ -2,7 +2,7 @@
 
 日期：2026-09-19
 
-状态：**草案，待批准。尚未实现代码，尚未运行任何生成。**
+状态：**协议已冻结并实现。** 生成结果必须单独标注 smoke、partial 或 full。
 
 目的：把 `none / true_text / true_statebridge / true_latentmas` 四个 baseline
 在五个数据集的**完整测试集**上跑出可冻结的数值。V3 只修正 V2 中已确认的

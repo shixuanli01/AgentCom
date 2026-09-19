@@ -13,6 +13,7 @@ from typing import Any
 
 import torch
 
+from .benchmarks import benchmark_metadata, load_benchmark
 from .channels import make_channel
 from .merge import merge_prebeliefs
 from .prebeliefs import rank_and_world
@@ -75,6 +76,10 @@ def main() -> None:
     config_path = cli.artifact_root / "config.json"
     config = json.loads(config_path.read_text(encoding="utf-8"))
     prebeliefs = load_prebelief_map(cli.artifact_root)
+    metadata_by_item = {}
+    if any(condition.endswith("_evidence") for condition in conditions):
+        task = str(config.get("dataset", "medqa"))
+        metadata_by_item = benchmark_metadata(task, load_benchmark(task))
     selected_ids = [int(value) for value in config["selected_item_ids"]]
     expected_prebeliefs = {
         (item_id, agent_id) for item_id in selected_ids for agent_id in ("A", "B")
@@ -199,6 +204,7 @@ def main() -> None:
                     "artifact_root": cli.artifact_root,
                     "tokenizer": runtime.model.tokenizer,
                     "other_sender_record": other_sender,
+                    "benchmark_metadata_by_item": metadata_by_item,
                 },
             )
             if condition.endswith("_latentmas"):

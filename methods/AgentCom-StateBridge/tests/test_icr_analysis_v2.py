@@ -1,4 +1,4 @@
-from icr.analysis_v2 import condition_metrics, safe_delta
+from icr.analysis_v2 import condition_metrics, evidence_payload_audit, safe_delta
 
 
 def _row(category, pre, post, sender_answer="a", receiver_answer="b", post_answer="a"):
@@ -48,3 +48,30 @@ def test_sparse_smoke_deltas_remain_nullable():
     assert safe_delta(None, 0.5) is None
     assert safe_delta(0.5, None) is None
     assert safe_delta(0.75, 0.5) == 0.25
+
+
+def test_evidence_payload_audit_reports_leakage_and_source_integrity():
+    row = {
+        **_row("correction_opportunity", False, True),
+        "condition": "true_evidence",
+        "item_id": 7,
+        "sender_agent_id": "A",
+        "message_source_item_id": 7,
+        "message_source_agent_id": "A",
+        "communication_payload": {
+            "characters": 120,
+            "tokens": 80,
+            "original_tokens": 100,
+            "removed_span_count": 2,
+            "sender_answer_label_present_after_filter": True,
+            "sender_answer_text_present_after_filter": True,
+            "explicit_answer_cue_present_after_filter": False,
+        },
+    }
+    audit = evidence_payload_audit([row])
+    assert audit is not None
+    assert audit["directional_messages"] == 1
+    assert audit["explicit_answer_cue_present"] == 0
+    assert audit["sender_answer_label_present"] == 1
+    assert audit["source_binding_mismatches"] == 0
+    assert audit["token_retention_rate"] == 0.8

@@ -5,6 +5,9 @@ directory; generated runs use the ignored `artifacts/` tree.
 
 ## Current
 
+- [Evidence Channel V1 protocol (Chinese)](EVIDENCE_CHANNEL_V1_PROTOCOL_ZH.md) —
+  the first method intervention on top of frozen ICR-V3; it changes only the
+  external message body and reuses the exact baseline prebelief artifact.
 - [ICR-V3 protocol (Chinese)](ICR_V3_PROTOCOL_ZH.md) — the frozen prompt,
   output-contract, and scoring specification for the full-set baseline sweep of
   `none`, `true_text`, `true_statebridge`, and `true_latentmas`.

@@ -100,6 +100,12 @@ def test_text_differs_from_latent_only_in_the_message_body():
     assert text == latent.replace(EMBEDDING_HINT_MARKER, "<<SENDER>>")
 
 
+def test_evidence_uses_the_same_message_slot_as_full_text():
+    latent = _revision("medqa", "true_statebridge")
+    evidence = _revision("medqa", "true_evidence", sender_reasoning="<<EVIDENCE>>")
+    assert evidence == latent.replace(EMBEDDING_HINT_MARKER, "<<EVIDENCE>>")
+
+
 def test_none_differs_from_latent_only_in_the_external_block():
     latent = _revision("medqa", "true_statebridge")
     none = _revision("medqa", "none")
@@ -113,6 +119,9 @@ def test_marker_appears_exactly_once_and_only_for_latent_conditions():
     assert EMBEDDING_HINT_MARKER not in _revision("medqa", "none")
     assert EMBEDDING_HINT_MARKER not in _revision(
         "medqa", "true_text", sender_reasoning="<<SENDER>>"
+    )
+    assert EMBEDDING_HINT_MARKER not in _revision(
+        "medqa", "true_evidence", sender_reasoning="<<EVIDENCE>>"
     )
 
 
@@ -136,6 +145,51 @@ def test_external_block_rejects_unknown_conditions_and_missing_text():
         external_block("true_telepathy")
     with pytest.raises(ValueError):
         external_block("true_text")
+    with pytest.raises(ValueError):
+        external_block("true_evidence")
+
+
+def test_evidence_channel_removes_explicit_claim_without_rewriting_support():
+    from icr.channels import EvidenceCommunicationChannel
+
+    sender = {
+        "item_id": 0,
+        "agent_id": "A",
+        "replication_id": "seed_pair_00",
+        "reasoning_text": (
+            "Nystatin treats local candidiasis.\n"
+            "Therefore, the correct answer is C.\n"
+            "\\boxed{C}"
+        ),
+        "parsed_answer": "c",
+    }
+    receiver = {**sender, "agent_id": "B"}
+
+    class Tokenizer:
+        def __call__(self, text, add_special_tokens=False):
+            del add_special_tokens
+            return {"input_ids": text.split()}
+
+    message = EvidenceCommunicationChannel("true_evidence", "true").build_message(
+        sender,
+        receiver,
+        {
+            "tokenizer": Tokenizer(),
+            "other_sender_record": sender,
+            "benchmark_metadata_by_item": {
+                0: {
+                    "benchmark": "medqa300",
+                    "answer_type": "choice",
+                    "answer_options": {"c": "Nystatin"},
+                }
+            },
+        },
+    )
+    assert message.text == "Nystatin treats local candidiasis."
+    assert message.source_agent_id == "A"
+    assert message.diagnostics["modality"] == "claim_suppressed_evidence_v1"
+    assert message.diagnostics["removed_answer_cue_count"] == 2
+    assert not message.diagnostics["explicit_answer_cue_present_after_filter"]
 
 
 # --- Per-task output contracts -------------------------------------------

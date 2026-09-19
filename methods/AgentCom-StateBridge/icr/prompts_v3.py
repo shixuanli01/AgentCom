@@ -153,9 +153,9 @@ def external_block(condition: str, *, sender_reasoning: Optional[str] = None) ->
     """Render the single condition-varying block of the V3 revision prompt."""
     if condition == "none":
         return NO_MESSAGE_BLOCK
-    if condition.endswith("_text"):
+    if condition.endswith("_text") or condition.endswith("_evidence"):
         if sender_reasoning is None:
-            raise ValueError("Text conditions require the sender reasoning text")
+            raise ValueError("Textual conditions require a message body")
         return f"{MESSAGE_LEAD_IN}\n{sender_reasoning}"
     if condition.endswith("_statebridge") or condition.endswith("_latentmas"):
         return LATENT_BLOCK
