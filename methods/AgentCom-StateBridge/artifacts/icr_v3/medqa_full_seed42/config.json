@@ -1,6 +1,11 @@
 {
   "answer_parser_version": "icr.parsing_v3@ICR-V3",
   "benchmark": "medqa300",
+  "both_correct_sampling": {
+    "keep_one_in": 10,
+    "label_free": true,
+    "rule": "item_id % keep_one_in == 0"
+  },
   "completed_revision_conditions": [
     "none",
     "true_text",
@@ -12,7 +17,7 @@
   "dataset_sha256": "ddee8dc64d3b2a1e5061c409c68d626109237640009168838a038db29efe802c",
   "excluded_item_ids": [],
   "exclusion_rule": null,
-  "fingerprint": "f4f4959b286b882c72d23afbb2d0dec1fe739935fab20b44719515946a07dcac",
+  "fingerprint": "96d887fc74fa20233ad0dea5fecb234e265ffe9fb994858e4c3713933ca0446d",
   "generation": {
     "do_sample": true,
     "max_new_tokens": 8192,
@@ -30,6 +35,9 @@
     "true_text",
     "self_text",
     "other_text",
+    "true_evidence",
+    "self_evidence",
+    "other_evidence",
     "true_statebridge",
     "self_statebridge",
     "other_statebridge",
@@ -351,6 +359,7 @@
     "sample_size": null,
     "selection_seed": null
   },
+  "solver_prompt_version": "icr_v2_phase1_verbatim",
   "statebridge": {
     "adaptive_reg": 0.001,
     "algorithm_source": "methods/state_bridge.py (unmodified)",
