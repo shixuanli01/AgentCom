@@ -83,7 +83,7 @@ def main() -> None:
                     **{metric: values[metric] for metric in PRIMARY_METRICS},
                 }
             )
-        for line in revision_path.read_text(encoding="utf-8").splitlines():
+        for line in revision_path.read_text(encoding="utf-8").split("\n"):
             if line:
                 row = json.loads(line)
                 if row["condition"] not in CONDITIONS:

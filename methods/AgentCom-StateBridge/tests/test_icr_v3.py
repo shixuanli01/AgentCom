@@ -283,3 +283,81 @@ def test_gpqa_is_the_only_phase1_deviation_and_disambiguates_its_layers():
         1,
     )
     assert "final A-D list" in gpqa
+
+
+def test_jsonl_readers_survive_unicode_line_separators(tmp_path):
+    """A record may contain U+2028, which str.splitlines() treats as a break.
+
+    json.dumps leaves that character unescaped, so a merged.jsonl written from
+    GPQA prebeliefs splits into more "lines" than it has records and the
+    fragments do not parse. Every jsonl reader must split on newlines only.
+    """
+    import json
+
+    record = {"item_id": 0, "agent_id": "A", "reasoning_text": "before after"}
+    path = tmp_path / "merged.jsonl"
+    path.write_text(json.dumps(record, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    text = path.read_text(encoding="utf-8")
+    assert len([l for l in text.splitlines() if l]) == 2  # the trap
+    rows = [json.loads(l) for l in text.split("\n") if l]
+    assert len(rows) == 1
+    assert rows[0]["reasoning_text"] == "before after"
+
+
+# --- Selective rerun of truncated records --------------------------------
+
+
+def test_raised_budget_keeps_finished_records_and_drops_truncated_ones(tmp_path):
+    """max_new_tokens decides when generation stops, not how it samples.
+
+    A record that reached EOS is what the same seed would produce under any
+    larger budget, so raising the budget must keep it. A truncated record never
+    stated its answer and was scored wrong, so it must be regenerated.
+    """
+    import json
+    import subprocess
+    import sys
+
+    from icr.prebeliefs import accepted_fingerprints
+    from icr.protocol import sha256_json
+
+    stable = {"generation": {"max_new_tokens": 2048}, "dataset": "arc_challenge"}
+    config = {**stable, "fingerprint": sha256_json(stable)}
+    old = config["fingerprint"]
+    (tmp_path / "config.json").write_text(json.dumps(config), encoding="utf-8")
+
+    subprocess.run(
+        [sys.executable, "scripts/raise_token_budget.py", str(tmp_path), "4096"],
+        check=True,
+        capture_output=True,
+    )
+    updated = json.loads((tmp_path / "config.json").read_text(encoding="utf-8"))
+
+    assert updated["generation"]["max_new_tokens"] == 4096
+    assert updated["fingerprint"] != old
+    assert old in updated["superseded_fingerprints"]
+    # Records written under the old fingerprint remain acceptable.
+    assert old in accepted_fingerprints(updated)
+    assert updated["fingerprint"] in accepted_fingerprints(updated)
+    assert updated["max_new_tokens_history"][-1]["from"] == 2048
+
+
+def test_budget_cannot_be_lowered(tmp_path):
+    import json
+    import subprocess
+    import sys
+
+    from icr.protocol import sha256_json
+
+    stable = {"generation": {"max_new_tokens": 4096}}
+    (tmp_path / "config.json").write_text(
+        json.dumps({**stable, "fingerprint": sha256_json(stable)}), encoding="utf-8"
+    )
+    done = subprocess.run(
+        [sys.executable, "scripts/raise_token_budget.py", str(tmp_path), "2048"],
+        capture_output=True,
+        text=True,
+    )
+    assert done.returncode != 0
+    assert "Refusing to lower" in done.stderr

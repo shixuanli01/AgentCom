@@ -16,7 +16,7 @@ import torch
 from .benchmarks import benchmark_metadata, load_benchmark
 from .channels import make_channel
 from .merge import merge_prebeliefs
-from .prebeliefs import rank_and_world
+from .prebeliefs import accepted_fingerprints, rank_and_world
 from .protocol import (
     atomic_write_json,
     atomic_write_jsonl,
@@ -60,6 +60,10 @@ def parse_args() -> argparse.Namespace:
         "--global-resume", action="store_true",
         help="Resume completed keys from every revision shard, enabling safe resharding",
     )
+    parser.add_argument(
+        "--rerun-truncated", action="store_true",
+        help="Regenerate cached records that never reached EOS; see icr.prebeliefs.",
+    )
     parser.add_argument("--rank", type=int)
     parser.add_argument("--world-size", type=int)
     parser.add_argument(
@@ -74,7 +78,7 @@ def load_prebelief_map(root: Path) -> dict[tuple[int, str], dict[str, Any]]:
     merged = root / "prebeliefs" / "merged.jsonl"
     if not merged.exists():
         merge_prebeliefs(root, require_complete=True)
-    records = [json.loads(line) for line in merged.read_text(encoding="utf-8").splitlines() if line]
+    records = [json.loads(line) for line in merged.read_text(encoding="utf-8").split("\n") if line]
     return {(int(row["item_id"]), str(row["agent_id"])): row for row in records}
 
 
@@ -151,6 +155,7 @@ def main() -> None:
     shard_name = f"rank{rank}{suffix}"
     records_dir = cli.artifact_root / "revisions" / shard_name / "records"
     globally_completed: set[tuple[int, str, str]] = set()
+    truncated_keys: set[tuple[int, str, str]] = set()
     if cli.global_resume:
         for existing_path in cli.artifact_root.glob(
             "revisions/rank*/records/item_*.json"
@@ -159,17 +164,17 @@ def main() -> None:
                 existing = json.loads(existing_path.read_text(encoding="utf-8"))
             except (OSError, json.JSONDecodeError):
                 continue
-            if (
-                existing.get("status") == "complete"
-                and existing.get("config_fingerprint") == config["fingerprint"]
-            ):
-                globally_completed.add(
-                    (
-                        int(existing["item_id"]),
-                        str(existing["direction"]),
-                        str(existing["condition"]),
-                    )
+            if existing.get("status") == "complete" and existing.get(
+                "config_fingerprint"
+            ) in accepted_fingerprints(config):
+                key = (
+                    int(existing["item_id"]),
+                    str(existing["direction"]),
+                    str(existing["condition"]),
                 )
+                globally_completed.add(key)
+                if cli.rerun_truncated and not bool(existing.get("hit_eos", True)):
+                    truncated_keys.add(key)
     print(
         f"[ICR revisions rank={rank}] pairs={len(assigned)} conditions={conditions}",
         flush=True,
@@ -202,7 +207,11 @@ def main() -> None:
         for condition in conditions:
             record_path = records_dir / f"item_{item_id:04d}_{direction}_{condition}.json"
             record_key = (item_id, direction, condition)
-            if cli.global_resume and record_key in globally_completed:
+            if (
+                cli.global_resume
+                and record_key in globally_completed
+                and record_key not in truncated_keys
+            ):
                 print(
                     f"[ICR revisions rank={rank}] global-resume item={item_id} "
                     f"direction={direction} condition={condition}",
@@ -211,10 +220,12 @@ def main() -> None:
                 continue
             if record_path.exists():
                 cached = json.loads(record_path.read_text(encoding="utf-8"))
+                truncated = not bool(cached.get("hit_eos", True))
                 if (
                     cached.get("status") == "complete"
-                    and cached.get("config_fingerprint") == config["fingerprint"]
+                    and cached.get("config_fingerprint") in accepted_fingerprints(config)
                     and int(cached.get("revision_seed", -1)) == seed
+                    and not (cli.rerun_truncated and truncated)
                 ):
                     print(
                         f"[ICR revisions rank={rank}] resume item={item_id} "

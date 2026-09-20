@@ -43,7 +43,7 @@ def read_json(path: Path) -> dict[str, Any]:
 
 
 def count_jsonl(path: Path) -> int:
-    return sum(bool(line.strip()) for line in path.read_text(encoding="utf-8").splitlines())
+    return sum(bool(line.strip()) for line in path.read_text(encoding="utf-8").split("\n"))
 
 
 def require_file(path: Path) -> Path:

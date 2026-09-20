@@ -511,7 +511,7 @@ def main() -> None:
         json.loads(line)
         for line in (source_root / "revisions/merged.jsonl")
         .read_text(encoding="utf-8")
-        .splitlines()
+        .split("\n")
         if line
     ]
     conditions = tuple(config["completed_revision_conditions"])

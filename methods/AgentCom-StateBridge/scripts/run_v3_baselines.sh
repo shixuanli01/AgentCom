@@ -10,6 +10,7 @@
 #   BENCHMARK_LIMIT   first N items only, for smoke runs
 #   LATENT_STEPS      LatentMAS latent steps (default 10)
 #   BOTH_CORRECT_SAMPLE  keep one in N both-correct items (default 10)
+#   PHASE1_ONLY       stop after independent beliefs, before any revision
 #   PYTHON            interpreter (default: repo venv)
 #
 # Runs are durable at item boundaries; re-running resumes completed records.
@@ -100,6 +101,16 @@ fi
 
 "$PYTHON" -m icr.verify --artifact-root "$ARTIFACT_ROOT" \
   > "$ARTIFACT_ROOT/logs/verification.log" 2>&1
+
+# Phase 1 alone already tells you what phase 2 can possibly measure: CR and PR
+# only exist on items where the two agents disagree about correctness, and SR
+# only on items both got wrong. Running it first lets a dataset be dropped
+# before its revisions are paid for.
+if [[ -n "${PHASE1_ONLY:-}" ]]; then
+  trap - INT TERM EXIT
+  echo "[$TASK] phase 1 complete; stopping before revisions (PHASE1_ONLY)"
+  exit 0
+fi
 
 echo "[$TASK] phase 2: revisions for $CONDITIONS"
 launch_phase icr.revisions --conditions "$CONDITIONS" \

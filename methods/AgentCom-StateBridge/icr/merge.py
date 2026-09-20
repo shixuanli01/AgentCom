@@ -68,7 +68,7 @@ def _expected_directional_pairs(root, config, keep_one_in: int):
             _json.loads(line)
             for line in (root / "prebeliefs" / "merged.jsonl")
             .read_text(encoding="utf-8")
-            .splitlines()
+            .split("\n")
             if line
         )
     }

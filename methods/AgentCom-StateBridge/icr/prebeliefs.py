@@ -8,7 +8,7 @@ import os
 import signal
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 import torch
 
@@ -46,6 +46,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sample-size", type=int)
     parser.add_argument("--selection-seed", type=int, default=42)
     parser.add_argument("--item-ids", nargs="+", type=int)
+    parser.add_argument(
+        "--rerun-truncated", action="store_true",
+        help=(
+            "Regenerate cached records that never reached EOS. Pair it with a "
+            "raised token budget: a truncated generation never stated its answer "
+            "and was scored wrong, while a record that reached EOS is unaffected "
+            "by the budget and stays valid."
+        ),
+    )
     parser.add_argument("--rank", type=int)
     parser.add_argument("--world-size", type=int)
     return parser.parse_args()
@@ -117,6 +126,15 @@ def build_config(
         stable["replication_id"] = cli.replication_id
         stable["statebridge"]["message_directory"] = "messages/statebridge"
     return {**stable, "fingerprint": sha256_json(stable)}
+
+
+def accepted_fingerprints(config: Mapping[str, Any]) -> set[str]:
+    """Fingerprints whose finished records this run still trusts.
+
+    Raising the token budget changes the fingerprint but cannot change a record
+    that already reached EOS, so the superseded fingerprints stay acceptable.
+    """
+    return {config["fingerprint"], *config.get("superseded_fingerprints", [])}
 
 
 def ensure_config(path: Path, candidate: dict[str, Any]) -> dict[str, Any]:
@@ -192,10 +210,12 @@ def main() -> None:
             if record_path.exists():
                 cached = json.loads(record_path.read_text(encoding="utf-8"))
                 prefix = cli.artifact_root / cached.get("statebridge_prefix_file", "")
+                truncated = not bool(cached.get("hit_eos", True))
                 if (
                     cached.get("status") == "complete"
-                    and cached.get("config_fingerprint") == config["fingerprint"]
+                    and cached.get("config_fingerprint") in accepted_fingerprints(config)
                     and prefix.is_file()
+                    and not (cli.rerun_truncated and truncated)
                 ):
                     print(f"[ICR prebeliefs rank={rank}] resume item={item_id} agent={agent_id}", flush=True)
                     continue

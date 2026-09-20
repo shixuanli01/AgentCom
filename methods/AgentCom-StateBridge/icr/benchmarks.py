@@ -21,16 +21,22 @@ class BenchmarkSpec:
     answer_type: str
 
 
+# Token budgets. A generation that runs out of budget before emitting its final
+# answer parses as None and is then scored wrong, so the correction subset fills
+# up with truncations instead of reasoning errors. At the original budgets that
+# was 28.0% of GPQA prebeliefs and 20.7% of HumanEval+ ones, against 0.0% for
+# MedQA and 0.2% for GSM8K, and on HumanEval+ it left the follow-rate metrics
+# with an empty denominator. Both budgets are doubled.
 SPECS = {
     "medqa": BenchmarkSpec("medqa", "medqa300", "medical", 8192, "choice"),
-    "gpqa": BenchmarkSpec("gpqa", "gpqa_diamond", "general", 8192, "choice"),
+    "gpqa": BenchmarkSpec("gpqa", "gpqa_diamond", "general", 16384, "choice"),
     "arc_challenge": BenchmarkSpec(
         "arc_challenge", "arc_challenge", "general", 2048, "choice"
     ),
     "gsm8k": BenchmarkSpec("gsm8k", "gsm8k_test", "math", 2048, "number"),
-    "mbppplus": BenchmarkSpec("mbppplus", "mbppplus_test", "code", 4096, "code"),
+    "mbppplus": BenchmarkSpec("mbppplus", "mbppplus_test", "code", 8192, "code"),
     "humanevalplus": BenchmarkSpec(
-        "humanevalplus", "humanevalplus_test", "code", 4096, "code"
+        "humanevalplus", "humanevalplus_test", "code", 8192, "code"
     ),
 }
 
