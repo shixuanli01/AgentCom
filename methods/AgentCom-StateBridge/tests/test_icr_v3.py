@@ -570,3 +570,33 @@ def test_skipping_all_correct_items_still_leaves_scr_measurable():
     }
 
     assert categories({"A": False, "B": False, "C": False}) == {"both_wrong": 6}
+
+
+def test_resume_shards_over_outstanding_pairs_not_every_pair():
+    """A dead worker's backlog must not land on one worker again.
+
+    Shards are strides, and a stride nests inside any divisor of its world
+    size: pairs[7::8] sits entirely inside pairs[3::4] and pairs[1::2]. Re-running
+    a failed world-8 run at world 4 or 2 therefore hands the whole backlog to a
+    single worker. ARC-Challenge filled 293 records that way on one GPU while
+    three sat idle. Sharding over the outstanding pairs spreads them instead.
+    """
+    pairs = [(item, direction) for item in range(40) for direction in ("A_to_B", "B_to_A")]
+
+    # What a world-8 worker owned, and therefore what it left behind.
+    backlog = pairs[7::8]
+
+    # The trap: every smaller world that divides 8 keeps the backlog together.
+    for world in (2, 4):
+        owners = {
+            rank for rank in range(world)
+            for pair in pairs[rank::world] if pair in set(backlog)
+        }
+        assert len(owners) == 1, f"world {world} spread the backlog unexpectedly"
+
+    # Sharding over the outstanding pairs spreads them across every worker.
+    for world in (2, 4):
+        shards = [backlog[rank::world] for rank in range(world)]
+        assert all(shards), f"world {world} left a worker idle"
+        assert sorted(p for s in shards for p in s) == sorted(backlog)
+        assert max(len(s) for s in shards) - min(len(s) for s in shards) <= 1

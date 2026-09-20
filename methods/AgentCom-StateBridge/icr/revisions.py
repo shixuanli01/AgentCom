@@ -141,7 +141,37 @@ def main() -> None:
         for item_id in run_ids
         for direction in DIRECTIONS
     ]
-    assigned = directional_pairs[rank::world]
+    # Shard over the pairs that still need work, not over every pair. The
+    # records a dead worker left behind are exactly one stride of the old world
+    # size, and a stride nests inside any divisor of it -- pairs[7::8] sits
+    # entirely inside pairs[3::4] and pairs[1::2] -- so re-running at a smaller
+    # world hands the whole backlog to a single worker again. ARC-Challenge
+    # filled 293 records that way on one GPU while three sat idle.
+    if cli.global_resume:
+        done: set[tuple[int, str, str]] = set()
+        for existing_path in cli.artifact_root.glob(
+            "revisions/rank*/records/item_*.json"
+        ):
+            try:
+                existing = json.loads(existing_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                continue
+            if existing.get("status") == "complete":
+                done.add(
+                    (
+                        int(existing["item_id"]),
+                        str(existing["direction"]),
+                        str(existing["condition"]),
+                    )
+                )
+        outstanding = [
+            pair
+            for pair in directional_pairs
+            if any((pair[0], pair[1], condition) not in done for condition in conditions)
+        ]
+        assigned = outstanding[rank::world]
+    else:
+        assigned = directional_pairs[rank::world]
     needs_other_source = any(condition.startswith("other_") for condition in conditions)
     stop_requested = False
 

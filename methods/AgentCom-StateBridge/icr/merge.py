@@ -92,38 +92,55 @@ def merge_revisions(root: Path, *, require_complete: bool) -> list[dict[str, Any
         root.glob("revisions/rank*/records/item_*.json"),
         ("item_id", "direction", "condition"),
     )
-    if require_complete:
-        conditions = config.get("revision_conditions_requested")
-        if not conditions:
-            raise RuntimeError("config.json does not declare requested revision conditions")
-        # A both-correct subsample is part of the run definition, so the
-        # records it skips must not count as missing. The skipped set is
-        # derived from the frozen prebeliefs, never from the revision records,
-        # so an absent record can still be told apart from a skipped one.
-        sampling = config.get("both_correct_sampling") or {}
-        keep_one_in = int(sampling.get("keep_one_in", 1))
-        skip_all_correct = bool(sampling.get("skip_all_correct_items", False))
-        expected_pairs = _expected_directional_pairs(
-            root, config, keep_one_in, skip_all_correct
-        )
-        expected = {
-            (item_id, direction, condition)
-            for item_id, direction in expected_pairs
-            for condition in conditions
-        }
-        actual = {
-            (row["item_id"], row["direction"], row["condition"])
-            for row in rows
-            if row["condition"] in conditions
-        }
-        if actual != expected:
-            raise RuntimeError(
-                f"Incomplete revisions: have {len(actual)}, expected {len(expected)}"
-            )
-        config["completed_revision_conditions"] = list(conditions)
-        from .protocol import atomic_write_json
+    # Scope filtering must not depend on require_complete. icr.analysis
+    # re-merges with require_complete=False, and when that skipped the filter it
+    # overwrote a correctly scoped merged.jsonl with every record on disk,
+    # including ones a tightened sampling rule had put out of scope. analysis_v2
+    # then read the clobbered file and refused to run.
+    sampling = config.get("both_correct_sampling") or {}
+    keep_one_in = int(sampling.get("keep_one_in", 1))
+    skip_all_correct = bool(sampling.get("skip_all_correct_items", False))
+    scoped = keep_one_in > 1 or skip_all_correct
 
-        atomic_write_json(root / "config.json", config)
+    if scoped or require_complete:
+        expected_pairs = set(
+            _expected_directional_pairs(root, config, keep_one_in, skip_all_correct)
+        )
+        if require_complete:
+            conditions = config.get("revision_conditions_requested")
+            if not conditions:
+                raise RuntimeError(
+                    "config.json does not declare requested revision conditions"
+                )
+            expected = {
+                (item_id, direction, condition)
+                for item_id, direction in expected_pairs
+                for condition in conditions
+            }
+            actual = {
+                (row["item_id"], row["direction"], row["condition"])
+                for row in rows
+                if row["condition"] in conditions
+            }
+            missing = expected - actual
+            if missing:
+                raise RuntimeError(
+                    f"Incomplete revisions: {len(missing)} of {len(expected)} missing"
+                )
+            config["completed_revision_conditions"] = list(conditions)
+            from .protocol import atomic_write_json
+
+            atomic_write_json(root / "config.json", config)
+        stale = sum(
+            1 for row in rows
+            if (row["item_id"], row["direction"]) not in expected_pairs
+        )
+        if stale:
+            print(f"dropping {stale} out-of-scope revision records", flush=True)
+        rows = [
+            row for row in rows
+            if (row["item_id"], row["direction"]) in expected_pairs
+        ]
     atomic_write_jsonl(root / "revisions" / "merged.jsonl", rows)
     return rows
 
