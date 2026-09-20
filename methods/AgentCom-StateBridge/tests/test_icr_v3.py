@@ -399,3 +399,27 @@ def test_raised_budget_fingerprint_matches_a_rebuilt_config(tmp_path):
     assert raised["fingerprint"] == rebuilt
     assert raised["fingerprint"] == sha256_json(fingerprint_payload(raised))
     assert raised["completed_revision_conditions"] == ["none", "true_text"]
+
+
+def test_raising_to_the_current_budget_is_a_no_op(tmp_path):
+    """A repair can be rerun after failing part-way, so reaching the target
+    budget again is success. Treating it as an error once aborted a repair that
+    had already deleted the revisions it was about to regenerate."""
+    import json
+    import subprocess
+    import sys
+
+    from icr.protocol import sha256_json
+
+    stable = {"generation": {"max_new_tokens": 4096}}
+    config = {**stable, "fingerprint": sha256_json(stable)}
+    (tmp_path / "config.json").write_text(json.dumps(config), encoding="utf-8")
+
+    done = subprocess.run(
+        [sys.executable, "scripts/raise_token_budget.py", str(tmp_path), "4096"],
+        capture_output=True,
+        text=True,
+    )
+    assert done.returncode == 0
+    assert "nothing to raise" in done.stdout
+    assert json.loads((tmp_path / "config.json").read_text(encoding="utf-8")) == config

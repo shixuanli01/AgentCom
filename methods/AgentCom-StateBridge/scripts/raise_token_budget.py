@@ -34,11 +34,18 @@ def main() -> None:
     path = cli.root / "config.json"
     config = json.loads(path.read_text(encoding="utf-8"))
     current = int(config["generation"]["max_new_tokens"])
-    if cli.max_new_tokens <= current:
+    if cli.max_new_tokens < current:
         raise SystemExit(
-            f"Refusing to lower or keep the budget: {current} -> {cli.max_new_tokens}. "
+            f"Refusing to lower the budget: {current} -> {cli.max_new_tokens}. "
             "Only an increase leaves finished records valid."
         )
+    if cli.max_new_tokens == current:
+        # A repair may be rerun after a failure part-way through, so reaching the
+        # target budget again is success, not an error. Treating it as an error
+        # once aborted a repair that had already deleted the revisions it was
+        # about to regenerate.
+        print(f"{cli.root.name}: already at max_new_tokens {current}; nothing to raise")
+        return
 
     old_fingerprint = config["fingerprint"]
     raised = {**config, "generation": {**config["generation"], "max_new_tokens": cli.max_new_tokens}}
