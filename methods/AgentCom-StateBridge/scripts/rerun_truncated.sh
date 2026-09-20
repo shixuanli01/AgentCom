@@ -9,17 +9,18 @@
 # receiver's prior, and the pair classification of that item all change, so every
 # revision record for that item is deleted and regenerated too.
 #
-# The new budget is read from icr.benchmarks.SPECS rather than passed in, so it
-# cannot drift from the value the runners rebuild their config with. Passing it
-# separately once left an artifact root at 4096 while SPECS still said 2048, and
-# every worker refused to start on a fingerprint mismatch.
+# The budget may be raised again on each pass: doubling it once is not always
+# enough, since some items truncate because the model loops rather than because
+# the budget was merely tight. An existing root's config is authoritative, so
+# raising it needs no source edit and cannot drift from what the runners rebuild.
 #
 # Usage:
-#   bash scripts/rerun_truncated.sh TASK [WORKERS_PER_GPU]
+#   bash scripts/rerun_truncated.sh TASK [NEW_BUDGET] [WORKERS_PER_GPU]
 set -euo pipefail
 
-TASK="${1:?usage: rerun_truncated.sh TASK [WORKERS_PER_GPU]}"
-WORKERS="${2:-2}"
+TASK="${1:?usage: rerun_truncated.sh TASK [NEW_BUDGET] [WORKERS_PER_GPU]}"
+BUDGET_ARG="${2:-}"
+WORKERS="${3:-2}"
 
 cd /workspace/AgentCom/methods/AgentCom-StateBridge
 export HF_HOME=/workspace/.hf_home
@@ -28,7 +29,11 @@ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
 PY=/workspace/AgentCom/.venv-agentcom/bin/python
 ROOT="artifacts/icr_v3/${TASK}_full_seed42"
-BUDGET=$("$PY" -c "from icr.benchmarks import benchmark_spec; print(benchmark_spec('$TASK').default_max_new_tokens)")
+if [[ -n "$BUDGET_ARG" ]]; then
+  BUDGET="$BUDGET_ARG"
+else
+  BUDGET=$("$PY" -c "import json;print(json.load(open('$ROOT/config.json'))['generation']['max_new_tokens'])")
+fi
 LOG=artifacts/icr_v3/queue.log
 CONDITIONS="none,true_text,true_statebridge,true_latentmas"
 read -r -a GPUS <<< "${CUDA_DEVICES:-0 1 2 3}"

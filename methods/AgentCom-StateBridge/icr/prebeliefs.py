@@ -170,7 +170,19 @@ def ensure_config(path: Path, candidate: dict[str, Any]) -> dict[str, Any]:
 def main() -> None:
     cli = parse_args()
     if cli.max_new_tokens is None:
-        cli.max_new_tokens = benchmark_spec(cli.task).default_max_new_tokens
+        # An existing root's own config is authoritative. SPECS only supplies
+        # the budget for a root that does not exist yet, so a budget raised on
+        # disk cannot drift from the value the runners rebuild their config
+        # with, and raising it again needs no source edit.
+        existing_config = cli.artifact_root / "config.json"
+        if existing_config.is_file():
+            cli.max_new_tokens = int(
+                json.loads(existing_config.read_text(encoding="utf-8"))["generation"][
+                    "max_new_tokens"
+                ]
+            )
+        else:
+            cli.max_new_tokens = benchmark_spec(cli.task).default_max_new_tokens
     rank, world = rank_and_world(cli)
     data = load_benchmark(cli.task)
     selected_ids = select_item_ids(
