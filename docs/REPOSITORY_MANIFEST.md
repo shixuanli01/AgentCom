@@ -2,11 +2,9 @@
 
 ## Included
 
-- Current training-free Trajectory Memory Relay (TMR) implementation.
-- TMR last-64 and coverage-64 selectors, diagnostics, evaluator, and tests.
+- ICR-V3 baseline pipeline: protocol, channels, runtime, repair, and analysis.
+- EGR evidence-adjudication track.
 - StateBridge-compatible active-method workspace and frozen Qwen3-4B control.
-- Earlier selector, multi-path, and Refiner causal code retained as supporting
-  development history.
 - Current experiment plans and unit tests.
 - Frozen StateBridge Qwen3-4B reproduction audit.
 - Small redistributable MedQA and GPQA-Diamond files.
@@ -15,6 +13,9 @@
 ## Excluded
 
 - Historical Task 5-14 / RuleMAS code and reports.
+- Trajectory Memory Relay, the multi-path evaluator, the LLM judge, and the
+  Refiner causal runner: superseded tracks, unreachable from the current
+  pipeline, kept in Git history rather than the working tree.
 - LatentMAS, KVComm, C2C, Single, and TextMAS baseline workspaces.
 - Model weights and Hugging Face caches.
 - Checkpoints, hidden-state dumps, logs, and full result trees.

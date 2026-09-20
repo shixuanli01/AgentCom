@@ -12,7 +12,6 @@ from icr.prompts_v3 import (
     ANSWER_FORMAT,
     PROMPT_VERSION,
     external_block,
-    independent_solver_prompt,
     revision_prompt,
 )
 from prompts import EMBEDDING_HINT_MARKER
@@ -198,10 +197,9 @@ def test_evidence_channel_removes_explicit_claim_without_rewriting_support():
 @pytest.mark.parametrize(
     "task", ["medqa", "gpqa", "arc_challenge", "gsm8k", "humanevalplus"]
 )
-def test_output_contract_closes_both_phases(task):
-    contract = ANSWER_FORMAT[task]
-    assert independent_solver_prompt(task, "Q?").endswith(contract)
-    assert _revision(task, "none").endswith(contract)
+def test_the_revision_prompt_closes_with_its_task_output_contract(task):
+    # Phase 1 carries V2's own contract; only phase 2 uses these.
+    assert _revision(task, "none").endswith(ANSWER_FORMAT[task])
 
 
 def test_answer_contracts_match_the_labels_each_dataset_displays():

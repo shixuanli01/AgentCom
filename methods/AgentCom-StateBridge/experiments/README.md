@@ -30,14 +30,16 @@ introduces no new communication method.
 EGR is a receiver-side evidence-integration protocol, not a latent transport.
 Transport comparisons and receiver-policy comparisons are reported separately.
 
-### TMR — training-free latent transport
+### TMR — training-free latent transport (implementation removed)
 
 - [Trajectory Memory Relay V1 (Chinese)](TMR_V1_PROTOCOL_ZH.md)
 - [Turning-point hidden-state selection](TURNING_POINT_SELECTION.md)
 
-`tmr_last64` isolates native external-memory transport; `tmr_coverage64`
-changes only source-position selection. Implemented and smoke-tested; no full
-accuracy result was produced.
+Implemented and smoke-tested; no full accuracy result was produced before the
+track was stopped. The implementation and its multi-path evaluator have been
+removed from the working tree, since neither is reachable from the current
+baseline pipeline. The protocol documents stay as the record of what was built,
+and the code remains in Git history.
 
 ### Multi-path predecessors
 

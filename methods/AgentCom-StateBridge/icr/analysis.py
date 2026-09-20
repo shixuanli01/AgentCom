@@ -12,7 +12,6 @@ from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
 
-from agentcom.multipath import exact_mcnemar_p
 
 from .merge import merge_revisions
 from .protocol import atomic_write_json
@@ -25,6 +24,19 @@ CATEGORY_FOR_RATE = {
     "sr": "both_wrong",
     "scr": "both_correct",
 }
+
+
+def exact_mcnemar_p(corrections: int, harms: int) -> float:
+    """Two-sided exact McNemar p-value under a Binomial(n, 0.5) null.
+
+    Moved here from the retired multi-path evaluator, which was the only reason
+    the ICR analysis still imported from that track.
+    """
+    discordant = corrections + harms
+    if discordant == 0:
+        return 1.0
+    tail = sum(math.comb(discordant, k) for k in range(min(corrections, harms) + 1))
+    return min(1.0, 2.0 * tail / (2**discordant))
 
 
 def _safe_rate(numerator: int, denominator: int) -> float | None:

@@ -8,7 +8,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
-from agentcom.multipath import exact_mcnemar_p
+from icr.analysis import exact_mcnemar_p
 from icr.analysis import condition_metrics
 from icr.protocol import atomic_write_json
 

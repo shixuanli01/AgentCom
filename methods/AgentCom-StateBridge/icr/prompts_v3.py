@@ -1,6 +1,11 @@
-"""ICR-V3 prompts: one template, one condition-varying slot, per-task output format.
+"""ICR-V3 revision prompt: one template, one condition-varying slot.
 
-The V3 revision prompt is fixed to five blocks in this order:
+Phase 1 is not here. V3 rewrote it too and asked for concise reasoning, which
+cost independent-solve accuracy and shrank the only subset where CR and PR can
+be measured, so it was restored to V2's templates in icr.protocol. Only the
+revision prompt carries V3's alignment changes.
+
+The revision prompt is fixed to five blocks in this order:
 
     [Task / Question] -> [Receiver's own prior] -> [External information]
     -> [How to integrate] -> [Output format]
@@ -22,15 +27,6 @@ PROMPT_VERSION = "icr_v3_mid_injection"
 
 CHOICE_TASKS = ("medqa", "gpqa", "arc_challenge")
 CODE_TASKS = ("mbppplus", "humanevalplus")
-
-TASK_NOUN = {
-    "medqa": "medical multiple-choice question",
-    "gpqa": "multiple-choice question",
-    "arc_challenge": "multiple-choice question",
-    "gsm8k": "math word problem",
-    "mbppplus": "programming problem",
-    "humanevalplus": "programming problem",
-}
 
 _MCQ_UPPER = (
     "Return your concise reasoning, then exactly one final answer as \\boxed{X}, "
@@ -59,18 +55,6 @@ ANSWER_FORMAT = {
     ),
 }
 ANSWER_FORMAT["humanevalplus"] = ANSWER_FORMAT["mbppplus"]
-
-
-SOLVER_TEMPLATE = """You are an independent problem-solving agent.
-
-Solve the following {task_noun} carefully and independently.
-Reason from the evidence in the problem.
-Do not assume another agent will review your answer.
-
-Problem:
-{question}
-
-{answer_format}"""
 
 
 REVISION_TEMPLATE = """You previously solved this problem independently.
@@ -132,21 +116,6 @@ def answer_format(task: str) -> str:
         return ANSWER_FORMAT[task]
     except KeyError as error:
         raise ValueError(f"No V3 answer format registered for task {task!r}") from error
-
-
-def task_noun(task: str) -> str:
-    try:
-        return TASK_NOUN[task]
-    except KeyError as error:
-        raise ValueError(f"No V3 task noun registered for task {task!r}") from error
-
-
-def independent_solver_prompt(task: str, question: str) -> str:
-    return SOLVER_TEMPLATE.format(
-        task_noun=task_noun(task),
-        question=question,
-        answer_format=answer_format(task),
-    )
 
 
 def external_block(condition: str, *, sender_reasoning: Optional[str] = None) -> str:

@@ -9,9 +9,7 @@ from pathlib import Path
 from typing import Any, Mapping, Optional, Sequence
 
 from utils import (
-    extract_gsm8k_answer,
     extract_markdown_python_block,
-    normalize_answer,
     run_with_timeout,
     set_seed,
 )
@@ -85,77 +83,6 @@ Return the complete implementation in exactly one markdown Python code block.
 Programming problem:
 {question}"""
 
-REVISION_BASE = """You previously solved this question independently.
-
-Original question:
-{question}
-
-Your previous reasoning:
-{receiver_prior_reasoning}
-
-Your previous answer:
-{receiver_prior_answer}
-
-{external_section}
-
-Your task is to REVISE your belief, not simply restart from scratch.
-
-Evaluate your previous reasoning and the external information critically.
-
-* Do not change your answer merely because another message exists.
-* If the external information provides stronger evidence or identifies a real error, revise.
-* If your original reasoning remains better supported, keep it.
-* Resolve disagreements using the evidence in the original question.
-
-Return:
-1. concise revised reasoning
-2. exactly one final benchmark-compatible answer in the form \\boxed{{A}}, replacing A with one of A, B, C, or D."""
-
-NUMERIC_REVISION_BASE = """You previously solved this math word problem independently.
-
-Original problem:
-{question}
-
-Your previous reasoning:
-{receiver_prior_reasoning}
-
-Your previous answer:
-{receiver_prior_answer}
-
-{external_section}
-
-Your task is to REVISE your belief, not simply restart from scratch.
-
-Evaluate your previous reasoning and the external information critically.
-
-* Do not change your answer merely because another message exists.
-* If the external information identifies a real calculation or reasoning error, revise.
-* If your original reasoning remains better supported, keep it.
-* Resolve disagreements by checking the calculation against the original problem.
-
-Return concise revised reasoning and exactly one final numeric answer in the form
-\\boxed{{NUMBER}}."""
-
-CODE_REVISION_BASE = """You previously solved this programming problem independently.
-
-Original problem:
-{question}
-
-Your previous reasoning and implementation:
-{receiver_prior_reasoning}
-
-{external_section}
-
-Your task is to REVISE the implementation, not simply copy the external message.
-
-Check the required function signature, examples, edge cases, imports, and algorithmic
-correctness. Keep your original implementation when it is better supported; revise only
-when the external information identifies a real defect or provides a sound improvement.
-
-Return the complete final implementation in exactly one markdown Python code block.
-Do not place tests or explanatory prose inside that code block."""
-
-
 def stable_seed(global_seed: int, item_id: int, *parts: str) -> int:
     payload = "\0".join((str(global_seed), str(item_id), *parts))
     digest = hashlib.sha256(payload.encode("utf-8")).digest()
@@ -203,17 +130,6 @@ def revision_seed(
 
 def reset_rng(seed: int) -> None:
     set_seed(seed)
-
-
-def parse_medqa_answer(text: str) -> Optional[str]:
-    """Legacy V2 multiple-choice parser, retained for reproducibility only."""
-    value = normalize_answer(extract_gsm8k_answer(text))
-    return value if value in set("abcd") else None
-
-
-def parse_multiple_choice_answer(text: str) -> Optional[str]:
-    """Legacy V2 alias. New runs use :func:`parse_task_answer`."""
-    return parse_medqa_answer(text)
 
 
 def parse_task_answer(task: str, text: str) -> Optional[str]:

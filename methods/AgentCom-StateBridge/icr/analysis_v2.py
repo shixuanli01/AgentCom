@@ -475,7 +475,7 @@ def build_manifest(
             "revision": config["revision_prompt_version"],
             "statebridge_injection": config["statebridge"]["receiver_injection_position"],
         },
-        "answer_parser_version": "icr.protocol.parse_medqa_answer@ICR-MEDQA300-V2",
+        "answer_parser_version": "icr.parsing_v3@ICR-V3",
         "analysis": {
             "version": "communication_first_step1_v2",
             "bootstrap_cluster": "item_id (both directions retained)",

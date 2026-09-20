@@ -7,7 +7,6 @@ import torch
 from icr.analysis import clustered_bootstrap, condition_metrics
 from icr.protocol import (
     INDEPENDENT_SOLVER_PROMPT,
-    REVISION_BASE,
     classify_pair,
     other_item_id,
     parse_conditions,
@@ -18,16 +17,9 @@ from icr.channels import CommunicationMessage
 from prompts import EMBEDDING_HINT_MARKER
 
 
-def test_prompt_templates_render_literal_boxed_answer_example():
+def test_phase1_template_renders_a_literal_boxed_answer_example():
     solver = INDEPENDENT_SOLVER_PROMPT.format(question="Question?")
-    revision = REVISION_BASE.format(
-        question="Question?",
-        receiver_prior_reasoning="Reasoning",
-        receiver_prior_answer="a",
-        external_section="No external message is available.",
-    )
     assert "\\boxed{A}" in solver
-    assert "\\boxed{A}" in revision
 
 
 def test_statebridge_marker_sits_in_the_shared_message_slot():
