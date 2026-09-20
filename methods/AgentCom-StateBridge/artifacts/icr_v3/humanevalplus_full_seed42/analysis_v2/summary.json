@@ -1,0 +1,553 @@
+{
+  "bootstrap": {
+    "cluster": "item_id",
+    "directions_per_cluster": 2,
+    "iterations": 10000,
+    "seed": 20260920
+  },
+  "causal_influence": {
+    "latentmas": {
+      "true_vs_none": {
+        "all": {
+          "ci95": [
+            0.4266666666666667,
+            0.6180555555555556
+          ],
+          "denominator": 168,
+          "numerator": 88,
+          "point_estimate": 0.5238095238095238
+        },
+        "both_correct": {
+          "ci95": [
+            0.05,
+            0.5833333333333334
+          ],
+          "denominator": 20,
+          "numerator": 6,
+          "point_estimate": 0.3
+        },
+        "both_wrong": {
+          "ci95": [
+            0.3181818181818182,
+            0.5655791630716134
+          ],
+          "denominator": 92,
+          "numerator": 41,
+          "point_estimate": 0.44565217391304346
+        },
+        "correction_opportunity": {
+          "ci95": [
+            0.725,
+            0.96875
+          ],
+          "denominator": 28,
+          "numerator": 24,
+          "point_estimate": 0.8571428571428571
+        },
+        "destruction_risk": {
+          "ci95": [
+            0.36666666666666664,
+            0.8333333333333334
+          ],
+          "denominator": 28,
+          "numerator": 17,
+          "point_estimate": 0.6071428571428571
+        }
+      }
+    },
+    "statebridge": {
+      "true_vs_none": {
+        "all": {
+          "ci95": [
+            0.29914529914529914,
+            0.5139039855072461
+          ],
+          "denominator": 168,
+          "numerator": 68,
+          "point_estimate": 0.40476190476190477
+        },
+        "both_correct": {
+          "ci95": [
+            0.05,
+            0.5
+          ],
+          "denominator": 20,
+          "numerator": 5,
+          "point_estimate": 0.25
+        },
+        "both_wrong": {
+          "ci95": [
+            0.25832661290322584,
+            0.5636363636363636
+          ],
+          "denominator": 92,
+          "numerator": 38,
+          "point_estimate": 0.41304347826086957
+        },
+        "correction_opportunity": {
+          "ci95": [
+            0.36666666666666664,
+            0.8333333333333334
+          ],
+          "denominator": 28,
+          "numerator": 17,
+          "point_estimate": 0.6071428571428571
+        },
+        "destruction_risk": {
+          "ci95": [
+            0.07692307692307693,
+            0.53125
+          ],
+          "denominator": 28,
+          "numerator": 8,
+          "point_estimate": 0.2857142857142857
+        }
+      }
+    },
+    "text": {
+      "true_vs_none": {
+        "all": {
+          "ci95": [
+            0.36666666666666664,
+            0.5512820512820513
+          ],
+          "denominator": 168,
+          "numerator": 77,
+          "point_estimate": 0.4583333333333333
+        },
+        "both_correct": {
+          "ci95": [
+            0.08333333333333333,
+            0.4166666666666667
+          ],
+          "denominator": 20,
+          "numerator": 5,
+          "point_estimate": 0.25
+        },
+        "both_wrong": {
+          "ci95": [
+            0.3333333333333333,
+            0.6111111111111112
+          ],
+          "denominator": 92,
+          "numerator": 44,
+          "point_estimate": 0.4782608695652174
+        },
+        "correction_opportunity": {
+          "ci95": [
+            0.5,
+            0.9
+          ],
+          "denominator": 28,
+          "numerator": 20,
+          "point_estimate": 0.7142857142857143
+        },
+        "destruction_risk": {
+          "ci95": [
+            0.1,
+            0.5
+          ],
+          "denominator": 28,
+          "numerator": 8,
+          "point_estimate": 0.2857142857142857
+        }
+      }
+    }
+  },
+  "causal_utility": {
+    "latentmas_ce": {
+      "accuracy": {
+        "ci95": [
+          -0.08333333333333337,
+          0.031753663003662946
+        ],
+        "point_estimate": -0.02380952380952378
+      },
+      "cr": {
+        "ci95": [
+          0.125,
+          0.45833333333333337
+        ],
+        "point_estimate": 0.2857142857142857
+      },
+      "pr": {
+        "ci95": [
+          -0.53125,
+          -0.1333333333333333
+        ],
+        "point_estimate": -0.3214285714285715
+      },
+      "scr": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "point_estimate": 0.0
+      },
+      "si": {
+        "ci95": [
+          -0.1499999999999999,
+          0.11368006993006931
+        ],
+        "point_estimate": -0.017857142857142905
+      },
+      "sr": {
+        "ci95": [
+          -0.1111111111111111,
+          0.02633357041251752
+        ],
+        "point_estimate": -0.03260869565217392
+      },
+      "sra": {
+        "ci95": [
+          -0.1499999999999999,
+          0.11368006993006931
+        ],
+        "point_estimate": -0.017857142857142905
+      }
+    },
+    "statebridge_ce": {
+      "accuracy": {
+        "ci95": [
+          -0.03969047619047621,
+          0.053333333333333344
+        ],
+        "point_estimate": 0.011904761904761918
+      },
+      "cr": {
+        "ci95": [
+          0.0,
+          0.23076923076923073
+        ],
+        "point_estimate": 0.1071428571428572
+      },
+      "pr": {
+        "ci95": [
+          -0.09090909090909083,
+          0.16666666666666663
+        ],
+        "point_estimate": 0.0357142857142857
+      },
+      "scr": {
+        "ci95": [
+          -0.16666666666666663,
+          0.0
+        ],
+        "point_estimate": -0.050000000000000044
+      },
+      "si": {
+        "ci95": [
+          -1.1102230246251565e-16,
+          0.15000000000000002
+        ],
+        "point_estimate": 0.0714285714285714
+      },
+      "sr": {
+        "ci95": [
+          -0.09210526315789475,
+          0.05128205128205128
+        ],
+        "point_estimate": -0.010869565217391311
+      },
+      "sra": {
+        "ci95": [
+          0.0,
+          0.15000000000000002
+        ],
+        "point_estimate": 0.0714285714285714
+      }
+    },
+    "text_ce": {
+      "accuracy": {
+        "ci95": [
+          -0.02173913043478265,
+          0.08333333333333337
+        ],
+        "point_estimate": 0.029761904761904767
+      },
+      "cr": {
+        "ci95": [
+          -0.02941176470588236,
+          0.4090909090909091
+        ],
+        "point_estimate": 0.1785714285714286
+      },
+      "pr": {
+        "ci95": [
+          -0.1071428571428572,
+          0.1071428571428571
+        ],
+        "point_estimate": 0.0
+      },
+      "scr": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "point_estimate": 0.0
+      },
+      "si": {
+        "ci95": [
+          -0.02941176470588225,
+          0.2142857142857143
+        ],
+        "point_estimate": 0.0892857142857143
+      },
+      "sr": {
+        "ci95": [
+          -0.06818181818181819,
+          0.07142857142857142
+        ],
+        "point_estimate": 0.0
+      },
+      "sra": {
+        "ci95": [
+          -0.02941176470588236,
+          0.2142857142857143
+        ],
+        "point_estimate": 0.0892857142857143
+      }
+    }
+  },
+  "conditions": {
+    "none": {
+      "accuracy": 0.4226190476190476,
+      "accuracy_denominator": 168,
+      "accuracy_numerator": 71,
+      "answer_change_rate": 0.27380952380952384,
+      "cr": 0.5714285714285714,
+      "cr_denominator": 28,
+      "cr_numerator": 16,
+      "destructions": 2,
+      "directional_examples": 168,
+      "fcs": 0.0,
+      "fcs_denominator": 19,
+      "fcs_numerator": 0,
+      "follow_selectivity": 0.0,
+      "fws": 0.0,
+      "fws_denominator": 19,
+      "fws_numerator": 0,
+      "invalid_outputs": 14,
+      "mean_generated_tokens": 4422.410714285715,
+      "mean_input_tokens": 2612.9523809523807,
+      "mean_latency_seconds": 119.20642628981953,
+      "mean_payload_bytes": 0.0,
+      "mean_payload_states": null,
+      "mean_payload_tokens": null,
+      "net_correction": 23,
+      "pr": 0.9285714285714286,
+      "pr_denominator": 28,
+      "pr_numerator": 26,
+      "rescues": 25,
+      "scr": 1.0,
+      "scr_denominator": 20,
+      "scr_numerator": 20,
+      "si": 0.75,
+      "sr": 0.09782608695652174,
+      "sr_denominator": 92,
+      "sr_numerator": 9,
+      "sra": 0.75,
+      "sra_denominator": 56,
+      "sra_numerator": 42,
+      "total_generation_seconds": 20026.679616689682,
+      "total_generations": 168
+    },
+    "true_latentmas": {
+      "accuracy": 0.39880952380952384,
+      "accuracy_denominator": 168,
+      "accuracy_numerator": 67,
+      "answer_change_rate": 0.44047619047619047,
+      "cr": 0.8571428571428571,
+      "cr_denominator": 28,
+      "cr_numerator": 24,
+      "destructions": 11,
+      "directional_examples": 168,
+      "fcs": 0.2631578947368421,
+      "fcs_denominator": 19,
+      "fcs_numerator": 5,
+      "follow_selectivity": -0.15789473684210525,
+      "fws": 0.42105263157894735,
+      "fws_denominator": 19,
+      "fws_numerator": 8,
+      "invalid_outputs": 13,
+      "mean_generated_tokens": 2345.6190476190477,
+      "mean_input_tokens": 2619.9523809523807,
+      "mean_latency_seconds": 86.09610067520823,
+      "mean_payload_bytes": 0.0,
+      "mean_payload_states": null,
+      "mean_payload_tokens": null,
+      "net_correction": 19,
+      "pr": 0.6071428571428571,
+      "pr_denominator": 28,
+      "pr_numerator": 17,
+      "rescues": 30,
+      "scr": 1.0,
+      "scr_denominator": 20,
+      "scr_numerator": 20,
+      "si": 0.7321428571428571,
+      "sr": 0.06521739130434782,
+      "sr_denominator": 92,
+      "sr_numerator": 6,
+      "sra": 0.7321428571428571,
+      "sra_denominator": 56,
+      "sra_numerator": 41,
+      "total_generation_seconds": 14464.144913434982,
+      "total_generations": 168
+    },
+    "true_statebridge": {
+      "accuracy": 0.43452380952380953,
+      "accuracy_denominator": 168,
+      "accuracy_numerator": 73,
+      "answer_change_rate": 0.32142857142857145,
+      "cr": 0.6785714285714286,
+      "cr_denominator": 28,
+      "cr_numerator": 19,
+      "destructions": 2,
+      "directional_examples": 168,
+      "fcs": 0.05263157894736842,
+      "fcs_denominator": 19,
+      "fcs_numerator": 1,
+      "follow_selectivity": 0.0,
+      "fws": 0.05263157894736842,
+      "fws_denominator": 19,
+      "fws_numerator": 1,
+      "invalid_outputs": 12,
+      "mean_generated_tokens": 4102.910714285715,
+      "mean_input_tokens": 2682.75,
+      "mean_latency_seconds": 101.08838453321229,
+      "mean_payload_bytes": 321523.8095238095,
+      "mean_payload_states": 62.79761904761905,
+      "mean_payload_tokens": null,
+      "net_correction": 25,
+      "pr": 0.9642857142857143,
+      "pr_denominator": 28,
+      "pr_numerator": 27,
+      "rescues": 27,
+      "scr": 0.95,
+      "scr_denominator": 20,
+      "scr_numerator": 19,
+      "si": 0.8214285714285714,
+      "sr": 0.08695652173913043,
+      "sr_denominator": 92,
+      "sr_numerator": 8,
+      "sra": 0.8214285714285714,
+      "sra_denominator": 56,
+      "sra_numerator": 46,
+      "total_generation_seconds": 16982.848601579666,
+      "total_generations": 168
+    },
+    "true_text": {
+      "accuracy": 0.4523809523809524,
+      "accuracy_denominator": 168,
+      "accuracy_numerator": 76,
+      "answer_change_rate": 0.3869047619047619,
+      "cr": 0.75,
+      "cr_denominator": 28,
+      "cr_numerator": 21,
+      "destructions": 2,
+      "directional_examples": 168,
+      "fcs": 0.21052631578947367,
+      "fcs_denominator": 19,
+      "fcs_numerator": 4,
+      "follow_selectivity": 0.21052631578947367,
+      "fws": 0.0,
+      "fws_denominator": 19,
+      "fws_numerator": 0,
+      "invalid_outputs": 10,
+      "mean_generated_tokens": 3878.410714285714,
+      "mean_input_tokens": 4894.6547619047615,
+      "mean_latency_seconds": 106.57186356612614,
+      "mean_payload_bytes": 8675.47619047619,
+      "mean_payload_states": null,
+      "mean_payload_tokens": 2273.7023809523807,
+      "net_correction": 28,
+      "pr": 0.9285714285714286,
+      "pr_denominator": 28,
+      "pr_numerator": 26,
+      "rescues": 30,
+      "scr": 1.0,
+      "scr_denominator": 20,
+      "scr_numerator": 20,
+      "si": 0.8392857142857143,
+      "sr": 0.09782608695652174,
+      "sr_denominator": 92,
+      "sr_numerator": 9,
+      "sra": 0.8392857142857143,
+      "sra_denominator": 56,
+      "sra_numerator": 47,
+      "total_generation_seconds": 17904.073079109192,
+      "total_generations": 168
+    }
+  },
+  "directional_records": 672,
+  "evidence_pairwise": {},
+  "evidence_payload_audit": null,
+  "item_count": 164,
+  "new_model_inference": false,
+  "regression_baseline": {
+    "not_applicable": true,
+    "passed": true,
+    "reason": "The frozen numeric regression baseline is the V2 MedQA300 seed_pair_00 replication only."
+  },
+  "source_artifact": "/workspace/AgentCom/methods/AgentCom-StateBridge/artifacts/icr_v3/humanevalplus_full_seed42",
+  "status": "complete",
+  "step": 1,
+  "text_minus_statebridge": {
+    "accuracy": {
+      "ci95": [
+        -0.037037037037037035,
+        0.07638888888888884
+      ],
+      "point_estimate": 0.01785714285714285
+    },
+    "cr": {
+      "ci95": [
+        -0.15625,
+        0.3
+      ],
+      "point_estimate": 0.0714285714285714
+    },
+    "fcs": {
+      "ci95": [
+        0.0,
+        0.4
+      ],
+      "point_estimate": 0.15789473684210525
+    },
+    "follow_selectivity": {
+      "ci95": [
+        0.0,
+        0.46153846153846156
+      ],
+      "point_estimate": 0.21052631578947367
+    },
+    "fws": {
+      "ci95": [
+        -0.17647058823529413,
+        0.0
+      ],
+      "point_estimate": -0.05263157894736842
+    },
+    "pr": {
+      "ci95": [
+        -0.16666666666666663,
+        0.09090909090909094
+      ],
+      "point_estimate": -0.0357142857142857
+    },
+    "si": {
+      "ci95": [
+        -0.125,
+        0.1607142857142856
+      ],
+      "point_estimate": 0.017857142857142905
+    },
+    "sra": {
+      "ci95": [
+        -0.125,
+        0.1607142857142857
+      ],
+      "point_estimate": 0.017857142857142905
+    }
+  }
+}

@@ -1,0 +1,16 @@
+category,ci95_high,ci95_low,comparison,control_condition,denominator,influence_rate,modality,numerator,true_condition
+all,0.5512820512820513,0.36666666666666664,true_vs_none,none,168,0.4583333333333333,text,77,true_text
+correction_opportunity,0.9,0.5,true_vs_none,none,28,0.7142857142857143,text,20,true_text
+destruction_risk,0.5,0.1,true_vs_none,none,28,0.2857142857142857,text,8,true_text
+both_wrong,0.6111111111111112,0.3333333333333333,true_vs_none,none,92,0.4782608695652174,text,44,true_text
+both_correct,0.4166666666666667,0.08333333333333333,true_vs_none,none,20,0.25,text,5,true_text
+all,0.5139039855072461,0.29914529914529914,true_vs_none,none,168,0.40476190476190477,statebridge,68,true_statebridge
+correction_opportunity,0.8333333333333334,0.36666666666666664,true_vs_none,none,28,0.6071428571428571,statebridge,17,true_statebridge
+destruction_risk,0.53125,0.07692307692307693,true_vs_none,none,28,0.2857142857142857,statebridge,8,true_statebridge
+both_wrong,0.5636363636363636,0.25832661290322584,true_vs_none,none,92,0.41304347826086957,statebridge,38,true_statebridge
+both_correct,0.5,0.05,true_vs_none,none,20,0.25,statebridge,5,true_statebridge
+all,0.6180555555555556,0.4266666666666667,true_vs_none,none,168,0.5238095238095238,latentmas,88,true_latentmas
+correction_opportunity,0.96875,0.725,true_vs_none,none,28,0.8571428571428571,latentmas,24,true_latentmas
+destruction_risk,0.8333333333333334,0.36666666666666664,true_vs_none,none,28,0.6071428571428571,latentmas,17,true_latentmas
+both_wrong,0.5655791630716134,0.3181818181818182,true_vs_none,none,92,0.44565217391304346,latentmas,41,true_latentmas
+both_correct,0.5833333333333334,0.05,true_vs_none,none,20,0.3,latentmas,6,true_latentmas
