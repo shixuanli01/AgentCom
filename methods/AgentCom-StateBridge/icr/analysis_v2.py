@@ -529,11 +529,16 @@ def main() -> None:
     mismatched = [c for c, pairs in per_condition.items() if pairs != reference]
     if mismatched:
         raise RuntimeError(f"Conditions cover different directional pairs: {mismatched}")
-    keep_one_in = int((config.get("both_correct_sampling") or {}).get("keep_one_in", 1))
-    if keep_one_in <= 1 and len(reference) != len(config["selected_item_ids"]) * 2:
+    sampling = config.get("both_correct_sampling") or {}
+    keep_one_in = int(sampling.get("keep_one_in", 1))
+    skip_all_correct = bool(sampling.get("skip_all_correct_items", False))
+    from . import DIRECTIONS
+
+    full_grid = len(config["selected_item_ids"]) * len(DIRECTIONS)
+    if keep_one_in <= 1 and not skip_all_correct and len(reference) != full_grid:
         raise RuntimeError(
             f"Incomplete run: {len(reference)} directional pairs, "
-            f"expected {len(config['selected_item_ids']) * 2}"
+            f"expected {full_grid}"
         )
 
     by_condition: dict[str, list[dict[str, Any]]] = defaultdict(list)

@@ -14,6 +14,7 @@ from typing import Any
 import torch
 
 from .benchmarks import benchmark_metadata, load_benchmark
+from . import AGENTS, DIRECTIONS, direction_agents
 from .channels import make_channel
 from .merge import merge_prebeliefs
 from .prebeliefs import accepted_fingerprints, rank_and_world
@@ -46,6 +47,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--item-ids", nargs="+", type=int,
         help="Optional selected-item subset (used by resumable smoke runs)",
+    )
+    parser.add_argument(
+        "--skip-all-correct-items", action="store_true",
+        help=(
+            "Skip items every agent answered correctly. Communication has "
+            "almost no room to change them, and with three agents a mixed item "
+            "still contains two both-correct pairs, so SCR stays measured "
+            "without paying for the items where nothing can happen."
+        ),
     )
     parser.add_argument(
         "--both-correct-sample", type=int, default=1,
@@ -95,7 +105,7 @@ def main() -> None:
         metadata_by_item = benchmark_metadata(task, load_benchmark(task))
     selected_ids = [int(value) for value in config["selected_item_ids"]]
     expected_prebeliefs = {
-        (item_id, agent_id) for item_id in selected_ids for agent_id in ("A", "B")
+        (item_id, agent_id) for item_id in selected_ids for agent_id in AGENTS
     }
     if set(prebeliefs) != expected_prebeliefs:
         raise RuntimeError("Phase-1 cache is incomplete or contains unexpected records")
@@ -114,6 +124,7 @@ def main() -> None:
         config["both_correct_sampling"] = {
             "keep_one_in": int(cli.both_correct_sample),
             "rule": "item_id % keep_one_in == 0",
+            "skip_all_correct_items": bool(cli.skip_all_correct_items),
             "label_free": True,
         }
         atomic_write_json(config_path, config)
@@ -128,7 +139,7 @@ def main() -> None:
     directional_pairs = [
         (item_id, direction)
         for item_id in run_ids
-        for direction in ("A_to_B", "B_to_A")
+        for direction in DIRECTIONS
     ]
     assigned = directional_pairs[rank::world]
     needs_other_source = any(condition.startswith("other_") for condition in conditions)
@@ -180,7 +191,7 @@ def main() -> None:
         flush=True,
     )
     for item_id, direction in assigned:
-        sender_id, receiver_id = (("A", "B") if direction == "A_to_B" else ("B", "A"))
+        sender_id, receiver_id = direction_agents(direction)
         sender = prebeliefs[(item_id, sender_id)]
         receiver = prebeliefs[(item_id, receiver_id)]
         other_id = None
@@ -197,6 +208,10 @@ def main() -> None:
             config.get("replication_id"),
         )
         pair_class = classify_pair(bool(sender["correct"]), bool(receiver["correct"]))
+        if cli.skip_all_correct_items and all(
+            bool(prebeliefs[(item_id, agent)]["correct"]) for agent in AGENTS
+        ):
+            continue
         if (
             cli.both_correct_sample > 1
             and pair_class == "both_correct"

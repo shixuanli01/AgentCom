@@ -9,6 +9,7 @@ from pathlib import Path
 import torch
 from safetensors.torch import load_file
 
+from . import DIRECTIONS, direction_agents
 from .merge import merge_prebeliefs
 from .protocol import other_item_id, prebelief_seed, revision_seed
 
@@ -17,14 +18,14 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Verify ICR Phase-1 cache")
     parser.add_argument("--artifact-root", type=Path, required=True)
     parser.add_argument("--item-id", type=int)
-    parser.add_argument("--direction", choices=("A_to_B", "B_to_A"), default="A_to_B")
+    parser.add_argument("--direction", choices=DIRECTIONS, default=DIRECTIONS[0])
     cli = parser.parse_args()
     config = json.loads((cli.artifact_root / "config.json").read_text(encoding="utf-8"))
     rows = merge_prebeliefs(cli.artifact_root, require_complete=True)
     records = {(int(row["item_id"]), row["agent_id"]): row for row in rows}
     selected_ids = [int(value) for value in config["selected_item_ids"]]
     item_id = cli.item_id if cli.item_id is not None else selected_ids[0]
-    sender_id, receiver_id = (("A", "B") if cli.direction == "A_to_B" else ("B", "A"))
+    sender_id, receiver_id = direction_agents(cli.direction)
     sender = records[(item_id, sender_id)]
     receiver = records[(item_id, receiver_id)]
     other_id = other_item_id(item_id, selected_ids, int(config["other_mapping_offset"]))

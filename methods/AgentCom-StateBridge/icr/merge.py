@@ -7,6 +7,8 @@ import json
 from pathlib import Path
 from typing import Any, Iterable
 
+from . import AGENTS, DIRECTIONS, direction_agents
+
 from .protocol import atomic_write_jsonl, sha256_json
 
 
@@ -40,7 +42,7 @@ def merge_prebeliefs(root: Path, *, require_complete: bool) -> list[dict[str, An
         expected = {
             (item_id, agent_id)
             for item_id in config["selected_item_ids"]
-            for agent_id in ("A", "B")
+            for agent_id in AGENTS
         }
         actual = {(row["item_id"], row["agent_id"]) for row in rows}
         if actual != expected:
@@ -51,14 +53,14 @@ def merge_prebeliefs(root: Path, *, require_complete: bool) -> list[dict[str, An
     return rows
 
 
-def _expected_directional_pairs(root, config, keep_one_in: int):
+def _expected_directional_pairs(root, config, keep_one_in: int, skip_all_correct: bool = False):
     """Directional pairs a run should contain, honouring both-correct sampling."""
     pairs = [
         (int(item_id), direction)
         for item_id in config["selected_item_ids"]
-        for direction in ("A_to_B", "B_to_A")
+        for direction in DIRECTIONS
     ]
-    if keep_one_in <= 1:
+    if keep_one_in <= 1 and not skip_all_correct:
         return pairs
     import json as _json
 
@@ -74,9 +76,11 @@ def _expected_directional_pairs(root, config, keep_one_in: int):
     }
     kept = []
     for item_id, direction in pairs:
-        sender, receiver = ("A", "B") if direction == "A_to_B" else ("B", "A")
+        sender, receiver = direction_agents(direction)
+        if skip_all_correct and all(correct[(item_id, a)] for a in AGENTS):
+            continue
         both_correct = correct[(item_id, sender)] and correct[(item_id, receiver)]
-        if both_correct and item_id % keep_one_in != 0:
+        if keep_one_in > 1 and both_correct and item_id % keep_one_in != 0:
             continue
         kept.append((item_id, direction))
     return kept
@@ -96,10 +100,12 @@ def merge_revisions(root: Path, *, require_complete: bool) -> list[dict[str, Any
         # records it skips must not count as missing. The skipped set is
         # derived from the frozen prebeliefs, never from the revision records,
         # so an absent record can still be told apart from a skipped one.
-        keep_one_in = int(
-            (config.get("both_correct_sampling") or {}).get("keep_one_in", 1)
+        sampling = config.get("both_correct_sampling") or {}
+        keep_one_in = int(sampling.get("keep_one_in", 1))
+        skip_all_correct = bool(sampling.get("skip_all_correct_items", False))
+        expected_pairs = _expected_directional_pairs(
+            root, config, keep_one_in, skip_all_correct
         )
-        expected_pairs = _expected_directional_pairs(root, config, keep_one_in)
         expected = {
             (item_id, direction, condition)
             for item_id, direction in expected_pairs

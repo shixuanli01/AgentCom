@@ -16,7 +16,7 @@ from utils import (
     set_seed,
 )
 
-from . import CONDITIONS, DIRECTIONS
+from . import AGENTS, CONDITIONS, DIRECTIONS
 from .parsing_v3 import (
     CHOICE_LABELS,
     normalize_numeric,
@@ -177,7 +177,7 @@ def prebelief_seed(
     agent_id: str,
     replication_id: Optional[str] = None,
 ) -> int:
-    if agent_id not in ("A", "B"):
+    if agent_id not in AGENTS:
         raise ValueError(f"Unknown agent: {agent_id}")
     if replication_id is None:
         return stable_seed(global_seed, item_id, f"agent_{agent_id}_pre")

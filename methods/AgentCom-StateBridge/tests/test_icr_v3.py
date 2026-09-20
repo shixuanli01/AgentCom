@@ -423,3 +423,150 @@ def test_raising_to_the_current_budget_is_a_no_op(tmp_path):
     assert done.returncode == 0
     assert "nothing to raise" in done.stdout
     assert json.loads((tmp_path / "config.json").read_text(encoding="utf-8")) == config
+
+
+def test_repair_shards_over_truncated_records_and_keeps_their_paths(tmp_path):
+    """A repair must balance across workers and not leave duplicate records.
+
+    Striding over every item leaves most workers idle when only a handful of
+    records need regenerating. Sharding over the truncated records fixes that,
+    but each one has to be written back to the rank directory it already lives
+    in, or the same (item, agent) would exist under two ranks.
+    """
+    import json
+
+    root = tmp_path / "prebeliefs"
+    for rank, (item, agent, eos) in enumerate(
+        [(3, "A", False), (7, "B", False), (5, "A", True), (9, "B", False)]
+    ):
+        d = root / f"rank{rank}" / "records"
+        d.mkdir(parents=True)
+        (d / f"item_{item:04d}_{agent}.json").write_text(
+            json.dumps({"item_id": item, "agent_id": agent, "hit_eos": eos}),
+            encoding="utf-8",
+        )
+
+    truncated = {}
+    for path in root.glob("rank*/records/item_*.json"):
+        row = json.loads(path.read_text(encoding="utf-8"))
+        if not row.get("hit_eos", True):
+            truncated[(int(row["item_id"]), str(row["agent_id"]))] = path
+
+    assert set(truncated) == {(3, "A"), (7, "B"), (9, "B")}
+    assert (5, "A") not in truncated  # reached EOS, must not be regenerated
+
+    items = sorted({item for item, _ in truncated})
+    world = 2
+    assert sorted(items[0::world] + items[1::world]) == items  # every item covered
+    assert not set(items[0::world]) & set(items[1::world])  # and covered once
+
+    # Each record keeps the rank directory it was found in.
+    assert truncated[(3, "A")].parts[-3] == "rank0"
+    assert truncated[(7, "B")].parts[-3] == "rank1"
+    assert truncated[(9, "B")].parts[-3] == "rank3"
+
+
+# --- Third agent -----------------------------------------------------------
+
+
+def test_three_agents_give_six_ordered_pairs():
+    from icr import AGENTS, DIRECTIONS, direction_agents
+
+    assert AGENTS == ("A", "B", "C")
+    assert len(DIRECTIONS) == 6
+    assert set(DIRECTIONS) == {
+        "A_to_B", "A_to_C", "B_to_A", "B_to_C", "C_to_A", "C_to_B"
+    }
+    for direction in DIRECTIONS:
+        sender, receiver = direction_agents(direction)
+        assert sender != receiver
+        assert {sender, receiver} <= set(AGENTS)
+
+
+def test_direction_agents_rejects_nonsense():
+    import pytest
+
+    from icr import direction_agents
+
+    for bad in ("A_to_A", "A_to_D", "D_to_A", "AtoB", ""):
+        with pytest.raises(ValueError):
+            direction_agents(bad)
+
+
+def test_adding_agent_c_leaves_the_existing_seeds_untouched():
+    """The A and B beliefs already generated must stay valid.
+
+    prebelief_seed hashes the agent id, and revision_seed hashes the direction
+    label, so a third agent adds new seeds without disturbing the old ones. If
+    this broke, every belief generated so far would have to be discarded.
+    """
+    from icr.protocol import prebelief_seed, revision_seed
+
+    assert prebelief_seed(42, 0, "A", "seed_pair_00") == 1352253858
+    assert prebelief_seed(42, 0, "B", "seed_pair_00") == 1804839786
+    assert revision_seed(42, 0, "A_to_B", "seed_pair_00") == 1771418669
+    # The new agent and directions are simply different draws.
+    assert prebelief_seed(42, 0, "C", "seed_pair_00") not in {
+        prebelief_seed(42, 0, "A", "seed_pair_00"),
+        prebelief_seed(42, 0, "B", "seed_pair_00"),
+    }
+
+
+def test_a_mixed_item_yields_twice_the_correction_and_destruction_cases():
+    """Why a third agent is worth more than a third replication.
+
+    With two agents a mixed item gives one correction case and one destruction
+    case. With three it gives two of each, whichever way the correctness falls,
+    and items where the first two agreed can now turn out mixed.
+    """
+    from icr import DIRECTIONS, direction_agents
+    from icr.protocol import classify_pair
+
+    for correct in ({"A": True, "B": False, "C": False},
+                    {"A": True, "B": True, "C": False}):
+        counts = {"correction_opportunity": 0, "destruction_risk": 0}
+        for direction in DIRECTIONS:
+            sender, receiver = direction_agents(direction)
+            category = classify_pair(correct[sender], correct[receiver])
+            if category in counts:
+                counts[category] += 1
+        assert counts == {"correction_opportunity": 2, "destruction_risk": 2}
+
+
+def test_skipping_all_correct_items_still_leaves_scr_measurable():
+    """Items every agent got right cannot show anything, so they are skipped.
+
+    A mixed item still contains two both-correct pairs, so preservation on
+    already-correct answers stays measured without paying for the items where
+    communication has no room to act. LatentMAS destroyed 4 of 378 such pairs on
+    MedQA, so this is not a quantity that can simply be assumed to be 100%.
+    """
+    from icr import DIRECTIONS, direction_agents
+    from icr.protocol import classify_pair
+
+    def categories(correct):
+        counts = {}
+        for direction in DIRECTIONS:
+            sender, receiver = direction_agents(direction)
+            category = classify_pair(correct[sender], correct[receiver])
+            counts[category] = counts.get(category, 0) + 1
+        return counts
+
+    all_correct = categories({"A": True, "B": True, "C": True})
+    assert all_correct == {"both_correct": 6}  # nothing to learn, skip the item
+
+    two_correct = categories({"A": True, "B": True, "C": False})
+    assert two_correct == {
+        "both_correct": 2,       # SCR survives inside a mixed item
+        "correction_opportunity": 2,
+        "destruction_risk": 2,
+    }
+
+    one_correct = categories({"A": True, "B": False, "C": False})
+    assert one_correct == {
+        "both_wrong": 2,         # and SR does too
+        "correction_opportunity": 2,
+        "destruction_risk": 2,
+    }
+
+    assert categories({"A": False, "B": False, "C": False}) == {"both_wrong": 6}

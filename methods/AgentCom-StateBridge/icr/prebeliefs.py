@@ -12,7 +12,7 @@ from typing import Any, Mapping
 
 import torch
 
-from . import CONDITIONS, PROTOCOL_V3
+from . import AGENTS, CONDITIONS, PROTOCOL_V3
 from .benchmarks import (
     SPECS,
     benchmark_spec,
@@ -204,7 +204,25 @@ def main() -> None:
         cli.artifact_root / "config.json",
         build_config(cli, selected_ids, data, excluded_ids),
     )
-    assigned_ids = selected_ids[rank::world]
+    # A repair regenerates a small, unevenly spread subset. Striding over every
+    # item leaves most workers with nothing to do -- ARC-Challenge finished one
+    # pass with 17 records left and only 2 of 8 workers still alive. Shard over
+    # the records that actually need work instead, and write each one back to
+    # the rank directory it already lives in so no duplicate appears elsewhere.
+    truncated_paths: dict[tuple[int, str], Path] = {}
+    if cli.rerun_truncated:
+        for existing in (cli.artifact_root / "prebeliefs").glob(
+            "rank*/records/item_*.json"
+        ):
+            try:
+                row = json.loads(existing.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                continue
+            if not bool(row.get("hit_eos", True)):
+                truncated_paths[(int(row["item_id"]), str(row["agent_id"]))] = existing
+        assigned_ids = sorted({item for item, _ in truncated_paths})[rank::world]
+    else:
+        assigned_ids = selected_ids[rank::world]
     stop_requested = False
 
     def request_stop(signum, _frame):
@@ -237,8 +255,13 @@ def main() -> None:
     )
     for item_id in assigned_ids:
         item = data[item_id]
-        for agent_id in ("A", "B"):
-            record_path = records_dir / f"item_{item_id:04d}_{agent_id}.json"
+        for agent_id in AGENTS:
+            if cli.rerun_truncated and (item_id, agent_id) not in truncated_paths:
+                continue
+            record_path = truncated_paths.get(
+                (item_id, agent_id),
+                records_dir / f"item_{item_id:04d}_{agent_id}.json",
+            )
             if record_path.exists():
                 cached = json.loads(record_path.read_text(encoding="utf-8"))
                 prefix = cli.artifact_root / cached.get("statebridge_prefix_file", "")
