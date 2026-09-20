@@ -21,6 +21,7 @@ import argparse
 import json
 from pathlib import Path
 
+from icr.prebeliefs import fingerprint_payload
 from icr.protocol import atomic_write_json, sha256_json
 
 
@@ -40,19 +41,26 @@ def main() -> None:
         )
 
     old_fingerprint = config["fingerprint"]
-    stable = {k: v for k, v in config.items() if k not in {"fingerprint"}}
-    stable["generation"] = {**config["generation"], "max_new_tokens": cli.max_new_tokens}
-    superseded = list(dict.fromkeys([*config.get("superseded_fingerprints", []), old_fingerprint]))
-    stable["superseded_fingerprints"] = superseded
-    stable["max_new_tokens_history"] = [
-        *config.get("max_new_tokens_history", []),
-        {
-            "from": current,
-            "to": cli.max_new_tokens,
-            "reason": "truncated generations never stated an answer and were scored wrong",
-        },
-    ]
-    updated = {**stable, "fingerprint": sha256_json(stable)}
+    raised = {**config, "generation": {**config["generation"], "max_new_tokens": cli.max_new_tokens}}
+    # The fingerprint must cover exactly what build_config hashes, or the
+    # rebuilt candidate will never match what is on disk.
+    fingerprint = sha256_json(fingerprint_payload(raised))
+    superseded = list(
+        dict.fromkeys([*config.get("superseded_fingerprints", []), old_fingerprint])
+    )
+    updated = {
+        **raised,
+        "superseded_fingerprints": superseded,
+        "max_new_tokens_history": [
+            *config.get("max_new_tokens_history", []),
+            {
+                "from": current,
+                "to": cli.max_new_tokens,
+                "reason": "truncated generations never stated an answer and were scored wrong",
+            },
+        ],
+        "fingerprint": fingerprint,
+    }
     atomic_write_json(path, updated)
 
     print(f"{cli.root.name}: max_new_tokens {current} -> {cli.max_new_tokens}")

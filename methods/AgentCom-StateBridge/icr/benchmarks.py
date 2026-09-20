@@ -31,9 +31,9 @@ SPECS = {
     "medqa": BenchmarkSpec("medqa", "medqa300", "medical", 8192, "choice"),
     "gpqa": BenchmarkSpec("gpqa", "gpqa_diamond", "general", 16384, "choice"),
     "arc_challenge": BenchmarkSpec(
-        "arc_challenge", "arc_challenge", "general", 2048, "choice"
+        "arc_challenge", "arc_challenge", "general", 4096, "choice"
     ),
-    "gsm8k": BenchmarkSpec("gsm8k", "gsm8k_test", "math", 2048, "number"),
+    "gsm8k": BenchmarkSpec("gsm8k", "gsm8k_test", "math", 4096, "number"),
     "mbppplus": BenchmarkSpec("mbppplus", "mbppplus_test", "code", 8192, "code"),
     "humanevalplus": BenchmarkSpec(
         "humanevalplus", "humanevalplus_test", "code", 8192, "code"

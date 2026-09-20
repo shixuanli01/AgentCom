@@ -128,6 +128,26 @@ def build_config(
     return {**stable, "fingerprint": sha256_json(stable)}
 
 
+# Keys that config.json gains after build_config has already hashed it. They
+# record what a run has done, not what the run is, so they must stay out of the
+# fingerprint. Hashing them once made every raised budget unreachable: the
+# on-disk fingerprint covered them, the rebuilt candidate did not, and every
+# worker refused to start.
+RUNTIME_CONFIG_KEYS = (
+    "fingerprint",
+    "revision_conditions_requested",
+    "completed_revision_conditions",
+    "both_correct_sampling",
+    "superseded_fingerprints",
+    "max_new_tokens_history",
+)
+
+
+def fingerprint_payload(config: Mapping[str, Any]) -> dict[str, Any]:
+    """The subset of a config that its fingerprint is computed over."""
+    return {k: v for k, v in config.items() if k not in RUNTIME_CONFIG_KEYS}
+
+
 def accepted_fingerprints(config: Mapping[str, Any]) -> set[str]:
     """Fingerprints whose finished records this run still trusts.
 

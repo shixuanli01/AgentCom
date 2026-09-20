@@ -361,3 +361,41 @@ def test_budget_cannot_be_lowered(tmp_path):
     )
     assert done.returncode != 0
     assert "Refusing to lower" in done.stderr
+
+
+def test_raised_budget_fingerprint_matches_a_rebuilt_config(tmp_path):
+    """A raised budget must hash the same fields build_config hashes.
+
+    config.json accumulates keys after it is first written -- which conditions
+    ran, how both-correct items were sampled -- and hashing those made the
+    on-disk fingerprint unreachable: the rebuilt candidate never covered them,
+    so every worker refused to start on a mismatch.
+    """
+    import json
+    import subprocess
+    import sys
+
+    from icr.prebeliefs import fingerprint_payload
+    from icr.protocol import sha256_json
+
+    stable = {"dataset": "arc_challenge", "generation": {"max_new_tokens": 2048}}
+    config = {
+        **stable,
+        "fingerprint": sha256_json(stable),
+        # Runtime bookkeeping written after the first fingerprint.
+        "completed_revision_conditions": ["none", "true_text"],
+        "both_correct_sampling": {"keep_one_in": 10},
+    }
+    (tmp_path / "config.json").write_text(json.dumps(config), encoding="utf-8")
+
+    subprocess.run(
+        [sys.executable, "scripts/raise_token_budget.py", str(tmp_path), "4096"],
+        check=True,
+        capture_output=True,
+    )
+    raised = json.loads((tmp_path / "config.json").read_text(encoding="utf-8"))
+
+    rebuilt = sha256_json({**stable, "generation": {"max_new_tokens": 4096}})
+    assert raised["fingerprint"] == rebuilt
+    assert raised["fingerprint"] == sha256_json(fingerprint_payload(raised))
+    assert raised["completed_revision_conditions"] == ["none", "true_text"]
