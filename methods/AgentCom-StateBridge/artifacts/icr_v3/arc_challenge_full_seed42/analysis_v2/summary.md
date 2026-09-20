@@ -4,28 +4,28 @@
 
 | Channel | Acc | CR | PR | SI | SRA | FCS | FWS | FollowSelectivity |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| No message | 69.59% | 54.10% | 98.36% | 76.23% | 76.23% | 7.14% | 7.14% | 0.00% |
-| Full Text | 70.82% | 98.36% | 77.05% | 87.70% | 87.70% | 92.86% | 78.57% | 14.29% |
-| StateBridge | 69.59% | 90.16% | 77.05% | 83.61% | 83.61% | 64.29% | 50.00% | 14.29% |
-| LatentMAS | 65.71% | 77.05% | 62.30% | 69.67% | 69.67% | 42.86% | 78.57% | -35.71% |
+| No message | 27.89% | 8.16% | 92.86% | 50.51% | 50.51% | 8.33% | 7.29% | 1.04% |
+| Full Text | 30.27% | 80.61% | 34.69% | 57.65% | 57.65% | 80.21% | 66.67% | 13.54% |
+| StateBridge | 29.93% | 69.39% | 44.90% | 57.14% | 57.14% | 68.75% | 54.17% | 14.58% |
+| LatentMAS | 28.23% | 58.16% | 45.92% | 52.04% | 52.04% | 57.29% | 55.21% | 2.08% |
 
 ## Text − StateBridge
 
 | Metric | Difference | 95% item-cluster bootstrap CI |
 |---|---:|---:|
-| accuracy | 1.22% | [-0.37%, 2.90%] |
-| cr | 8.20% | [0.00%, 16.98%] |
-| pr | 0.00% | [-6.67%, 6.49%] |
-| si | 4.10% | [-0.79%, 9.02%] |
-| sra | 4.10% | [-0.79%, 9.02%] |
-| fcs | 28.57% | [0.00%, 60.00%] |
-| fws | 28.57% | [6.67%, 53.85%] |
-| follow_selectivity | 0.00% | [-30.00%, 30.00%] |
+| accuracy | 0.34% | [-1.48%, 2.23%] |
+| cr | 11.22% | [1.19%, 21.70%] |
+| pr | -10.20% | [-20.00%, 0.00%] |
+| si | 0.51% | [-5.00%, 6.25%] |
+| sra | 0.51% | [-5.00%, 6.25%] |
+| fcs | 11.46% | [1.22%, 22.22%] |
+| fws | 12.50% | [2.13%, 23.00%] |
+| follow_selectivity | -1.04% | [-11.70%, 10.20%] |
 
 ## Evidence-bounded answers
 
-- **High sender influence?** Yes in this artifact: true StateBridge differs from none on 57/490 answers (11.63%, 95% CI [8.46%, 14.96%]).
-- **Positive communication utility?** No on overall accuracy: StateBridge CE is 0.00%, 95% CI [-2.28%, 2.24%].
-- **Sender-belief overwrite behavior?** The observed pattern is consistent with aggressive sender following: FCS=64.29%, FWS=50.00%, FollowSelectivity=14.29%. This is a behavioral description of this run, not yet a cross-seed causal generalization.
+- **High sender influence?** Yes in this artifact: true StateBridge differs from none on 127/588 answers (21.60%, 95% CI [16.86%, 26.60%]).
+- **Positive communication utility?** No on overall accuracy: StateBridge CE is 2.04%, 95% CI [-0.71%, 4.74%].
+- **Sender-belief overwrite behavior?** The observed pattern is consistent with aggressive sender following: FCS=68.75%, FWS=54.17%, FollowSelectivity=14.58%. This is a behavioral description of this run, not yet a cross-seed causal generalization.
 
-The correction subset contains 61 directional cases and the destruction subset contains 61, so cross-seed replication remains necessary.
+The correction subset contains 98 directional cases and the destruction subset contains 98, so cross-seed replication remains necessary.

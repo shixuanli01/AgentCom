@@ -3,55 +3,55 @@
     "cluster": "item_id",
     "directions_per_cluster": 2,
     "iterations": 10000,
-    "seed": 20260919
+    "seed": 20260920
   },
   "causal_influence": {
     "latentmas": {
       "true_vs_none": {
         "all": {
           "ci95": [
-            0.1173070987654321,
-            0.19057377049180327
+            0.17534572557471265,
+            0.26881720430107525
           ],
-          "denominator": 490,
-          "numerator": 75,
-          "point_estimate": 0.15306122448979592
+          "denominator": 588,
+          "numerator": 130,
+          "point_estimate": 0.22108843537414966
         },
         "both_correct": {
           "ci95": [
             0.0,
-            0.015789473684210527
+            0.10346623563218364
           ],
-          "denominator": 208,
-          "numerator": 1,
-          "point_estimate": 0.004807692307692308
+          "denominator": 64,
+          "numerator": 3,
+          "point_estimate": 0.046875
         },
         "both_wrong": {
           "ci95": [
-            0.1304291213768116,
-            0.273972602739726
+            0.02755757874015748,
+            0.10714285714285714
           ],
-          "denominator": 160,
-          "numerator": 32,
-          "point_estimate": 0.2
+          "denominator": 328,
+          "numerator": 21,
+          "point_estimate": 0.06402439024390244
         },
         "correction_opportunity": {
           "ci95": [
-            0.21153846153846154,
-            0.45098039215686275
+            0.475,
+            0.6714532019704429
           ],
-          "denominator": 61,
-          "numerator": 20,
-          "point_estimate": 0.32786885245901637
+          "denominator": 98,
+          "numerator": 56,
+          "point_estimate": 0.5714285714285714
         },
         "destruction_risk": {
           "ci95": [
-            0.24285714285714285,
-            0.48333333333333334
+            0.40383771929824563,
+            0.6195652173913043
           ],
-          "denominator": 61,
-          "numerator": 22,
-          "point_estimate": 0.36065573770491804
+          "denominator": 98,
+          "numerator": 50,
+          "point_estimate": 0.5102040816326531
         }
       }
     },
@@ -59,48 +59,48 @@
       "true_vs_none": {
         "all": {
           "ci95": [
-            0.08461538461538462,
-            0.14957308743169398
+            0.1686046511627907,
+            0.2659583422881295
           ],
-          "denominator": 490,
-          "numerator": 57,
-          "point_estimate": 0.11632653061224489
+          "denominator": 588,
+          "numerator": 127,
+          "point_estimate": 0.21598639455782312
         },
         "both_correct": {
           "ci95": [
-            0.0,
-            0.0
+            0.017857142857142856,
+            0.14814814814814814
           ],
-          "denominator": 208,
-          "numerator": 0,
-          "point_estimate": 0.0
+          "denominator": 64,
+          "numerator": 5,
+          "point_estimate": 0.078125
         },
         "both_wrong": {
           "ci95": [
-            0.07432432432432433,
-            0.18133116883116865
+            0.020833333333333332,
+            0.07621951219512195
           ],
-          "denominator": 160,
-          "numerator": 20,
-          "point_estimate": 0.125
+          "denominator": 328,
+          "numerator": 15,
+          "point_estimate": 0.04573170731707317
         },
         "correction_opportunity": {
           "ci95": [
-            0.2727272727272727,
-            0.5217391304347826
+            0.5,
+            0.72
           ],
-          "denominator": 61,
-          "numerator": 24,
-          "point_estimate": 0.39344262295081966
+          "denominator": 98,
+          "numerator": 60,
+          "point_estimate": 0.6122448979591837
         },
         "destruction_risk": {
           "ci95": [
-            0.11475409836065574,
-            0.3230769230769231
+            0.36248922413793105,
+            0.5980392156862745
           ],
-          "denominator": 61,
-          "numerator": 13,
-          "point_estimate": 0.21311475409836064
+          "denominator": 98,
+          "numerator": 47,
+          "point_estimate": 0.47959183673469385
         }
       }
     },
@@ -108,48 +108,48 @@
       "true_vs_none": {
         "all": {
           "ci95": [
-            0.09003735632183908,
-            0.1609856510015408
+            0.20875420875420875,
+            0.3161555859457184
           ],
-          "denominator": 490,
-          "numerator": 61,
-          "point_estimate": 0.12448979591836734
+          "denominator": 588,
+          "numerator": 154,
+          "point_estimate": 0.2619047619047619
         },
         "both_correct": {
           "ci95": [
-            0.0,
-            0.0
+            0.013513513513513514,
+            0.1282051282051282
           ],
-          "denominator": 208,
-          "numerator": 0,
-          "point_estimate": 0.0
+          "denominator": 64,
+          "numerator": 4,
+          "point_estimate": 0.0625
         },
         "both_wrong": {
           "ci95": [
-            0.075,
-            0.19307211971197116
+            0.025,
+            0.11224674652469681
           ],
-          "denominator": 160,
+          "denominator": 328,
           "numerator": 21,
-          "point_estimate": 0.13125
+          "point_estimate": 0.06402439024390244
         },
         "correction_opportunity": {
           "ci95": [
-            0.31666666666666665,
-            0.5686359026369167
+            0.6320754716981132,
+            0.8301886792452831
           ],
-          "denominator": 61,
-          "numerator": 27,
-          "point_estimate": 0.4426229508196721
+          "denominator": 98,
+          "numerator": 72,
+          "point_estimate": 0.7346938775510204
         },
         "destruction_risk": {
           "ci95": [
-            0.11428571428571428,
-            0.32144370460048405
+            0.4673913043478261,
+            0.6956628303495309
           ],
-          "denominator": 61,
-          "numerator": 13,
-          "point_estimate": 0.21311475409836064
+          "denominator": 98,
+          "numerator": 57,
+          "point_estimate": 0.5816326530612245
         }
       }
     }
@@ -158,328 +158,328 @@
     "latentmas_ce": {
       "accuracy": {
         "ci95": [
-          -0.06862850290330723,
-          -0.010000000000000009
+          -0.025399659863945594,
+          0.0327426881246325
         ],
-        "point_estimate": -0.038775510204081653
+        "point_estimate": 0.003401360544217691
       },
       "cr": {
         "ci95": [
-          0.0980187908496732,
-          0.36363636363636365
+          0.39215023847376784,
+          0.6078431372549019
         ],
-        "point_estimate": 0.2295081967213114
+        "point_estimate": 0.5
       },
       "pr": {
         "ci95": [
-          -0.4833333333333333,
-          -0.24285714285714288
+          -0.5918367346938775,
+          -0.34693877551020413
         ],
-        "point_estimate": -0.360655737704918
+        "point_estimate": -0.46938775510204084
       },
       "scr": {
         "ci95": [
-          -0.015789473684210575,
-          0.0
+          -0.0357142857142857,
+          0.0714285714285714
         ],
-        "point_estimate": -0.004807692307692291
+        "point_estimate": 0.015625
       },
       "si": {
         "ci95": [
-          -0.15672007609013766,
-          0.024193548387096753
+          -0.06770833333333331,
+          0.09722222222222227
         ],
-        "point_estimate": -0.06557377049180335
+        "point_estimate": 0.015306122448979553
       },
       "sr": {
         "ci95": [
-          -0.11971830985915494,
-          -0.007243788819875818
+          -0.02201373473917869,
+          0.008571428571428572
         ],
-        "point_estimate": -0.0625
+        "point_estimate": -0.006097560975609756
       },
       "sra": {
         "ci95": [
-          -0.15672007609013755,
-          0.024193548387096753
+          -0.06770833333333331,
+          0.09722222222222221
         ],
-        "point_estimate": -0.06557377049180324
+        "point_estimate": 0.015306122448979664
       }
     },
     "statebridge_ce": {
       "accuracy": {
         "ci95": [
-          -0.022821576763485507,
-          0.02244897959183667
+          -0.00709219858156024,
+          0.04738562091503268
         ],
-        "point_estimate": 0.0
+        "point_estimate": 0.020408163265306145
       },
       "cr": {
         "ci95": [
-          0.2321428571428571,
-          0.4915254237288136
+          0.5,
+          0.72
         ],
-        "point_estimate": 0.360655737704918
+        "point_estimate": 0.6122448979591837
       },
       "pr": {
         "ci95": [
-          -0.32307692307692304,
-          -0.11475409836065575
+          -0.5980392156862745,
+          -0.3624892241379311
         ],
-        "point_estimate": -0.21311475409836067
+        "point_estimate": -0.4795918367346939
       },
       "scr": {
         "ci95": [
-          0.0,
-          0.0
+          -0.018518518518518493,
+          0.11764705882352944
         ],
-        "point_estimate": 0.0
+        "point_estimate": 0.046875
       },
       "si": {
         "ci95": [
-          0.008928571428571397,
-          0.1389002732240436
+          -0.011904761904761918,
+          0.14225677339901446
         ],
-        "point_estimate": 0.07377049180327866
+        "point_estimate": 0.0663265306122448
       },
       "sr": {
         "ci95": [
-          -0.10493827160493827,
-          -0.012500000000000011
+          -0.025362318840579712,
+          -0.0027624309392265192
         ],
-        "point_estimate": -0.056249999999999994
+        "point_estimate": -0.012195121951219513
       },
       "sra": {
         "ci95": [
-          0.008928571428571397,
-          0.1389002732240436
+          -0.011904761904761864,
+          0.14225677339901457
         ],
-        "point_estimate": 0.07377049180327877
+        "point_estimate": 0.06632653061224492
       }
     },
     "text_ce": {
       "accuracy": {
         "ci95": [
-          -0.0065502183406113135,
-          0.03191489361702127
+          -0.001650165016501643,
+          0.04892966360856266
         ],
-        "point_estimate": 0.01224489795918371
+        "point_estimate": 0.023809523809523836
       },
       "cr": {
         "ci95": [
-          0.31666666666666665,
-          0.5686359026369167
+          0.6222222222222222,
+          0.8214285714285714
         ],
-        "point_estimate": 0.44262295081967207
+        "point_estimate": 0.7244897959183674
       },
       "pr": {
         "ci95": [
-          -0.3214437046004842,
-          -0.11428571428571432
+          -0.6956628303495311,
+          -0.4673913043478261
         ],
-        "point_estimate": -0.21311475409836067
+        "point_estimate": -0.5816326530612246
       },
       "scr": {
         "ci95": [
-          0.0,
-          0.0
+          0.013513513513513487,
+          0.1282051282051282
         ],
-        "point_estimate": 0.0
+        "point_estimate": 0.0625
       },
       "si": {
         "ci95": [
-          0.06363636363636371,
-          0.17000000000000004
+          0.0,
+          0.14204545454545459
         ],
-        "point_estimate": 0.11475409836065564
+        "point_estimate": 0.0714285714285714
       },
       "sr": {
         "ci95": [
-          -0.08783783783783784,
-          -0.013333333333333336
+          -0.025362318840579712,
+          -0.0027624309392265192
         ],
-        "point_estimate": -0.04999999999999999
+        "point_estimate": -0.012195121951219513
       },
       "sra": {
         "ci95": [
-          0.0636363636363636,
-          0.17000000000000004
+          0.0,
+          0.14204545454545459
         ],
-        "point_estimate": 0.11475409836065575
+        "point_estimate": 0.07142857142857151
       }
     }
   },
   "conditions": {
     "none": {
-      "accuracy": 0.6959183673469388,
-      "accuracy_denominator": 490,
-      "accuracy_numerator": 341,
-      "answer_change_rate": 0.22244897959183674,
-      "cr": 0.5409836065573771,
-      "cr_denominator": 61,
-      "cr_numerator": 33,
-      "destructions": 1,
-      "directional_examples": 490,
-      "fcs": 0.07142857142857142,
-      "fcs_denominator": 14,
-      "fcs_numerator": 1,
-      "follow_selectivity": 0.0,
-      "fws": 0.07142857142857142,
-      "fws_denominator": 14,
-      "fws_numerator": 1,
-      "invalid_outputs": 12,
-      "mean_generated_tokens": 688.3122448979592,
-      "mean_input_tokens": 766.9224489795919,
-      "mean_latency_seconds": 16.12070793375677,
+      "accuracy": 0.2789115646258503,
+      "accuracy_denominator": 588,
+      "accuracy_numerator": 164,
+      "answer_change_rate": 0.04931972789115646,
+      "cr": 0.08163265306122448,
+      "cr_denominator": 98,
+      "cr_numerator": 8,
+      "destructions": 11,
+      "directional_examples": 588,
+      "fcs": 0.08333333333333333,
+      "fcs_denominator": 96,
+      "fcs_numerator": 8,
+      "follow_selectivity": 0.010416666666666657,
+      "fws": 0.07291666666666667,
+      "fws_denominator": 96,
+      "fws_numerator": 7,
+      "invalid_outputs": 4,
+      "mean_generated_tokens": 807.469387755102,
+      "mean_input_tokens": 709.6734693877551,
+      "mean_latency_seconds": 20.726062739381984,
       "mean_payload_bytes": 0.0,
       "mean_payload_states": null,
       "mean_payload_tokens": null,
-      "net_correction": 72,
-      "pr": 0.9836065573770492,
-      "pr_denominator": 61,
-      "pr_numerator": 60,
-      "rescues": 73,
-      "scr": 1.0,
-      "scr_denominator": 208,
-      "scr_numerator": 208,
-      "si": 0.7622950819672132,
-      "sr": 0.25,
-      "sr_denominator": 160,
-      "sr_numerator": 40,
-      "sra": 0.7622950819672131,
-      "sra_denominator": 122,
-      "sra_numerator": 93,
-      "total_generation_seconds": 7899.146887540817,
-      "total_generations": 490
+      "net_correction": 2,
+      "pr": 0.9285714285714286,
+      "pr_denominator": 98,
+      "pr_numerator": 91,
+      "rescues": 13,
+      "scr": 0.9375,
+      "scr_denominator": 64,
+      "scr_numerator": 60,
+      "si": 0.5051020408163266,
+      "sr": 0.01524390243902439,
+      "sr_denominator": 328,
+      "sr_numerator": 5,
+      "sra": 0.5051020408163265,
+      "sra_denominator": 196,
+      "sra_numerator": 99,
+      "total_generation_seconds": 12186.924890756607,
+      "total_generations": 588
     },
     "true_latentmas": {
-      "accuracy": 0.6571428571428571,
-      "accuracy_denominator": 490,
-      "accuracy_numerator": 322,
-      "answer_change_rate": 0.28775510204081634,
-      "cr": 0.7704918032786885,
-      "cr_denominator": 61,
-      "cr_numerator": 47,
-      "destructions": 24,
-      "directional_examples": 490,
-      "fcs": 0.42857142857142855,
-      "fcs_denominator": 14,
-      "fcs_numerator": 6,
-      "follow_selectivity": -0.35714285714285715,
-      "fws": 0.7857142857142857,
-      "fws_denominator": 14,
-      "fws_numerator": 11,
-      "invalid_outputs": 16,
-      "mean_generated_tokens": 506.73673469387757,
-      "mean_input_tokens": 773.9224489795919,
-      "mean_latency_seconds": 13.168586593744706,
+      "accuracy": 0.282312925170068,
+      "accuracy_denominator": 588,
+      "accuracy_numerator": 166,
+      "answer_change_rate": 0.21598639455782312,
+      "cr": 0.5816326530612245,
+      "cr_denominator": 98,
+      "cr_numerator": 57,
+      "destructions": 56,
+      "directional_examples": 588,
+      "fcs": 0.5729166666666666,
+      "fcs_denominator": 96,
+      "fcs_numerator": 55,
+      "follow_selectivity": 0.02083333333333326,
+      "fws": 0.5520833333333334,
+      "fws_denominator": 96,
+      "fws_numerator": 53,
+      "invalid_outputs": 2,
+      "mean_generated_tokens": 570.0442176870748,
+      "mean_input_tokens": 716.6734693877551,
+      "mean_latency_seconds": 14.685509046324256,
       "mean_payload_bytes": 0.0,
       "mean_payload_states": null,
       "mean_payload_tokens": null,
-      "net_correction": 53,
-      "pr": 0.6229508196721312,
-      "pr_denominator": 61,
-      "pr_numerator": 38,
-      "rescues": 77,
-      "scr": 0.9951923076923077,
-      "scr_denominator": 208,
-      "scr_numerator": 207,
-      "si": 0.6967213114754098,
-      "sr": 0.1875,
-      "sr_denominator": 160,
-      "sr_numerator": 30,
-      "sra": 0.6967213114754098,
-      "sra_denominator": 122,
-      "sra_numerator": 85,
-      "total_generation_seconds": 6452.607430934906,
-      "total_generations": 490
+      "net_correction": 4,
+      "pr": 0.45918367346938777,
+      "pr_denominator": 98,
+      "pr_numerator": 45,
+      "rescues": 60,
+      "scr": 0.953125,
+      "scr_denominator": 64,
+      "scr_numerator": 61,
+      "si": 0.5204081632653061,
+      "sr": 0.009146341463414634,
+      "sr_denominator": 328,
+      "sr_numerator": 3,
+      "sra": 0.5204081632653061,
+      "sra_denominator": 196,
+      "sra_numerator": 102,
+      "total_generation_seconds": 8635.079319238663,
+      "total_generations": 588
     },
     "true_statebridge": {
-      "accuracy": 0.6959183673469388,
-      "accuracy_denominator": 490,
-      "accuracy_numerator": 341,
-      "answer_change_rate": 0.2673469387755102,
-      "cr": 0.9016393442622951,
-      "cr_denominator": 61,
-      "cr_numerator": 55,
-      "destructions": 14,
-      "directional_examples": 490,
-      "fcs": 0.6428571428571429,
-      "fcs_denominator": 14,
-      "fcs_numerator": 9,
-      "follow_selectivity": 0.1428571428571429,
-      "fws": 0.5,
-      "fws_denominator": 14,
-      "fws_numerator": 7,
-      "invalid_outputs": 13,
-      "mean_generated_tokens": 612.265306122449,
-      "mean_input_tokens": 837.4040816326531,
-      "mean_latency_seconds": 14.263313835494372,
-      "mean_payload_bytes": 325025.9591836735,
-      "mean_payload_states": 63.481632653061226,
+      "accuracy": 0.29931972789115646,
+      "accuracy_denominator": 588,
+      "accuracy_numerator": 176,
+      "answer_change_rate": 0.2261904761904762,
+      "cr": 0.6938775510204082,
+      "cr_denominator": 98,
+      "cr_numerator": 68,
+      "destructions": 55,
+      "directional_examples": 588,
+      "fcs": 0.6875,
+      "fcs_denominator": 96,
+      "fcs_numerator": 66,
+      "follow_selectivity": 0.14583333333333337,
+      "fws": 0.5416666666666666,
+      "fws_denominator": 96,
+      "fws_numerator": 52,
+      "invalid_outputs": 2,
+      "mean_generated_tokens": 773.6190476190476,
+      "mean_input_tokens": 780.6734693877551,
+      "mean_latency_seconds": 16.295760086199053,
+      "mean_payload_bytes": 327680.0,
+      "mean_payload_states": 64.0,
       "mean_payload_tokens": null,
-      "net_correction": 72,
-      "pr": 0.7704918032786885,
-      "pr_denominator": 61,
-      "pr_numerator": 47,
-      "rescues": 86,
-      "scr": 1.0,
-      "scr_denominator": 208,
-      "scr_numerator": 208,
-      "si": 0.8360655737704918,
-      "sr": 0.19375,
-      "sr_denominator": 160,
-      "sr_numerator": 31,
-      "sra": 0.8360655737704918,
-      "sra_denominator": 122,
-      "sra_numerator": 102,
-      "total_generation_seconds": 6989.023779392242,
-      "total_generations": 490
+      "net_correction": 14,
+      "pr": 0.4489795918367347,
+      "pr_denominator": 98,
+      "pr_numerator": 44,
+      "rescues": 69,
+      "scr": 0.984375,
+      "scr_denominator": 64,
+      "scr_numerator": 63,
+      "si": 0.5714285714285714,
+      "sr": 0.003048780487804878,
+      "sr_denominator": 328,
+      "sr_numerator": 1,
+      "sra": 0.5714285714285714,
+      "sra_denominator": 196,
+      "sra_numerator": 112,
+      "total_generation_seconds": 9581.906930685043,
+      "total_generations": 588
     },
     "true_text": {
-      "accuracy": 0.7081632653061225,
-      "accuracy_denominator": 490,
-      "accuracy_numerator": 347,
-      "answer_change_rate": 0.2816326530612245,
-      "cr": 0.9836065573770492,
-      "cr_denominator": 61,
-      "cr_numerator": 60,
-      "destructions": 14,
-      "directional_examples": 490,
-      "fcs": 0.9285714285714286,
-      "fcs_denominator": 14,
-      "fcs_numerator": 13,
-      "follow_selectivity": 0.1428571428571429,
-      "fws": 0.7857142857142857,
-      "fws_denominator": 14,
-      "fws_numerator": 11,
-      "invalid_outputs": 11,
-      "mean_generated_tokens": 623.761224489796,
-      "mean_input_tokens": 1308.395918367347,
-      "mean_latency_seconds": 15.125446449493875,
-      "mean_payload_bytes": 2434.581632653061,
+      "accuracy": 0.30272108843537415,
+      "accuracy_denominator": 588,
+      "accuracy_numerator": 178,
+      "answer_change_rate": 0.27040816326530615,
+      "cr": 0.8061224489795918,
+      "cr_denominator": 98,
+      "cr_numerator": 79,
+      "destructions": 64,
+      "directional_examples": 588,
+      "fcs": 0.8020833333333334,
+      "fcs_denominator": 96,
+      "fcs_numerator": 77,
+      "follow_selectivity": 0.13541666666666674,
+      "fws": 0.6666666666666666,
+      "fws_denominator": 96,
+      "fws_numerator": 64,
+      "invalid_outputs": 1,
+      "mean_generated_tokens": 760.0595238095239,
+      "mean_input_tokens": 1195.812925170068,
+      "mean_latency_seconds": 16.39709815159947,
+      "mean_payload_bytes": 2123.316326530612,
       "mean_payload_states": null,
-      "mean_payload_tokens": 533.6346938775511,
-      "net_correction": 78,
-      "pr": 0.7704918032786885,
-      "pr_denominator": 61,
-      "pr_numerator": 47,
-      "rescues": 92,
+      "mean_payload_tokens": 478.2142857142857,
+      "net_correction": 16,
+      "pr": 0.3469387755102041,
+      "pr_denominator": 98,
+      "pr_numerator": 34,
+      "rescues": 80,
       "scr": 1.0,
-      "scr_denominator": 208,
-      "scr_numerator": 208,
-      "si": 0.8770491803278688,
-      "sr": 0.2,
-      "sr_denominator": 160,
-      "sr_numerator": 32,
-      "sra": 0.8770491803278688,
-      "sra_denominator": 122,
-      "sra_numerator": 107,
-      "total_generation_seconds": 7411.468760251999,
-      "total_generations": 490
+      "scr_denominator": 64,
+      "scr_numerator": 64,
+      "si": 0.576530612244898,
+      "sr": 0.003048780487804878,
+      "sr_denominator": 328,
+      "sr_numerator": 1,
+      "sra": 0.576530612244898,
+      "sra_denominator": 196,
+      "sra_numerator": 113,
+      "total_generation_seconds": 9641.493713140488,
+      "total_generations": 588
     }
   },
-  "directional_records": 1960,
+  "directional_records": 2352,
   "evidence_pairwise": {},
   "evidence_payload_audit": null,
   "item_count": 1165,
@@ -495,59 +495,59 @@
   "text_minus_statebridge": {
     "accuracy": {
       "ci95": [
-        -0.0037181682747866396,
-        0.02904564315352698
+        -0.014814814814814836,
+        0.022336769759450203
       ],
-      "point_estimate": 0.01224489795918371
+      "point_estimate": 0.003401360544217691
     },
     "cr": {
       "ci95": [
-        0.0,
-        0.16981132075471694
+        0.011904761904761973,
+        0.21698113207547176
       ],
-      "point_estimate": 0.08196721311475408
+      "point_estimate": 0.11224489795918369
     },
     "fcs": {
       "ci95": [
-        0.0,
-        0.6000000000000001
+        0.012195121951219523,
+        0.2222222222222222
       ],
-      "point_estimate": 0.2857142857142857
+      "point_estimate": 0.11458333333333337
     },
     "follow_selectivity": {
       "ci95": [
-        -0.30000000000000004,
-        0.30000000000000004
+        -0.11702127659574457,
+        0.10204081632653056
       ],
-      "point_estimate": 0.0
+      "point_estimate": -0.01041666666666663
     },
     "fws": {
       "ci95": [
-        0.06666666666666665,
-        0.5384615384615385
+        0.021276595744680882,
+        0.22999999999999998
       ],
-      "point_estimate": 0.2857142857142857
+      "point_estimate": 0.125
     },
     "pr": {
       "ci95": [
-        -0.06666666666666665,
-        0.06494212309429692
+        -0.2,
+        0.0
       ],
-      "point_estimate": 0.0
+      "point_estimate": -0.10204081632653061
     },
     "si": {
       "ci95": [
-        -0.007936507936507908,
-        0.0901639344262295
+        -0.050000000000000044,
+        0.0625
       ],
-      "point_estimate": 0.040983606557376984
+      "point_estimate": 0.005102040816326592
     },
     "sra": {
       "ci95": [
-        -0.007936507936507908,
-        0.0901639344262295
+        -0.050000000000000044,
+        0.0625
       ],
-      "point_estimate": 0.040983606557376984
+      "point_estimate": 0.005102040816326592
     }
   }
 }

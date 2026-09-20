@@ -2,9 +2,10 @@
   "answer_parser_version": "icr.parsing_v3@ICR-V3",
   "benchmark": "arc_challenge",
   "both_correct_sampling": {
-    "keep_one_in": 10,
+    "keep_one_in": 1,
     "label_free": true,
-    "rule": "item_id % keep_one_in == 0"
+    "rule": "item_id % keep_one_in == 0",
+    "skip_all_correct_items": true
   },
   "completed_revision_conditions": [
     "none",
