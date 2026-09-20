@@ -65,7 +65,7 @@ while true; do
   next=$((budget * 2))
   [[ "$next" -gt "$CEILING" ]] && next="$CEILING"
   log ">>> $TASK pass $pass: raising $budget -> $next"
-  bash scripts/rerun_truncated.sh "$TASK" "$next" "$WORKERS" >> "$LOG" 2>&1
+  PHASE1_ONLY="${PHASE1_ONLY:-}" bash scripts/rerun_truncated.sh "$TASK" "$next" "$WORKERS" >> "$LOG" 2>&1
 done
 
 "$PY" scripts/phase1_yield.py artifacts/icr_v3/*_full_seed42 | tee -a "$LOG"

@@ -14,6 +14,11 @@
 # the budget was merely tight. An existing root's config is authoritative, so
 # raising it needs no source edit and cannot drift from what the runners rebuild.
 #
+# Set PHASE1_ONLY to stop after the beliefs. A revision written against a
+# truncated prebelief measures whether communication can finish a cut-off
+# sentence, not whether it can correct faulty reasoning, so phase 1 has to be
+# clean before any of phase 2 is worth generating.
+#
 # Usage:
 #   bash scripts/rerun_truncated.sh TASK [NEW_BUDGET] [WORKERS_PER_GPU]
 set -euo pipefail
@@ -88,6 +93,22 @@ log "$TASK: regenerating truncated prebeliefs on $WORLD workers"
 launch icr.prebeliefs --task "$TASK" --replication-id seed_pair_00 || \
   log "$TASK: some prebelief workers failed; rerun resumes"
 "$PY" -m icr.merge --artifact-root "$ROOT" --phase prebeliefs --require-complete >> "$LOG" 2>&1
+
+if [[ -n "${PHASE1_ONLY:-}" ]]; then
+  remaining=$("$PY" - "$ROOT" <<'PYEOF'
+import json, sys
+from pathlib import Path
+root = Path(sys.argv[1])
+print(sum(
+    1 for p in root.glob("prebeliefs/rank*/records/item_*.json")
+    if not json.loads(p.read_text(encoding="utf-8")).get("hit_eos", True)
+))
+PYEOF
+)
+  log "$TASK: phase 1 repaired at budget $BUDGET; still truncated: $remaining"
+  log "$TASK: stopping before revisions (PHASE1_ONLY)"
+  exit 0
+fi
 
 log "$TASK: regenerating revisions"
 launch icr.revisions --conditions "$CONDITIONS" --latent-steps 10 \

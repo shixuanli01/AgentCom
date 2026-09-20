@@ -17,15 +17,22 @@
   "dataset_sha256": "ddee8dc64d3b2a1e5061c409c68d626109237640009168838a038db29efe802c",
   "excluded_item_ids": [],
   "exclusion_rule": null,
-  "fingerprint": "96d887fc74fa20233ad0dea5fecb234e265ffe9fb994858e4c3713933ca0446d",
+  "fingerprint": "355c5073cd75bb6fba78bad536a8081cca7855c7263452fe59411417cc2b8f52",
   "generation": {
     "do_sample": true,
-    "max_new_tokens": 8192,
+    "max_new_tokens": 16384,
     "temperature": 0.6,
     "top_k": null,
     "top_p": 0.95
   },
   "global_seed": 42,
+  "max_new_tokens_history": [
+    {
+      "from": 8192,
+      "reason": "truncated generations never stated an answer and were scored wrong",
+      "to": 16384
+    }
+  ],
   "model": "Qwen/Qwen3-4B",
   "other_mapping_offset": 137,
   "protocol": "ICR-V3",
@@ -371,5 +378,8 @@
     "selection_method": "last_k",
     "snap_ratio": 0.3,
     "use_hook": true
-  }
+  },
+  "superseded_fingerprints": [
+    "96d887fc74fa20233ad0dea5fecb234e265ffe9fb994858e4c3713933ca0446d"
+  ]
 }

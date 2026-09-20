@@ -25,10 +25,10 @@
     1042
   ],
   "exclusion_rule": "arc_challenge: trailing option count != 4 (label-free, pre-registered)",
-  "fingerprint": "2e3f2d9ad36a4b9bdc6de44ddd4542d21736627976faa6cb300a0024d0a3b4fd",
+  "fingerprint": "6f992a8ecbda97101e4902c39ef710f195315dac31f18e3cbc04f30f40e537a4",
   "generation": {
     "do_sample": true,
-    "max_new_tokens": 4096,
+    "max_new_tokens": 16384,
     "temperature": 0.6,
     "top_k": null,
     "top_p": 0.95
@@ -39,6 +39,16 @@
       "from": 2048,
       "reason": "truncated generations never stated an answer and were scored wrong",
       "to": 4096
+    },
+    {
+      "from": 4096,
+      "reason": "truncated generations never stated an answer and were scored wrong",
+      "to": 8192
+    },
+    {
+      "from": 8192,
+      "reason": "truncated generations never stated an answer and were scored wrong",
+      "to": 16384
     }
   ],
   "model": "Qwen/Qwen3-4B",
@@ -1253,6 +1263,8 @@
     "use_hook": true
   },
   "superseded_fingerprints": [
-    "d93cc43d9029c74276e8561d8efdea57eac309a249fb8aff68ede869799df27a"
+    "d93cc43d9029c74276e8561d8efdea57eac309a249fb8aff68ede869799df27a",
+    "2e3f2d9ad36a4b9bdc6de44ddd4542d21736627976faa6cb300a0024d0a3b4fd",
+    "4acc0c993442d54cbea67385410ca854e20415a164531c40d62a07053a601d99"
   ]
 }

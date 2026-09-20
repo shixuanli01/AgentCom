@@ -16,7 +16,7 @@ from icr.protocol import atomic_write_json
 def read_jsonl(path: Path) -> list[dict[str, Any]]:
     if not path.exists():
         return []
-    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line]
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").split("\n") if line]
 
 
 def paired_comparison(
