@@ -10,6 +10,10 @@ CONDITIONS = (
     "true_evidence",
     "self_evidence",
     "other_evidence",
+    # EGR V2: sentence-level, symmetric claim suppression.
+    "true_evidence_v2",
+    "self_evidence_v2",
+    "other_evidence_v2",
     "true_statebridge",
     "self_statebridge",
     "other_statebridge",

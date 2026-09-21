@@ -144,6 +144,74 @@ class EvidenceCommunicationChannel(CommunicationChannel):
         )
 
 
+class EvidenceV2CommunicationChannel(CommunicationChannel):
+    """Sentence-level claim suppression (EGR V2).
+
+    V1 removed the formal answer span, which on a benchmark whose options are
+    noun phrases left the claim standing in prose. V2 removes whole sentences
+    that name any option, symmetrically: removing only the chosen option's
+    sentences made the answer readable by elimination on 52% of packets.
+
+    A packet emptied by the filter falls back to the V1 packet and stays in the
+    population rather than being dropped.
+    """
+
+    def __init__(self, condition: str, source: str) -> None:
+        self.condition = condition
+        self.source = source
+
+    def build_message(self, sender_record, receiver_record, context):
+        from egr.evidence import build_evidence_packet
+        from egr.evidence_v2 import build_evidence_packet_v2
+
+        if self.source == "true":
+            source = sender_record
+        elif self.source == "self":
+            source = receiver_record
+        elif self.source == "other":
+            source = context["other_sender_record"]
+        else:
+            raise ValueError(f"Unknown evidence source: {self.source}")
+
+        tokenizer = context["tokenizer"]
+
+        def token_count(value: str) -> int:
+            return len(tokenizer(value, add_special_tokens=False)["input_ids"])
+
+        metadata = context["benchmark_metadata_by_item"][int(source["item_id"])]
+        packet = build_evidence_packet_v2(
+            source, metadata, token_counter=token_count, policy="all_options"
+        )
+        fell_back = False
+        if not str(packet["evidence_packet"]).strip():
+            packet = build_evidence_packet(source, metadata, token_counter=token_count)
+            fell_back = True
+        text = str(packet["evidence_packet"])
+        return CommunicationMessage(
+            condition=self.condition,
+            source_item_id=int(source["item_id"]),
+            source_agent_id=str(source["agent_id"]),
+            text=text,
+            diagnostics={
+                "modality": "sentence_claim_suppressed_evidence_v2",
+                "policy": "all_options",
+                "fell_back_to_v1": fell_back,
+                "tokens": int(packet["evidence_token_count"]),
+                "original_tokens": int(packet["original_token_count"]),
+                "characters": len(text),
+                "payload_bytes": len(text.encode("utf-8")),
+                "payload_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+                "sentences_total": packet.get("sentences_total"),
+                "sentences_removed": packet.get("sentences_removed"),
+                "removal_reasons": packet.get("removal_reasons"),
+                "options_still_mentioned": packet.get("options_still_mentioned"),
+                "sender_answer_text_present_after_filter": bool(
+                    packet["sender_answer_text_present_after_filter"]
+                ),
+            },
+        )
+
+
 class StateBridgeCommunicationChannel(CommunicationChannel):
     def __init__(self, condition: str, source: str) -> None:
         self.condition = condition
@@ -258,6 +326,10 @@ def make_channel(condition: str) -> CommunicationChannel:
         return NoCommunicationChannel()
     if condition.endswith("_text"):
         return TextCommunicationChannel(condition, condition.removesuffix("_text"))
+    if condition.endswith("_evidence_v2"):
+        return EvidenceV2CommunicationChannel(
+            condition, condition.removesuffix("_evidence_v2")
+        )
     if condition.endswith("_evidence"):
         return EvidenceCommunicationChannel(
             condition, condition.removesuffix("_evidence")
