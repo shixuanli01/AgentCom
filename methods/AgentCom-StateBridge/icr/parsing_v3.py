@@ -35,14 +35,20 @@ _BARE_LABEL_RE = re.compile(r"^([A-Za-z])$")
 _LEADING_LABEL_RE = re.compile(r"^\(?\s*([A-Za-z])\s*[)\].:,\-–]")
 
 
-def iter_boxed(text: str) -> list[str]:
-    """Return every ``\\boxed{...}`` payload, honouring nested braces."""
-    payloads: list[str] = []
+def iter_boxed_spans(text: str) -> list[tuple[int, int, str]]:
+    """Every ``\\boxed{...}`` as ``(start, end, payload)`` over ``text``.
+
+    ``start`` indexes the backslash and ``end`` is one past the closing brace,
+    so ``text[start:end]`` is the whole macro. CR-DNC needs the span, not just
+    the payload, because it rewrites the final answer in place and has to prove
+    every other character is untouched.
+    """
+    spans: list[tuple[int, int, str]] = []
     cursor = 0
     while True:
         start = text.find(_BOXED_TOKEN, cursor)
         if start < 0:
-            return payloads
+            return spans
         index = start + len(_BOXED_TOKEN)
         while index < len(text) and text[index].isspace():
             index += 1
@@ -60,11 +66,17 @@ def iter_boxed(text: str) -> list[str]:
                     break
             end += 1
         if depth == 0 and end < len(text):
-            payloads.append(text[index + 1 : end])
+            spans.append((start, end + 1, text[index + 1 : end]))
             cursor = end + 1
         else:
-            payloads.append(text[index + 1 :])
-            return payloads
+            # Unbalanced: the payload runs to the end of the text.
+            spans.append((start, len(text), text[index + 1 :]))
+            return spans
+
+
+def iter_boxed(text: str) -> list[str]:
+    """Return every ``\\boxed{...}`` payload, honouring nested braces."""
+    return [payload for _, _, payload in iter_boxed_spans(text)]
 
 
 def clean_boxed(content: str) -> str:

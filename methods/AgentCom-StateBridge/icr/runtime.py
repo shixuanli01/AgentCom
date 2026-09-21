@@ -147,7 +147,9 @@ class ICRRuntime:
         return hidden, token_ids
 
     @torch.no_grad()
-    def generate_prebelief(self, question: str, *, seed: int) -> dict[str, Any]:
+    def generate_prebelief(
+        self, question: str, *, seed: int, return_sender_states: bool = False
+    ) -> dict[str, Any]:
         reset_rng(seed)
         user_content = independent_solver_prompt(self.task, question)
         prompt = self._render(user_content)
@@ -195,9 +197,38 @@ class ICRRuntime:
             "alignment_seconds": alignment_seconds,
             "statebridge": diagnostic,
         }
+        sender_states = None
+        if return_sender_states:
+            # The [1, K, hidden] tensor StateBridge aligns is discarded inside
+            # _prepare_handoff and never cached, but CR-DNC has to modify it
+            # before alignment. Re-running the same deterministic selection on
+            # the same filtered states reproduces it exactly; selected_indices
+            # is compared against the diagnostic so a divergence cannot pass.
+            from methods.state_bridge import select_hidden_states
+
+            selected_hidden, selected_token_ids, selected_indices = select_hidden_states(
+                filtered_hidden,
+                filtered_ids,
+                k=self.bridge.max_prefix_tokens,
+                method=self.bridge.selection_method,
+                window_size=self.bridge.turning_point_window_size,
+            )
+            if list(selected_indices) != list(diagnostic["selected_indices"]):
+                raise RuntimeError(
+                    "sender-state selection diverged from the handoff diagnostic"
+                )
+            sender_states = {
+                "selected_hidden": selected_hidden.detach().cpu(),
+                "selected_token_ids": selected_token_ids.detach().cpu(),
+                "selected_indices": list(selected_indices),
+                "post_think_length": int(filtered_hidden.shape[1]),
+            }
         del hidden, filtered_hidden, filtered_ids, prompt_embeds
         torch.cuda.empty_cache()
-        return {"record": result, "prefix": prefix.detach().cpu()}
+        out = {"record": result, "prefix": prefix.detach().cpu()}
+        if sender_states is not None:
+            out["sender_states"] = sender_states
+        return out
 
     def build_revision_prompt(
         self,
