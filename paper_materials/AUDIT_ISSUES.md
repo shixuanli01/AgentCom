@@ -8,30 +8,60 @@ evidence would close it.
 
 ## A. Affects main results
 
-### A1 — Non-terminating generations are documented as excluded but are retained and scored wrong — **INCONSISTENT**
+### A1 — Non-terminating generations: the documentation says excluded, the artifacts retain them. **The artifacts are authoritative.**
 
-`excluded_item_ids` is `[]` for MedQA, GSM8K and HumanEval+, and contains only the
-7 pre-registered ARC-Challenge structural exclusions. No exclusion of degenerate
-repetition loops happens anywhere in the pipeline. The commit messages published
-with these artifacts state "what still fails there is a degenerate repetition loop
-and its item is excluded", which the artifacts contradict.
+A phase-1 generation that consumes all of `max_new_tokens` without emitting EOS
+(`hit_eos = false`) never states an answer, so `parsed_answer` is `None` and the
+belief is scored wrong. Nothing is deleted: the item stays in
+`selected_item_ids`, stays in `revisions/merged.jsonl`, and every revision
+record that rests on it is retained and scored. `excluded_item_ids` is `[]` for
+MedQA, GSM8K and HumanEval+ and holds only the 7 pre-registered ARC-Challenge
+structural exclusions.
 
-The effect is not neutral: a non-terminating generation emits no answer, is scored
-wrong, and "wrong" is exactly the condition for entering the correction and
-both-wrong subsets.
+Several commit messages published with these artifacts state "what still fails
+there is a degenerate repetition loop and its item is excluded". **That sentence
+is wrong.** No such exclusion exists anywhere in the pipeline. The papers, the
+protocol documents and any future commit message must describe the retention
+rule instead. The published commit messages cannot be edited; this entry is the
+correction of record.
 
-Contamination (`tables/truncation_contamination.csv`):
+Why it matters, and why the phase-1 rate understates it: a truncated belief is
+scored wrong, and "wrong" is exactly the condition for entering the correction,
+destruction and both-wrong subsets. Correct beliefs, by contrast, mostly land on
+all-correct items that phase 2 skips. So a small phase-1 failure rate is
+amplified in the analysed denominators.
 
-| Dataset | CR denominator touched | PR | SR |
-|---|---:|---:|---:|
-| MedQA | 0.00% | 0.00% | 0.92% |
-| ARC-C | 2.04% | 2.04% | 1.22% |
-| GSM8K | 4.35% | 4.35% | 0.00% |
-| HumanEval+ | **32.14%** | **32.14%** | 21.74% |
+| Dataset | Phase-1 non-termination | CR denominator touched | PR | SR |
+|---|---:|---:|---:|---:|
+| MedQA | 1/900 = 0.11% | 0.00% | 0.00% | 0.92% |
+| ARC-C | 2/3,495 = 0.06% | 2.04% | 2.04% | 1.22% |
+| GSM8K | 2/3,957 = 0.05% | 4.35% | 4.35% | 0.00% |
+| GPQA-D | 13/594 = 2.19% | 10.53% | 10.53% | PENDING |
+| HumanEval+ | 12/492 = 2.44% | **32.14%** | **32.14%** | 21.74% |
 
-- Tables: `main_results.csv`, `sr_scr.csv`, `paired_vs_no_message.csv`, `six_direction_detail.csv`
-- **Blocking for HumanEval+ as a main-text result; not blocking for MedQA, ARC-C or GSM8K**, where the share is ≤4.35% and must be stated.
-- To close: either state the retention rule in the paper and report the contamination share, or pre-register an exclusion rule and recompute. Do not change the commit-message wording retroactively without also stating which is true.
+**Decision: retain as the primary analysis; report exclusion as a sensitivity
+analysis.** `tables/truncation_sensitivity.csv` recomputes CR, PR, SI and Acc_ret
+with every item carrying a non-terminating phase-1 generation dropped whole (all
+six directions), under a label-free rule that depends only on `hit_eos`.
+
+| Dataset | SI shift on exclusion | Channel ordering |
+|---|---|---|
+| MedQA | 0.00 pp (all channels) | unchanged |
+| ARC-C | −1.00 to +0.01 pp | unchanged |
+| GSM8K | −2.20 to −1.98 pp | unchanged |
+| HumanEval+ | −9.32 to +2.18 pp, denominators fall to 18 | unchanged but uninformative |
+
+Two reasons not to promote exclusion to primary. First, the rule is label-free
+but **not difficulty-neutral**: the generations that loop are the hard items, so
+excluding them systematically thins the analysed subsets of their hardest cases.
+Second, the exclusion would be adopted after seeing the results — the
+contamination share is only knowable once computed — which is not a
+pre-registration. Retaining costs nothing in conclusions: on MedQA, ARC-C and
+GSM8K the shift is at most 2.2 pp and moves all four channels together.
+
+- Tables: `main_results.csv`, `sr_scr.csv`, `paired_vs_no_message.csv`, `six_direction_detail.csv`, `truncation_sensitivity.csv`, `truncation_contamination.csv`
+- **Not blocking for MedQA, ARC-C or GSM8K**, provided the retention rule and the contamination share are stated. **Blocking for HumanEval+ as a main-text result** — 32% of its CR and PR denominators, and only 18 pairs left if excluded.
+- GPQA-Diamond sits between the two at 10.53%; its CR and PR must carry that figure.
 
 ### A2 — GPQA-Diamond is incomplete — **PENDING**
 

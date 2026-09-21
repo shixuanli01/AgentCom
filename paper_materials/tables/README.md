@@ -23,6 +23,7 @@ Scope vocabulary:
 | `accuracy_scopes.csv` | `prebeliefs/merged.jsonl`, `revisions/merged.jsonl` | five scopes, one per column group | VERIFIED |
 | `six_direction_detail.csv` | `revisions/merged.jsonl` | retained, split by the six ordered directions | VERIFIED |
 | `cost.csv` | `revisions/merged.jsonl` `communication_payload`, `prompt_tokens`, `generation_length`, `generation_seconds` | retained | PARTIAL — construction cost MISSING for 3 of 4 channels |
+| `truncation_sensitivity.csv` | `prebeliefs/` `hit_eos` + `revisions/merged.jsonl` | retained, recomputed with non-terminating items dropped whole | VERIFIED — sensitivity only, primary analysis is retention |
 | `truncation_contamination.csv` | `prebeliefs/` `hit_eos` joined to `revisions/merged.jsonl` | retained | VERIFIED |
 | `exclusions_and_reuse.csv` | `config.json`, shard paths, `prebeliefs/` | all items | VERIFIED |
 | `full_set_accuracy_estimated.csv` | `icr/full_set_accuracy.py` over both merged files | all items, partly imputed | **ESTIMATED, NOT MEASURED** |

@@ -88,6 +88,19 @@ Five accuracy scopes, which must never share a column:
 
 Initial-answer accuracy: MedQA 69.33%, ARC-C 93.91%, GSM8K 94.62%, HumanEval+ 87.80%.
 
+**Scoring of non-terminating generations — retention, not exclusion.** A phase-1
+generation that does not terminate within `max_new_tokens` states no answer and is
+scored wrong. Such items are **retained**, not excluded; the only pre-registered
+exclusion in the whole study is ARC-Challenge's 7 items whose option count is not
+four. The phase-1 non-termination rate is 0.11% (MedQA), 0.06% (ARC-C), 0.05%
+(GSM8K), 2.19% (GPQA-D) and 2.44% (HumanEval+), but because a wrong belief is what
+puts a pair into the analysed subsets, the share of the CR and PR denominators
+touching such a generation is larger: 0.00%, 2.04%, 4.35%, 10.53% and 32.14%
+respectively. `tables/truncation_sensitivity.csv` recomputes every metric with
+those items dropped; on MedQA, ARC-C and GSM8K the SI shift is at most 2.2 points
+and moves all four channels together, leaving the ordering unchanged. State the
+rule and the share; do not switch to exclusion post hoc.
+
 **`Acc_mixed = SI` — VERIFIED, all 16 dataset×condition cells.** When both directions
 of a mixed-correctness pair are present, the mixed-direction accuracy is
 (CR·N + PR·N)/(2N) = (CR+PR)/2 = SI *identically*. They are one result, not two,

@@ -205,8 +205,12 @@ directions.
 - **Skipped, not excluded:** items every agent answered correctly are not run in
   phase 2. They remain in the population and are handled in Appendix E.
 - **Non-terminating generations are NOT excluded.** They are retained and scored
-  wrong, because no answer is emitted. See AUDIT_ISSUES #1 — the commit messages
-  say these items are excluded, and that is not what the artifacts do.
+  wrong, because no answer is emitted. The rule depends only on whether generation
+  terminated (`hit_eos`), never on correctness. Phase-1 non-termination rates:
+  MedQA 0.11%, ARC-C 0.06%, GSM8K 0.05%, GPQA-D 2.19%, HumanEval+ 2.44%.
+  Several published commit messages claim these items are excluded; they are not,
+  and AUDIT_ISSUES A1 is the correction of record. A full exclusion sensitivity is
+  in `tables/truncation_sensitivity.csv`.
 - **Cache reuse:** `tables/integrity_checks.csv` lists the shard provenance of every
   record (e.g. MedQA `rank0_v3`, ARC-C `rank*_v3` and `rank*_fill`). Zero duplicate
   `(item_id, direction, condition)` keys in any dataset.
