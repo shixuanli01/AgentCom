@@ -139,7 +139,8 @@ def project_out_direction(
     """
     original_dtype = payload.dtype
     flat = payload.reshape(-1, payload.shape[-1]).float()
-    unit = direction.float().reshape(-1)
+    # The direction is estimated on CPU in float32; the payload may live on GPU.
+    unit = direction.float().reshape(-1).to(flat.device)
     unit = unit / unit.norm().clamp_min(DIRECTION_EPSILON)
 
     coefficients = flat @ unit
