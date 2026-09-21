@@ -16,6 +16,14 @@ CONDITIONS = (
     "true_latentmas",
     "self_latentmas",
     "other_latentmas",
+    # CR-DNC development conditions. The payload is the StateBridge one with an
+    # estimated decision direction projected out at the named alpha; the
+    # alignment, the receiver prompt, the decoding settings and the revision
+    # seed are identical to true_statebridge, so the two are a matched pair.
+    "cr_dnc_a025",
+    "cr_dnc_a050",
+    "cr_dnc_a075",
+    "cr_dnc_a100",
 )
 # A third independent sample per item. The pairs are what the audit measures,
 # and CR and PR only exist on pairs whose two agents disagree about

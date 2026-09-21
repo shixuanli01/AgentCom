@@ -78,6 +78,15 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--cr-dnc-prefix-root", type=Path,
+        default=Path("runs/medqa/cr_dnc_v1/prefixes"),
+        help=(
+            "Directory holding pre-built CR-DNC prefixes, one subdirectory per "
+            "alpha tag. Only read by cr_dnc_* conditions; every other condition "
+            "ignores it."
+        ),
+    )
+    parser.add_argument(
         "--global-resume", action="store_true",
         help="Resume completed keys from every revision shard, enabling safe resharding",
     )
@@ -301,6 +310,7 @@ def main() -> None:
                 receiver,
                 {
                     "artifact_root": cli.artifact_root,
+                    "cr_dnc_prefix_root": cli.cr_dnc_prefix_root,
                     "tokenizer": runtime.model.tokenizer,
                     "other_sender_record": other_sender,
                     "benchmark_metadata_by_item": metadata_by_item,

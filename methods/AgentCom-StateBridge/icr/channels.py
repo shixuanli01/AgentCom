@@ -6,9 +6,10 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import hashlib
 from pathlib import Path
-from typing import Any, Mapping, Optional
 
 import torch
+from typing import Any, Mapping, Optional
+
 from safetensors.torch import load_file
 
 
@@ -174,6 +175,53 @@ class StateBridgeCommunicationChannel(CommunicationChannel):
         )
 
 
+class CRDNCCommunicationChannel(CommunicationChannel):
+    """StateBridge payload with the estimated decision direction projected out.
+
+    Loads a prefix built exactly like the StateBridge one, from a payload that
+    had ``H - alpha (H d) d^T`` applied before the same unmodified alignment. The
+    alignment, the receiver prompt, the decoding settings and the revision seed
+    are untouched, so a paired comparison against ``true_statebridge`` differs in
+    the payload and nothing else.
+
+    Conditions are named ``cr_dnc_a<alpha>``, with the alpha written without a
+    decimal point: ``cr_dnc_a050`` is alpha = 0.50.
+    """
+
+    def __init__(self, condition: str, alpha_tag: str) -> None:
+        self.condition = condition
+        self.alpha_tag = alpha_tag
+
+    def build_message(self, sender_record, receiver_record, context):
+        del receiver_record
+        source = sender_record
+        root = Path(context["cr_dnc_prefix_root"]) / self.alpha_tag
+        prefix_path = root / f"item_{int(source['item_id']):04d}_{source['agent_id']}.safetensors"
+        if not prefix_path.exists():
+            raise FileNotFoundError(
+                f"no CR-DNC prefix for item {source['item_id']} agent "
+                f"{source['agent_id']} at alpha tag {self.alpha_tag}: {prefix_path}"
+            )
+        loaded = load_file(str(prefix_path), device="cpu")
+        prefix = loaded["statebridge_prefix"]
+        return CommunicationMessage(
+            condition=self.condition,
+            source_item_id=int(source["item_id"]),
+            source_agent_id=str(source["agent_id"]),
+            prefix=prefix,
+            diagnostics={
+                "modality": "cr_dnc",
+                "alpha_tag": self.alpha_tag,
+                "states": int(prefix.shape[1]),
+                "hidden_dimension": int(prefix.shape[2]),
+                "dtype": str(prefix.dtype).replace("torch.", ""),
+                "payload_bytes": int(prefix.numel() * prefix.element_size()),
+                "fell_back_to_raw": bool(loaded.get("fell_back_to_raw", torch.zeros(1)).item())
+                if "fell_back_to_raw" in loaded else False,
+            },
+        )
+
+
 class LatentMASCommunicationChannel(CommunicationChannel):
     """Reference an exact cached Phase-1 trajectory for KV reconstruction."""
 
@@ -222,4 +270,6 @@ def make_channel(condition: str) -> CommunicationChannel:
         return LatentMASCommunicationChannel(
             condition, condition.removesuffix("_latentmas")
         )
+    if condition.startswith("cr_dnc_"):
+        return CRDNCCommunicationChannel(condition, condition.removeprefix("cr_dnc_"))
     raise ValueError(f"Unknown condition: {condition}")

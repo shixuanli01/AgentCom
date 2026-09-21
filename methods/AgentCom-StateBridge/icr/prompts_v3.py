@@ -126,7 +126,14 @@ def external_block(condition: str, *, sender_reasoning: Optional[str] = None) ->
         if sender_reasoning is None:
             raise ValueError("Textual conditions require a message body")
         return f"{MESSAGE_LEAD_IN}\n{sender_reasoning}"
-    if condition.endswith("_statebridge") or condition.endswith("_latentmas"):
+    if (
+        condition.endswith("_statebridge")
+        or condition.endswith("_latentmas")
+        or condition.startswith("cr_dnc_")
+    ):
+        # CR-DNC carries a hidden-state prefix like StateBridge does, so it must
+        # render the identical block. A different receiver prompt would make the
+        # paired comparison against true_statebridge measure two things at once.
         return LATENT_BLOCK
     raise ValueError(f"Unknown condition: {condition}")
 
