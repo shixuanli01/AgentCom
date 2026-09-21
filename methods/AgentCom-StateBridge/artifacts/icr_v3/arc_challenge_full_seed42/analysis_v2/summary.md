@@ -29,3 +29,20 @@
 - **Sender-belief overwrite behavior?** The observed pattern is consistent with aggressive sender following: FCS=68.75%, FWS=54.17%, FollowSelectivity=14.58%. This is a behavioral description of this run, not yet a cross-seed causal generalization.
 
 The correction subset contains 98 directional cases and the destruction subset contains 98, so cross-seed replication remains necessary.
+
+
+## Accuracy on the full benchmark
+
+The Acc column above is conditional on the 98 mixed items phase 2 retained. Over all 1165 items (6990 directional records, of which 6402 fall on the 1067 items every agent already answered correctly):
+
+| Channel | Receiver accuracy | 95% CI | Item accuracy (majority vote) | Measured / extrapolated |
+|---|---:|---:|---:|---:|
+| No message | 93.93% | [93.13%, 94.74%] | 94.16% | 796 / 6194 |
+| Full Text | 94.13% | [93.33%, 94.94%] | 94.18% | 796 / 6194 |
+| StateBridge | 94.11% | [93.30%, 94.91%] | 94.10% | 796 / 6194 |
+| LatentMAS | 93.52% | [92.38%, 94.67%] | 94.03% | 796 / 6194 |
+
+Pre-communication accuracy (phase 1, one independent belief per agent): 93.91%.
+
+Receiver accuracy counts one revised answer per (item, sender to receiver) pair. The records on skipped items are extrapolated from a directly measured sample of those same items, never from the mixed ones: mixed items are harder by construction, and borrowing their rate put ARC-Challenge 5.7 points low and manufactured a 5.9-point channel gap that direct measurement puts at 0.6. The interval covers only that extrapolation, so it is common to all channels and the differences between them are tighter than the intervals suggest.
+Item accuracy majority-votes the three agents' revised answers, averaged over the eight ways to give each receiver one sender.

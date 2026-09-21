@@ -86,6 +86,46 @@ def _expected_directional_pairs(root, config, keep_one_in: int, skip_all_correct
     return kept
 
 
+def all_correct_item_ids(root: Path) -> set[int]:
+    """Items every agent answered correctly in phase 1."""
+    import json as _json
+
+    correct: dict[int, dict[str, bool]] = {}
+    for line in (
+        (root / "prebeliefs" / "merged.jsonl").read_text(encoding="utf-8").split("\n")
+    ):
+        if not line:
+            continue
+        row = _json.loads(line)
+        correct.setdefault(int(row["item_id"]), {})[str(row["agent_id"])] = bool(
+            row["correct"]
+        )
+    return {
+        item_id
+        for item_id, agents in correct.items()
+        if len(agents) == len(AGENTS) and all(agents.values())
+    }
+
+
+def _expected_all_correct_pairs(root: Path, config, keep_one_in: int):
+    """All-correct pairs the run was asked to sample (empty when it sampled none).
+
+    Full-set accuracy needs the rate at which a receiver on a skipped item still
+    answers correctly. That rate cannot be borrowed from the mixed items -- they
+    are the harder ones, and borrowing biased ARC-Challenge's full-set accuracy
+    down by 5.7 points -- so it has to be measured on the skipped population
+    itself.
+    """
+    if keep_one_in <= 0:
+        return []
+    return [
+        (int(item_id), direction)
+        for item_id in all_correct_item_ids(root)
+        if int(item_id) % keep_one_in == 0
+        for direction in DIRECTIONS
+    ]
+
+
 def merge_revisions(root: Path, *, require_complete: bool) -> list[dict[str, Any]]:
     config = json.loads((root / "config.json").read_text(encoding="utf-8"))
     rows = _deduplicate(
@@ -100,7 +140,46 @@ def merge_revisions(root: Path, *, require_complete: bool) -> list[dict[str, Any
     sampling = config.get("both_correct_sampling") or {}
     keep_one_in = int(sampling.get("keep_one_in", 1))
     skip_all_correct = bool(sampling.get("skip_all_correct_items", False))
+    all_correct_keep = int(sampling.get("all_correct_keep_one_in", 0))
     scoped = keep_one_in > 1 or skip_all_correct
+
+    # Records that landed on an all-correct item are split off rather than
+    # dropped. They are the only direct measurement of what communication does
+    # to the items phase 2 skips, so full-set accuracy rests on them -- but they
+    # must stay out of merged.jsonl, whose subsets define CR, PR and SI. MedQA
+    # was published with 136 of them mixed into that file, which left its
+    # accuracy denominator at 754 where the other datasets used mixed-only.
+    if skip_all_correct:
+        skipped_items = all_correct_item_ids(root)
+        sample_rows = [row for row in rows if int(row["item_id"]) in skipped_items]
+        rows = [row for row in rows if int(row["item_id"]) not in skipped_items]
+        if require_complete and all_correct_keep > 0:
+            conditions = config.get("revision_conditions_requested") or []
+            expected_sample = {
+                (item_id, direction, condition)
+                for item_id, direction in _expected_all_correct_pairs(
+                    root, config, all_correct_keep
+                )
+                for condition in conditions
+            }
+            actual_sample = {
+                (row["item_id"], row["direction"], row["condition"])
+                for row in sample_rows
+            }
+            missing_sample = expected_sample - actual_sample
+            if missing_sample:
+                raise RuntimeError(
+                    f"Incomplete all-correct sample: {len(missing_sample)} of "
+                    f"{len(expected_sample)} missing"
+                )
+        atomic_write_jsonl(
+            root / "revisions" / "all_correct_sample.jsonl", sample_rows
+        )
+        print(
+            f"split {len(sample_rows)} records on all-correct items into "
+            "revisions/all_correct_sample.jsonl",
+            flush=True,
+        )
 
     if scoped or require_complete:
         expected_pairs = set(

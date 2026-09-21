@@ -1,0 +1,5 @@
+accuracy,accuracy_ci95,condition,extrapolated,mixed_correct,mixed_records,sample_correct,sample_records,skipped_item_accuracy,unmeasured_records
+0.866869918699187,"[0.7374812684036276, 0.9962585689947463]",none,True,71,168,23,24,0.9583333333333334,792
+0.9065040650406504,"[0.7954465283978166, 1.0]",true_text,True,76,168,24,24,1.0,792
+0.9034552845528455,"[0.7923977479100117, 1.0]",true_statebridge,True,73,168,24,24,1.0,792
+0.8973577235772358,"[0.786300186934402, 1.0]",true_latentmas,True,67,168,24,24,1.0,792

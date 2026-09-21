@@ -17,6 +17,7 @@ import pandas as pd
 import torch
 import transformers
 
+from .full_set_accuracy import compute as compute_full_set_accuracy
 from .protocol import atomic_write_json
 
 
@@ -970,6 +971,83 @@ def main() -> None:
     atomic_write_parquet(output / "per_direction_cases.parquet", cases)
     atomic_write_parquet(output / "per_item_cases.parquet", item_cases)
 
+    # Accuracy over the whole benchmark. The Acc column above is conditional on
+    # the mixed items phase 2 retained, which is the hardest slice; it is not
+    # the number anyone means by "accuracy on this benchmark".
+    full_set = compute_full_set_accuracy(source_root, conditions)
+    atomic_write_csv(
+        output / "full_set_accuracy.csv",
+        [
+            {"condition": condition, **entry}
+            for condition, entry in full_set["conditions"].items()
+        ],
+    )
+
+    def _fsa_lines() -> list[str]:
+        out = [
+            "",
+            "## Accuracy on the full benchmark",
+            "",
+            f"The Acc column above is conditional on the {full_set['items'] - full_set['all_correct_items']} "
+            f"mixed items phase 2 retained. Over all {full_set['items']} items "
+            f"({full_set['total_records']} directional records, of which "
+            f"{full_set['skipped_records']} fall on the {full_set['all_correct_items']} items every "
+            f"agent already answered correctly):",
+            "",
+        ]
+        item_col = full_set["item_unit_defined"]
+        header = "| Channel | Receiver accuracy | 95% CI | Measured / extrapolated |"
+        rule = "|---|---:|---:|---:|"
+        if item_col:
+            header = (
+                "| Channel | Receiver accuracy | 95% CI | Item accuracy "
+                "(majority vote) | Measured / extrapolated |"
+            )
+            rule = "|---|---:|---:|---:|---:|"
+        out += [header, rule]
+        for label, condition in display_conditions:
+            entry = full_set["conditions"].get(condition)
+            if entry is None:
+                continue
+            measured = entry["mixed_records"] + entry["sample_records"]
+            share = f"{measured} / {entry['unmeasured_records']}"
+            if entry["accuracy"] is None:
+                low, high = entry["accuracy_bounds"]
+                cells = [f"not estimable", f"[{fmt(low)}, {fmt(high)}]"]
+            else:
+                low, high = entry["accuracy_ci95"]
+                cells = [fmt(entry["accuracy"]), f"[{fmt(low)}, {fmt(high)}]"]
+            if item_col:
+                value = entry.get("item_unit_accuracy")
+                cells.append(fmt(value) if value is not None else "n/a")
+            cells.append(share)
+            out.append("| " + label + " | " + " | ".join(cells) + " |")
+        out += [
+            "",
+            f"Pre-communication accuracy (phase 1, one independent belief per agent): "
+            f"{fmt(full_set['pre_communication_accuracy'])}.",
+            "",
+            "Receiver accuracy counts one revised answer per (item, sender to receiver) "
+            "pair. The records on skipped items are extrapolated from a directly "
+            "measured sample of those same items, never from the mixed ones: mixed "
+            "items are harder by construction, and borrowing their rate put "
+            "ARC-Challenge 5.7 points low and manufactured a 5.9-point channel gap "
+            "that direct measurement puts at 0.6. The interval covers only that "
+            "extrapolation, so it is common to all channels and the differences "
+            "between them are tighter than the intervals suggest.",
+        ]
+        if item_col:
+            out.append(
+                "Item accuracy majority-votes the three agents' revised answers, "
+                "averaged over the eight ways to give each receiver one sender."
+            )
+        else:
+            out.append(
+                "Item accuracy is undefined here: answers are programs, so three "
+                "distinct strings never form a majority."
+            )
+        return out
+
     focus = ("accuracy", "cr", "pr", "si", "sra", "fcs", "fws", "follow_selectivity")
     lines = [
         "# ICR Communication-First Step 1",
@@ -1072,6 +1150,7 @@ def main() -> None:
             "",
         ]
     )
+    lines.extend(_fsa_lines())
     (output / "summary.md").write_text("\n".join(lines), encoding="utf-8")
     print("\n".join(lines))
 

@@ -58,6 +58,17 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--all-correct-sample", type=int, default=0,
+        help=(
+            "Of the items --skip-all-correct-items would drop, keep one in N "
+            "(0 drops them all, 1 keeps them all). Full-set accuracy needs the "
+            "fraction of skipped records the receiver still gets right, and "
+            "that rate cannot be borrowed from the mixed items: those are the "
+            "harder ones, so borrowing biases full-set accuracy downward. A "
+            "deterministic item_id %% N subsample measures it directly."
+        ),
+    )
+    parser.add_argument(
         "--both-correct-sample", type=int, default=1,
         help=(
             "Keep one in N both-correct items (1 keeps all). Communication has "
@@ -125,6 +136,7 @@ def main() -> None:
             "keep_one_in": int(cli.both_correct_sample),
             "rule": "item_id % keep_one_in == 0",
             "skip_all_correct_items": bool(cli.skip_all_correct_items),
+            "all_correct_keep_one_in": int(cli.all_correct_sample),
             "label_free": True,
         }
         atomic_write_json(config_path, config)
@@ -241,7 +253,12 @@ def main() -> None:
         if cli.skip_all_correct_items and all(
             bool(prebeliefs[(item_id, agent)]["correct"]) for agent in AGENTS
         ):
-            continue
+            sampled = (
+                cli.all_correct_sample > 0
+                and item_id % cli.all_correct_sample == 0
+            )
+            if not sampled:
+                continue
         if (
             cli.both_correct_sample > 1
             and pair_class == "both_correct"
