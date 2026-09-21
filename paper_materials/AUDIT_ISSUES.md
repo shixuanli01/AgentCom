@@ -36,7 +36,7 @@ amplified in the analysed denominators.
 | MedQA | 1/900 = 0.11% | 0.00% | 0.00% | 0.92% |
 | ARC-C | 2/3,495 = 0.06% | 2.04% | 2.04% | 1.22% |
 | GSM8K | 2/3,957 = 0.05% | 4.35% | 4.35% | 0.00% |
-| GPQA-D | 13/594 = 2.19% | 10.53% | 10.53% | PENDING |
+| GPQA-D | 13/594 = 2.19% | 10.53% | 10.53% | 4.17% |
 | HumanEval+ | 12/492 = 2.44% | **32.14%** | **32.14%** | 21.74% |
 
 **Decision: retain as the primary analysis; report exclusion as a sensitivity
@@ -49,6 +49,7 @@ six directions), under a label-free rule that depends only on `hit_eos`.
 | MedQA | 0.00 pp (all channels) | unchanged |
 | ARC-C | −1.00 to +0.01 pp | unchanged |
 | GSM8K | −2.20 to −1.98 pp | unchanged |
+| GPQA-D | −4.46 to −2.76 pp | unchanged |
 | HumanEval+ | −9.32 to +2.18 pp, denominators fall to 18 | unchanged but uninformative |
 
 Two reasons not to promote exclusion to primary. First, the rule is label-free
@@ -56,22 +57,31 @@ but **not difficulty-neutral**: the generations that loop are the hard items, so
 excluding them systematically thins the analysed subsets of their hardest cases.
 Second, the exclusion would be adopted after seeing the results — the
 contamination share is only knowable once computed — which is not a
-pre-registration. Retaining costs nothing in conclusions: on MedQA, ARC-C and
-GSM8K the shift is at most 2.2 pp and moves all four channels together.
+pre-registration. Retaining costs nothing in conclusions: on MedQA, ARC-C, GSM8K
+and GPQA-D the shift is at most 4.5 pp and moves all four channels in the same
+direction.
 
 - Tables: `main_results.csv`, `sr_scr.csv`, `paired_vs_no_message.csv`, `six_direction_detail.csv`, `truncation_sensitivity.csv`, `truncation_contamination.csv`
 - **Not blocking for MedQA, ARC-C or GSM8K**, provided the retention rule and the contamination share are stated. **Blocking for HumanEval+ as a main-text result** — 32% of its CR and PR denominators, and only 18 pairs left if excluded.
 - GPQA-Diamond sits between the two at 10.53%; its CR and PR must carry that figure.
 
-### A2 — GPQA-Diamond is incomplete — **PENDING**
+### A2 — GPQA-Diamond — **RESOLVED**
 
-79 of 198 items carry three beliefs at 01:17 UTC (agent C generating, 91/198
-beliefs). `revisions/merged.jsonl` in that artifact holds 1,136 records from the
-earlier **two-agent** run and is stale relative to the three-agent scope.
+Phase 1 finished with 594 of 594 beliefs and phase 2 completed at 10:47 UTC with
+0 worker failures: 2,832 merged records (708 directed pairs x 4 conditions) plus
+495 records on all-correct items split into `all_correct_sample.jsonl`. Every
+integrity check passes — 0 duplicate keys, 0 stale receiver priors, 0 pairs whose
+prior diverges across conditions, 0 records with `status != complete`, and the
+closed-form counting identity holds in all four cells.
 
-- Tables: all GPQA rows are absent or marked PENDING.
-- **Blocking** for any GPQA claim.
-- To close: let phase 1 finish, then phase 2 (six directions, `--all-correct-sample 1`), then merge with `--require-complete` and re-run analysis. Do not write a GPQA conclusion from the projected denominator or the 41.9% two-agent initial accuracy.
+Two facts that must travel with the GPQA numbers. Its initial accuracy is
+**54.04%**, not the 41.9% recorded in earlier notes and several commit messages;
+that figure came from an 8,192-token run in which 28% of beliefs never terminated
+and were scored wrong. And 10.53% of its CR and PR denominators touch a
+non-terminating generation, the second-highest share in the study (see A1).
+
+- Tables: all GPQA rows are populated and marked VERIFIED.
+- **No longer blocking.**
 
 ### A3 — No development/test split by item — **MISSING**
 

@@ -13,7 +13,7 @@ Status vocabulary: **VERIFIED** (checked against per-record artifacts),
 | MedQA | VERIFIED | 300 items, three beliefs each |
 | ARC-Challenge | VERIFIED | 1,165 items after 7 pre-registered structural exclusions |
 | GSM8K | VERIFIED | 1,319 items |
-| GPQA-Diamond | **PENDING** | agent C beliefs still generating (91/198 at 01:17 UTC); phase 2 not started |
+| GPQA-Diamond | VERIFIED | 198 items; phase 2 completed 10:47 UTC with 0 worker failures |
 | HumanEval+ | VERIFIED but appendix-only | 32% of its CR/PR denominators touch a non-terminating generation |
 
 ---
@@ -54,13 +54,13 @@ Status vocabulary: **VERIFIED** (checked against per-record artifacts),
 | MedQA | 300 | 300 | 120 | 116 | 116 | 436 | 52 | 720 |
 | ARC-C | 1,165 | 1,165 | 98 | 98 | 98 | 328 | 64 | 588 |
 | GSM8K | 1,319 | 1,319 | 94 | 92 | 92 | 334 | 46 | 564 |
-| GPQA-D | 198 | PENDING | — | — | — | — | — | — |
+| GPQA-D | 198 | 198 | 118 | 114 | 114 | 432 | 48 | 708 |
 | HumanEval+ | 164 | 164 | 28 | 28 | 28 | 92 | 20 | 168 |
 
 "Retained items" are those where the three agents did not all answer correctly;
 items where all three were correct carry no correction and no destruction pair and
 are skipped in phase 2 (`--skip-all-correct-items`). Skipped item counts:
-MedQA 180, ARC-C 1,067, GSM8K 1,225, HumanEval+ 136.
+MedQA 180, ARC-C 1,067, GSM8K 1,225, GPQA-D 80, HumanEval+ 136.
 
 **Counting identity — VERIFIED for all five datasets** (`tables/count_identity_check.csv`).
 For an item with k of 3 correct beliefs the six ordered pairs contain k(3−k)
@@ -83,10 +83,14 @@ Five accuracy scopes, which must never share a column:
 | Initial-answer accuracy | items × 3 beliefs | VERIFIED |
 | Mixed-correctness directional accuracy | CR ∪ PR pairs | VERIFIED |
 | Retained-subset accuracy `Acc_ret` | retained items × 6 | VERIFIED |
-| Measured full-set accuracy | items × 6, all measured | **NOT AVAILABLE** — coverage is 42% (MedQA) to 11% (GSM8K) |
+| Measured full-set accuracy | items × 6, all measured | **NOT AVAILABLE** — coverage is 70.0% (GPQA-D), 41.9% (MedQA), 19.5% (HumanEval+), 11.4% (ARC-C), 10.1% (GSM8K) |
 | Extrapolated full-set accuracy | items × 6, partly imputed | PROVISIONAL, Appendix E |
 
-Initial-answer accuracy: MedQA 69.33%, ARC-C 93.91%, GSM8K 94.62%, HumanEval+ 87.80%.
+Initial-answer accuracy: MedQA 69.33%, ARC-C 93.91%, GSM8K 94.62%, GPQA-D 54.04%, HumanEval+ 87.80%.
+
+GPQA-Diamond's 54.04% is the figure to quote. An earlier two-agent run reported
+41.9%, but that ran at an 8,192-token budget where 28% of beliefs never terminated
+and were therefore scored wrong; at 16,384 the non-termination rate is 2.19%.
 
 **Scoring of non-terminating generations — retention, not exclusion.** A phase-1
 generation that does not terminate within `max_new_tokens` states no answer and is
@@ -98,10 +102,11 @@ puts a pair into the analysed subsets, the share of the CR and PR denominators
 touching such a generation is larger: 0.00%, 2.04%, 4.35%, 10.53% and 32.14%
 respectively. `tables/truncation_sensitivity.csv` recomputes every metric with
 those items dropped; on MedQA, ARC-C and GSM8K the SI shift is at most 2.2 points
-and moves all four channels together, leaving the ordering unchanged. State the
+and on GPQA-D at most 4.5, and in each case it moves all four channels the same way,
+leaving the ordering unchanged. State the
 rule and the share; do not switch to exclusion post hoc.
 
-**`Acc_mixed = SI` — VERIFIED, all 16 dataset×condition cells.** When both directions
+**`Acc_mixed = SI` — VERIFIED, all 20 dataset×condition cells.** When both directions
 of a mixed-correctness pair are present, the mixed-direction accuracy is
 (CR·N + PR·N)/(2N) = (CR+PR)/2 = SI *identically*. They are one result, not two,
 and must not be reported as independent evidence.
@@ -131,8 +136,12 @@ zero for these datasets).
 | GSM8K | Full Text | 143/564 = 25.35% | 47/92 = 51.09% | 48/92 = 52.17% | 51.63% |
 | GSM8K | StateBridge | 152/564 = 26.95% | 36/92 = 39.13% | 68/92 = 73.91% | 56.52% |
 | GSM8K | LatentMAS | 144/564 = 25.53% | 55/92 = 59.78% | 43/92 = 46.74% | 53.26% |
+| GPQA-D | No Message | 180/708 = 25.42% | 16/114 = 14.04% | 110/114 = 96.49% | 55.26% |
+| GPQA-D | Full Text | 193/708 = 27.26% | 85/114 = 74.56% | 54/114 = 47.37% | 60.96% |
+| GPQA-D | StateBridge | 190/708 = 26.84% | 73/114 = 64.04% | 59/114 = 51.75% | 57.89% |
+| GPQA-D | LatentMAS | 178/708 = 25.14% | 70/114 = 61.40% | 58/114 = 50.88% | 56.14% |
 
-GPQA-Diamond: **PENDING**. HumanEval+: see Appendix D.
+HumanEval+: see Appendix D.
 
 CR–PR plotting data with denominators: `tables/cr_pr_plot_data.csv`.
 
@@ -154,20 +163,25 @@ Retained scope, discordant cells:
 | GSM8K | Full Text | 40 | 45 | −5 | 85 |
 | GSM8K | StateBridge | 30 | 26 | +4 | 56 |
 | GSM8K | LatentMAS | 50 | 54 | −4 | 104 |
+| GPQA-D | Full Text | 78 | 65 | +13 | 143 |
+| GPQA-D | StateBridge | 69 | 59 | +10 | 128 |
+| GPQA-D | LatentMAS | 62 | 64 | −2 | 126 |
 
 The same table stratified by CR / PR / SR / SCR subset shows where the movement
 comes from. In the CR stratum the movement is almost purely gain (Full Text and
-StateBridge lose 0 records on MedQA, ARC-C and GSM8K); in the PR stratum it is
+StateBridge lose 0 records on MedQA, ARC-C and GSM8K, and 1 each on GPQA-D); in the PR stratum it is
 almost purely loss (MedQA: Full Text −65, StateBridge −27, LatentMAS −76 of 116).
 
 SI difference vs No Message (percentage points): MedQA Text +8.62, SB +13.79,
-LatentMAS −1.29; ARC-C +7.14 / +6.63 / +1.53; GSM8K −1.09 / +3.80 / +0.54.
+LatentMAS −1.29; ARC-C +7.14 / +6.63 / +1.53; GSM8K −1.09 / +3.80 / +0.54;
+GPQA-D +5.70 / +2.63 / +0.88.
 
 ### C. SR and SCR — `tables/sr_scr.csv` (VERIFIED)
 
-SR is near zero everywhere: the best cell is MedQA No Message 11/436 = 2.52%.
-On the retained scope SCR is 52/52, 64/64 and 46/46 for MedQA, ARC-C and GSM8K in
-most conditions (exact counts in the table). SCR measured on the *skipped*
+SR is near zero everywhere: the best cell is MedQA No Message 11/436 = 2.52%,
+and GPQA-D's best is StateBridge 11/432 = 2.55%. On the retained scope SCR sits
+at or near its ceiling — 52/52 (MedQA), 64/64 (ARC-C), 46/46 (GSM8K) in most
+conditions, and 44–48 of 48 on GPQA-D, where No Message itself loses 4. SCR measured on the *skipped*
 population is reported separately in Appendix E and is the basis of the
 extrapolation — it is never borrowed from the retained both-correct pairs.
 
@@ -185,38 +199,63 @@ adoption is never inferred from pass/fail.
 > Relative to a no-message control, each of the three channels raises the
 > correction rate and lowers the preservation rate; none raises both.
 
-Support: `tables/main_results.csv`, all of MedQA, ARC-C, GSM8K (and HumanEval+ in
-the appendix). CR rises from 6.90/8.16/13.04% (No Message) to 51–81% and PR falls
-from 98.28/92.86/92.39% to 32–74%. The paired strata in
-`tables/paired_vs_no_message.csv` show the mechanism: in the CR stratum Full Text
-and StateBridge lose 0 records; in the PR stratum they gain at most 3.
+Support: `tables/main_results.csv`, all four verified datasets and HumanEval+ in
+the appendix. CR rises from 6.90 / 8.16 / 13.04 / 14.04% (No Message on MedQA,
+ARC-C, GSM8K, GPQA-D) to 39–81%, and PR falls from 98.28 / 92.86 / 92.39 / 96.49%
+to 32–75%. The paired strata in `tables/paired_vs_no_message.csv` show the
+mechanism: in the CR stratum Full Text and StateBridge lose at most 1 record; in
+the PR stratum they gain at most 3. The exception is HumanEval+, where Full Text
+and StateBridge hold PR at 92.86 / 96.43% — on 28 pairs, so one record is 3.57
+points and the exception is not resolved.
 Scope: one model, one replication (`seed_pair_00`), one revision per pair.
 
 **F2 — The channels separate far more on correction/preservation than on accuracy.**
 > On the retained subset the four conditions span 4.2 points of accuracy on MedQA
 > while spanning 73 points of CR and 66 points of PR.
 
-Support: `tables/main_results.csv`. MedQA Acc_ret 24.72–28.89% against CR
-6.90–80.17% and PR 32.76–98.28%; ARC-C 27.89–30.27% against CR 8.16–80.61%;
-GSM8K 25.35–26.95% against CR 13.04–59.78%.
+Support: `tables/main_results.csv`. MedQA Acc_ret spans 24.72–28.89% (4.2 points)
+against CR 6.90–80.17% (73 points) and PR 32.76–98.28% (66 points); GPQA-D spans
+25.14–27.26% (2.1 points) against CR 14.04–74.56% (61 points) and PR 47.37–96.49%
+(49 points); ARC-C 27.89–30.27% against CR 8.16–80.61%; GSM8K 25.35–26.95%
+against CR 13.04–59.78%.
 Limit: this is a statement about this protocol's retained subset, not a claim that
 accuracy is uninformative in general.
 
-**F3 — StateBridge preserves more than Full Text on every verified dataset, and corrects less.**
-> Across MedQA, ARC-Challenge and GSM8K, the hidden-state channel has a higher
+**F3 — StateBridge preserves more than Full Text on all five datasets, and corrects less.**
+> Across every benchmark tested, the hidden-state channel has a higher
 > preservation rate and a lower correction rate than the full-text channel.
 
-Support: PR 75.00 vs 42.24 (MedQA), 44.90 vs 34.69 (ARC-C), 73.91 vs 52.17 (GSM8K);
-CR 57.76 vs 80.17, 69.39 vs 80.61, 39.13 vs 51.09.
-Limit: StateBridge does **not** have the highest PR on ARC-Challenge — LatentMAS
-does (45.92 vs 44.90). Do not write "highest on all datasets".
+Support, PR then CR (StateBridge vs Full Text):
+
+| Dataset | PR | CR |
+|---|---|---|
+| MedQA | 75.00 vs 42.24 | 57.76 vs 80.17 |
+| ARC-C | 44.90 vs 34.69 | 69.39 vs 80.61 |
+| GSM8K | 73.91 vs 52.17 | 39.13 vs 51.09 |
+| GPQA-D | 51.75 vs 47.37 | 64.04 vs 74.56 |
+| HumanEval+ | 96.43 vs 92.86 | 67.86 vs 75.00 |
+
+Limits, both of which constrain the wording. StateBridge does **not** have the
+highest PR of all four conditions on ARC-Challenge — LatentMAS does (45.92 vs
+44.90) — so the claim is against Full Text, not against every channel. And
+StateBridge does not have the highest SI everywhere: it leads on MedQA and GSM8K,
+Full Text leads on ARC-C, GPQA-D and HumanEval+. Neither channel dominates.
 
 **F4 — Mixed-correctness directional accuracy is SI, not a second result.**
 > When both directions of a mixed pair are evaluated, accuracy restricted to those
 > pairs equals the equal-weight mean of CR and PR by construction.
 
-Support: `tables/accuracy_scopes.csv`, `acc_mixed_equals_si = YES` in all 16 cells.
+Support: `tables/accuracy_scopes.csv`, `acc_mixed_equals_si = YES` in all 20 cells.
 Use: prevents double-reporting; state the identity rather than two numbers.
+
+**Observation worth one sentence, not a headline.** The accuracy benefit of
+communication tracks how much headroom the benchmark leaves. Full Text minus No
+Message on full-set receiver accuracy is +1.74 points on GPQA-D (initial accuracy
+54.04%), +0.61 on MedQA (69.33%), +0.20 on ARC-C (93.91%) and −0.06 on GSM8K
+(94.62%). The ordering is monotone in initial accuracy across four points, which
+is suggestive and nothing more; four points cannot establish a relationship, and
+the GPQA-D figure carries the largest measured coverage (70.0%) while ARC-C and
+GSM8K carry the smallest (11.4%, 10.1%).
 
 **Not supported by current evidence — do not write:** "best on all datasets";
 "significantly better than"; "latent channels cannot produce new answers"

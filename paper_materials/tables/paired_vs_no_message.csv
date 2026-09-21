@@ -53,6 +53,24 @@ GSM8K,LatentMAS,scr_stratum,46,44,0,1,1,-1,-2.1739,1
 GSM8K,Full Text,si_difference_vs_none,,,,,,,-1.087,
 GSM8K,StateBridge,si_difference_vs_none,,,,,,,3.8043,
 GSM8K,LatentMAS,si_difference_vs_none,,,,,,,0.5435,
+GPQA-D,Full Text,all_retained,708,115,78,65,450,13,1.8362,143
+GPQA-D,Full Text,cr_stratum,114,15,70,1,28,69,60.5263,71
+GPQA-D,Full Text,pr_stratum,114,54,0,56,4,-56,-49.1228,56
+GPQA-D,Full Text,sr_stratum,432,2,4,8,418,-4,-0.9259,12
+GPQA-D,Full Text,scr_stratum,48,44,4,0,0,4,8.3333,4
+GPQA-D,StateBridge,all_retained,708,121,69,59,459,10,1.4124,128
+GPQA-D,StateBridge,cr_stratum,114,15,58,1,40,57,50.0,59
+GPQA-D,StateBridge,pr_stratum,114,59,0,51,4,-51,-44.7368,51
+GPQA-D,StateBridge,sr_stratum,432,4,7,6,415,1,0.2315,13
+GPQA-D,StateBridge,scr_stratum,48,43,4,1,0,3,6.25,5
+GPQA-D,LatentMAS,all_retained,708,116,62,64,466,-2,-0.2825,126
+GPQA-D,LatentMAS,cr_stratum,114,14,56,2,42,54,47.3684,58
+GPQA-D,LatentMAS,pr_stratum,114,57,1,53,3,-52,-45.614,54
+GPQA-D,LatentMAS,sr_stratum,432,3,1,7,421,-6,-1.3889,8
+GPQA-D,LatentMAS,scr_stratum,48,42,4,2,0,2,4.1667,6
+GPQA-D,Full Text,si_difference_vs_none,,,,,,,5.7017,
+GPQA-D,StateBridge,si_difference_vs_none,,,,,,,2.6315,
+GPQA-D,LatentMAS,si_difference_vs_none,,,,,,,0.8772,
 HumanEval+,Full Text,all_retained,168,63,13,8,84,5,2.9762,21
 HumanEval+,Full Text,cr_stratum,28,14,7,2,5,5,17.8571,9
 HumanEval+,Full Text,pr_stratum,28,24,2,2,0,0,0.0,4

@@ -186,7 +186,7 @@ slot, so its message cannot occupy the same prompt position — follows from the
 | MedQA | 180 | 26 | 32 | 62 | 300 |
 | ARC-C | 1,067 | 32 | 17 | 49 | 1,165 |
 | GSM8K | 1,225 | 23 | 23 | 48 | 1,319 |
-| GPQA-D (partial) | 32 | 9 | 16 | 22 | 79 of 198 |
+| GPQA-D | 80 | 24 | 33 | 61 | 198 |
 | HumanEval+ | 136 | 10 | 4 | 14 | 164 |
 
 ### Per-direction detail
@@ -235,10 +235,10 @@ Counts per dataset are in `tables/integrity_checks.csv`
 |---|---|
 | Closed-form counting identity, all datasets | PASS (20/20 cells) |
 | Duplicate `(item, direction, condition)` keys | 0 in all five datasets |
-| Receiver prior byte-identical to the current belief | 3,016 / 3,184 / 3,194 / 512 / 768 pristine, 0 stale |
+| Receiver prior byte-identical to the current belief | 3,016 / 3,184 / 3,194 / 3,327 / 768 pristine, 0 stale |
 | All four conditions share one receiver prior per (item, direction) | 0 divergent pairs |
 | All four conditions cover the identical evaluation set | PASS (HumanEval+ verified explicitly: 168 pairs each) |
-| `Acc_mixed = SI` | PASS (16/16 cells) |
+| `Acc_mixed = SI` | PASS (20/20 cells) |
 | `status != complete` records | 0 |
 
 ### Development / test split
@@ -314,6 +314,7 @@ Acc_full = ( retained_correct + sample_correct + imputed_records × skipped_item
 | MedQA | 1,800 | 720 | 34 | 1,046 | 41.9% |
 | ARC-C | 6,990 | 588 | 208 | 6,194 | 11.4% |
 | GSM8K | 7,914 | 564 | 235 | 7,115 | 10.1% |
+| GPQA-D | 1,188 | 708 | 124 | 356 | 70.0% |
 | HumanEval+ | 984 | 168 | 24 | 792 | 19.5% |
 
 | Dataset | No Message | Full Text | StateBridge | LatentMAS |
@@ -321,6 +322,7 @@ Acc_full = ( retained_correct + sample_correct + imputed_records × skipped_item
 | MedQA | 70.28% [67.33, 73.23] | 70.89% [67.94, 73.84] | 71.56% [68.61, 74.51] | 69.89% [66.94, 72.84] |
 | ARC-C | 93.93% [93.13, 94.74] | 94.13% [93.33, 94.94] | 94.11% [93.30, 94.91] | 93.52% [92.38, 94.67] |
 | GSM8K | 94.74% [94.02, 95.47] | 94.68% [93.96, 95.40] | 94.79% [94.07, 95.52] | 94.69% [93.96, 95.42] |
+| GPQA-D | 54.58% [53.67, 55.48] | 56.32% [55.68, 56.97] | 55.75% [54.96, 56.53] | 55.06% [54.41, 55.71] |
 | HumanEval+ | 86.69% [73.75, 99.63] | 90.65% [79.54, 100.00] | 90.35% [79.24, 100.00] | 89.74% [78.63, 100.00] |
 
 Intervals are Wilson half-widths on the skipped-population sample, scaled by the
@@ -358,6 +360,13 @@ measured improvement, and no missing records were regenerated to close the gap.
 
 ### GPQA-Diamond
 
-**PENDING.** Its phase-2 run is configured with `--all-correct-sample 1`, i.e. the
-skipped population is covered in full, so when it completes its full-set accuracy
-will be **measured, not extrapolated**. No number is pre-written here.
+Its phase-2 run originally covered the skipped population in full, which would have
+made its full-set accuracy measured rather than extrapolated. That was cut short
+deliberately at 04:53 UTC to save roughly 3.8 hours of the remaining run, leaving
+495 records on all-correct items — 124 per condition, 25.8% of that population,
+covering 30 of the 80 all-correct items. Those records were kept, not discarded.
+
+The result is that GPQA-Diamond is still extrapolated like the others, but from
+the largest measured share in the study: 70.0% direct coverage against 41.9%
+(MedQA), 19.5% (HumanEval+), 11.4% (ARC-C) and 10.1% (GSM8K). Its intervals are
+correspondingly the tightest, at roughly ±0.7 points.

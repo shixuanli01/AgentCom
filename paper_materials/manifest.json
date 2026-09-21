@@ -1,11 +1,11 @@
 {
-  "generated_utc": "2026-09-21T01:25:00Z",
-  "generator": "read-only audit; no GPU run started, no config or historical result modified",
+  "generated_utc": "2026-09-21T11:05:00Z",
+  "generator": "read-only audit of the ICR-V3 artifacts; no configuration or historical result modified",
   "repository": {
     "remote": "git@github.com:shixuanli01/AgentCom.git",
     "branch": "main",
-    "git_commit": "4197f595b933ae17ab6c4a2392b927dfb65091b5",
-    "git_describe_dirty": "DIRTY"
+    "git_commit": "122614b99d13b641482c283b40f2bdf3ca7c7296",
+    "worktree": "DIRTY"
   },
   "environment": {
     "python": "Python 3.12.3",
@@ -36,7 +36,8 @@
     "channels": "methods/AgentCom-StateBridge/icr/runtime.py",
     "model_loading": "methods/AgentCom-StateBridge/models.py",
     "benchmarks_and_exclusions": "methods/AgentCom-StateBridge/icr/benchmarks.py",
-    "egr_v1": "methods/AgentCom-StateBridge/egr/"
+    "egr_v1": "methods/AgentCom-StateBridge/egr/",
+    "cr_dnc_split": "methods/AgentCom-StateBridge/communication/make_split.py"
   },
   "prompt_hashes": {
     "revision_template_sha256_16": "e176b57fb1a8b62a",
@@ -228,7 +229,7 @@
     },
     "gpqa": {
       "artifact_root": "methods/AgentCom-StateBridge/artifacts/icr_v3/gpqa_full_seed42",
-      "status": "PENDING",
+      "status": "VERIFIED",
       "protocol": "ICR-V3",
       "benchmark_label": "gpqa_diamond",
       "dataset_sha256": "42cdb10747fbb798116e3b490f470836d6ec1d47d24ae5b06dea7e8cae616f42",
@@ -259,9 +260,11 @@
       "excluded_item_ids": [],
       "exclusion_rule": null,
       "both_correct_sampling": {
-        "keep_one_in": 10,
+        "all_correct_keep_one_in": 0,
+        "keep_one_in": 1,
         "label_free": true,
-        "rule": "item_id % keep_one_in == 0"
+        "rule": "item_id % keep_one_in == 0",
+        "skip_all_correct_items": true
       },
       "completed_revision_conditions": [
         "none",
@@ -270,10 +273,10 @@
         "true_latentmas"
       ],
       "source_items": 198,
-      "items_with_three_beliefs": 106,
-      "raw_revision_records": 512,
-      "merged_revision_records": 1136,
-      "all_correct_sample_records": 0
+      "items_with_three_beliefs": 198,
+      "raw_revision_records": 3327,
+      "merged_revision_records": 2832,
+      "all_correct_sample_records": 495
     },
     "humanevalplus": {
       "artifact_root": "methods/AgentCom-StateBridge/artifacts/icr_v3/humanevalplus_full_seed42",
@@ -351,7 +354,8 @@
       "sample_statistics.csv",
       "six_direction_detail.csv",
       "sr_scr.csv",
-      "truncation_contamination.csv"
+      "truncation_contamination.csv",
+      "truncation_sensitivity.csv"
     ]
   },
   "known_missing": [
@@ -359,9 +363,8 @@
     "Final frozen EGR method and its held-out evaluation",
     "Per-record EGR artifacts (only aggregate markdown reports survive)",
     "Per-message construction cost for Full Text and StateBridge",
-    "Item-level development/test split",
+    "Item-level development/test split for the ICR audit (a CR-DNC split exists separately)",
     "Model revision pin and attn_implementation",
-    "HumanEval+ literal-newline evidence",
-    "GPQA-Diamond phase 2 (PENDING, in progress)"
+    "HumanEval+ literal-newline evidence"
   ]
 }

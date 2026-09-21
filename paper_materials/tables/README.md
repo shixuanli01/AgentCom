@@ -35,5 +35,7 @@ denominator is zero is dropped and counted in `bootstrap_undefined_*`. The
 published `analysis_v2` artifacts use 10,000 resamples and seed 20260920; the
 difference is recorded in `manifest.json`.
 
-GPQA-Diamond has no rows in the result tables: its phase 1 is still generating and
-its phase 2 has not started.
+All five datasets are present in every table. GPQA-Diamond's phase 2 completed at
+10:47 UTC on 2026-09-21 with 0 worker failures; its all-correct sample is 124
+records per condition (25.8% of that population), because the run that would have
+covered it in full was cut short deliberately to save wall-clock.
