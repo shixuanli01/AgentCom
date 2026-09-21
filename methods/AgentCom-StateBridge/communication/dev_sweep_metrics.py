@@ -69,6 +69,8 @@ def main():
         ("CR-DNC a=0.50", crdnc, "cr_dnc_a050"),
         ("CR-DNC a=0.75", crdnc, "cr_dnc_a075"),
         ("CR-DNC a=1.00", crdnc, "cr_dnc_a100"),
+        ("CTRL rand a=1.0", crdnc, "cr_dnc_randdir_a100"),
+        ("CTRL rand-norm", crdnc, "cr_dnc_randnorm_a100"),
     ):
         m = metrics(src, cond)
         if m["cr"][1] == 0:
