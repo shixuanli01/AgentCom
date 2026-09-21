@@ -24,6 +24,11 @@ CONDITIONS = (
     "cr_dnc_a050",
     "cr_dnc_a075",
     "cr_dnc_a100",
+    # Controls. randdir projects out a random unit direction at the same alpha;
+    # randnorm rescales it so the intervention norm matches CR-DNC's. If either
+    # reproduces CR-DNC's effect, the effect is not decision-specific.
+    "cr_dnc_randdir_a100",
+    "cr_dnc_randnorm_a100",
 )
 # A third independent sample per item. The pairs are what the audit measures,
 # and CR and PR only exist on pairs whose two agents disagree about
