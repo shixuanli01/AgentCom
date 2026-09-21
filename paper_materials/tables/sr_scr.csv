@@ -1,0 +1,17 @@
+dataset,condition,sr_num,sr_den,sr_pct,scr_retained_num,scr_retained_den,scr_retained_pct,scr_skipped_sample_num,scr_skipped_sample_den
+MedQA,No Message,11,436,2.5229,52,52,100.0,34,34
+MedQA,Full Text,2,436,0.4587,52,52,100.0,34,34
+MedQA,StateBridge,2,436,0.4587,52,52,100.0,34,34
+MedQA,LatentMAS,7,436,1.6055,52,52,100.0,34,34
+ARC-C,No Message,5,328,1.5244,60,64,93.75,208,208
+ARC-C,Full Text,1,328,0.3049,64,64,100.0,208,208
+ARC-C,StateBridge,1,328,0.3049,63,64,98.4375,208,208
+ARC-C,LatentMAS,3,328,0.9146,61,64,95.3125,207,208
+GSM8K,No Message,6,334,1.7964,45,46,97.8261,235,235
+GSM8K,Full Text,2,334,0.5988,46,46,100.0,235,235
+GSM8K,StateBridge,3,334,0.8982,45,46,97.8261,235,235
+GSM8K,LatentMAS,2,334,0.5988,44,46,95.6522,233,233
+HumanEval+,No Message,9,92,9.7826,20,20,100.0,23,24
+HumanEval+,Full Text,9,92,9.7826,20,20,100.0,24,24
+HumanEval+,StateBridge,8,92,8.6957,19,20,95.0,24,24
+HumanEval+,LatentMAS,6,92,6.5217,20,20,100.0,24,24

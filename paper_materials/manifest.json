@@ -1,0 +1,367 @@
+{
+  "generated_utc": "2026-09-21T01:25:00Z",
+  "generator": "read-only audit; no GPU run started, no config or historical result modified",
+  "repository": {
+    "remote": "git@github.com:shixuanli01/AgentCom.git",
+    "branch": "main",
+    "git_commit": "4197f595b933ae17ab6c4a2392b927dfb65091b5",
+    "git_describe_dirty": "DIRTY"
+  },
+  "environment": {
+    "python": "Python 3.12.3",
+    "transformers": "4.51.3",
+    "torch": "2.7.1+cu128",
+    "cuda": "12.8",
+    "gpus": "4x NVIDIA RTX 5090 (32 GB)",
+    "model_revision": "MISSING - not pinned in any run config",
+    "attn_implementation": "MISSING - not set; transformers default applies"
+  },
+  "analysis_parameters": {
+    "bootstrap": "item-cluster paired bootstrap",
+    "resamples": 2000,
+    "analysis_seed": 20260921,
+    "interval": "percentile 2.5 / 97.5",
+    "zero_denominator_handling": "resample dropped and counted in bootstrap_undefined_* columns",
+    "note": "published analysis_v2 artifacts use 10,000 resamples and seed 20260920; these tables use the 2,000-resample default requested for the paper materials"
+  },
+  "code_paths": {
+    "protocol_and_seeds": "methods/AgentCom-StateBridge/icr/protocol.py",
+    "phase1": "methods/AgentCom-StateBridge/icr/prebeliefs.py",
+    "phase2": "methods/AgentCom-StateBridge/icr/revisions.py",
+    "prompts": "methods/AgentCom-StateBridge/icr/prompts_v3.py",
+    "parser": "methods/AgentCom-StateBridge/icr/parsing_v3.py",
+    "merge_and_scope": "methods/AgentCom-StateBridge/icr/merge.py",
+    "metrics": "methods/AgentCom-StateBridge/icr/analysis_v2.py",
+    "full_set_accuracy": "methods/AgentCom-StateBridge/icr/full_set_accuracy.py",
+    "channels": "methods/AgentCom-StateBridge/icr/runtime.py",
+    "model_loading": "methods/AgentCom-StateBridge/models.py",
+    "benchmarks_and_exclusions": "methods/AgentCom-StateBridge/icr/benchmarks.py",
+    "egr_v1": "methods/AgentCom-StateBridge/egr/"
+  },
+  "prompt_hashes": {
+    "revision_template_sha256_16": "e176b57fb1a8b62a",
+    "code_revision_template_sha256_16": "cfce430522a2f655",
+    "external_block_source_sha256_16": "bf8a13d634f032e1"
+  },
+  "runs": {
+    "medqa": {
+      "artifact_root": "methods/AgentCom-StateBridge/artifacts/icr_v3/medqa_full_seed42",
+      "status": "VERIFIED",
+      "protocol": "ICR-V3",
+      "benchmark_label": "medqa300",
+      "dataset_sha256": "ddee8dc64d3b2a1e5061c409c68d626109237640009168838a038db29efe802c",
+      "config_fingerprint": "355c5073cd75bb6fba78bad536a8081cca7855c7263452fe59411417cc2b8f52",
+      "superseded_fingerprints": [
+        "96d887fc74fa20233ad0dea5fecb234e265ffe9fb994858e4c3713933ca0446d"
+      ],
+      "model": "Qwen/Qwen3-4B",
+      "global_seed": 42,
+      "replication_id": "seed_pair_00",
+      "generation": {
+        "do_sample": true,
+        "max_new_tokens": 16384,
+        "temperature": 0.6,
+        "top_k": null,
+        "top_p": 0.95
+      },
+      "max_new_tokens_history": [
+        {
+          "from": 8192,
+          "reason": "truncated generations never stated an answer and were scored wrong",
+          "to": 16384
+        }
+      ],
+      "solver_prompt_version": "icr_v2_phase1_verbatim",
+      "revision_prompt_version": "icr_v3_mid_injection",
+      "answer_parser_version": "icr.parsing_v3@ICR-V3",
+      "excluded_item_ids": [],
+      "exclusion_rule": null,
+      "both_correct_sampling": {
+        "keep_one_in": 1,
+        "label_free": true,
+        "rule": "item_id % keep_one_in == 0",
+        "skip_all_correct_items": true
+      },
+      "completed_revision_conditions": [
+        "none",
+        "true_text",
+        "true_statebridge",
+        "true_latentmas"
+      ],
+      "source_items": 300,
+      "items_with_three_beliefs": 300,
+      "raw_revision_records": 3016,
+      "merged_revision_records": 2880,
+      "all_correct_sample_records": 136
+    },
+    "arc_challenge": {
+      "artifact_root": "methods/AgentCom-StateBridge/artifacts/icr_v3/arc_challenge_full_seed42",
+      "status": "VERIFIED",
+      "protocol": "ICR-V3",
+      "benchmark_label": "arc_challenge",
+      "dataset_sha256": "e5f26d489a59a1cf0e77ed86ce732a321026a13d294d25582bfcff2129372be6",
+      "config_fingerprint": "6f992a8ecbda97101e4902c39ef710f195315dac31f18e3cbc04f30f40e537a4",
+      "superseded_fingerprints": [
+        "d93cc43d9029c74276e8561d8efdea57eac309a249fb8aff68ede869799df27a",
+        "2e3f2d9ad36a4b9bdc6de44ddd4542d21736627976faa6cb300a0024d0a3b4fd",
+        "4acc0c993442d54cbea67385410ca854e20415a164531c40d62a07053a601d99"
+      ],
+      "model": "Qwen/Qwen3-4B",
+      "global_seed": 42,
+      "replication_id": "seed_pair_00",
+      "generation": {
+        "do_sample": true,
+        "max_new_tokens": 16384,
+        "temperature": 0.6,
+        "top_k": null,
+        "top_p": 0.95
+      },
+      "max_new_tokens_history": [
+        {
+          "from": 2048,
+          "reason": "truncated generations never stated an answer and were scored wrong",
+          "to": 4096
+        },
+        {
+          "from": 4096,
+          "reason": "truncated generations never stated an answer and were scored wrong",
+          "to": 8192
+        },
+        {
+          "from": 8192,
+          "reason": "truncated generations never stated an answer and were scored wrong",
+          "to": 16384
+        }
+      ],
+      "solver_prompt_version": "icr_v2_phase1_verbatim",
+      "revision_prompt_version": "icr_v3_mid_injection",
+      "answer_parser_version": "icr.parsing_v3@ICR-V3",
+      "excluded_item_ids": [
+        121,
+        385,
+        400,
+        836,
+        868,
+        1037,
+        1042
+      ],
+      "exclusion_rule": "arc_challenge: trailing option count != 4 (label-free, pre-registered)",
+      "both_correct_sampling": {
+        "keep_one_in": 1,
+        "label_free": true,
+        "rule": "item_id % keep_one_in == 0",
+        "skip_all_correct_items": true
+      },
+      "completed_revision_conditions": [
+        "none",
+        "true_text",
+        "true_statebridge",
+        "true_latentmas"
+      ],
+      "source_items": 1165,
+      "items_with_three_beliefs": 1165,
+      "raw_revision_records": 3184,
+      "merged_revision_records": 2352,
+      "all_correct_sample_records": 832
+    },
+    "gsm8k": {
+      "artifact_root": "methods/AgentCom-StateBridge/artifacts/icr_v3/gsm8k_full_seed42",
+      "status": "VERIFIED",
+      "protocol": "ICR-V3",
+      "benchmark_label": "gsm8k_test",
+      "dataset_sha256": "14dbb509584329a3fe0aff683f095cc9a951e1dd8d7fbe024a60351ee4be5a45",
+      "config_fingerprint": "54423e26f7e585a72ce00775aada36bfe96341e0480f57dbac36f36ca412c7ba",
+      "superseded_fingerprints": [
+        "060aadffeca190b23e9adef02f643b66e3cd274815a49fa294e4aa5dbfaa9e14",
+        "2256105b1a29f3088c730194e7fbe71bda5f9f6b751941d22c4f9b5591c7fd60",
+        "42cd924cbd5bc7c642348e37ea651f78cc28852923e189707c6d7a4641276ba5"
+      ],
+      "model": "Qwen/Qwen3-4B",
+      "global_seed": 42,
+      "replication_id": "seed_pair_00",
+      "generation": {
+        "do_sample": true,
+        "max_new_tokens": 16384,
+        "temperature": 0.6,
+        "top_k": null,
+        "top_p": 0.95
+      },
+      "max_new_tokens_history": [
+        {
+          "from": 2048,
+          "reason": "truncated generations never stated an answer and were scored wrong",
+          "to": 4096
+        },
+        {
+          "from": 4096,
+          "reason": "truncated generations never stated an answer and were scored wrong",
+          "to": 8192
+        },
+        {
+          "from": 8192,
+          "reason": "truncated generations never stated an answer and were scored wrong",
+          "to": 16384
+        }
+      ],
+      "solver_prompt_version": "icr_v2_phase1_verbatim",
+      "revision_prompt_version": "icr_v3_mid_injection",
+      "answer_parser_version": "icr.parsing_v3@ICR-V3",
+      "excluded_item_ids": [],
+      "exclusion_rule": null,
+      "both_correct_sampling": {
+        "keep_one_in": 1,
+        "label_free": true,
+        "rule": "item_id % keep_one_in == 0",
+        "skip_all_correct_items": true
+      },
+      "completed_revision_conditions": [
+        "none",
+        "true_text",
+        "true_statebridge",
+        "true_latentmas"
+      ],
+      "source_items": 1319,
+      "items_with_three_beliefs": 1319,
+      "raw_revision_records": 3194,
+      "merged_revision_records": 2256,
+      "all_correct_sample_records": 938
+    },
+    "gpqa": {
+      "artifact_root": "methods/AgentCom-StateBridge/artifacts/icr_v3/gpqa_full_seed42",
+      "status": "PENDING",
+      "protocol": "ICR-V3",
+      "benchmark_label": "gpqa_diamond",
+      "dataset_sha256": "42cdb10747fbb798116e3b490f470836d6ec1d47d24ae5b06dea7e8cae616f42",
+      "config_fingerprint": "f3a6568c0975ebe7e0cf9c3d00c827d757363717095bb827c2ae4bf0deea3f2d",
+      "superseded_fingerprints": [
+        "cb9f218c2b3571fabd2ab894250af46cf053990d815e1d77bbd5fa897f53af2e"
+      ],
+      "model": "Qwen/Qwen3-4B",
+      "global_seed": 42,
+      "replication_id": "seed_pair_00",
+      "generation": {
+        "do_sample": true,
+        "max_new_tokens": 16384,
+        "temperature": 0.6,
+        "top_k": null,
+        "top_p": 0.95
+      },
+      "max_new_tokens_history": [
+        {
+          "from": 8192,
+          "reason": "truncated generations never stated an answer and were scored wrong",
+          "to": 16384
+        }
+      ],
+      "solver_prompt_version": "icr_v2_phase1_verbatim",
+      "revision_prompt_version": "icr_v3_mid_injection",
+      "answer_parser_version": "icr.parsing_v3@ICR-V3",
+      "excluded_item_ids": [],
+      "exclusion_rule": null,
+      "both_correct_sampling": {
+        "keep_one_in": 10,
+        "label_free": true,
+        "rule": "item_id % keep_one_in == 0"
+      },
+      "completed_revision_conditions": [
+        "none",
+        "true_text",
+        "true_statebridge",
+        "true_latentmas"
+      ],
+      "source_items": 198,
+      "items_with_three_beliefs": 106,
+      "raw_revision_records": 512,
+      "merged_revision_records": 1136,
+      "all_correct_sample_records": 0
+    },
+    "humanevalplus": {
+      "artifact_root": "methods/AgentCom-StateBridge/artifacts/icr_v3/humanevalplus_full_seed42",
+      "status": "VERIFIED",
+      "protocol": "ICR-V3",
+      "benchmark_label": "humanevalplus_test",
+      "dataset_sha256": "2669a4b46e251fe9198fcf811dbdbeff6e7d184622ca4891b57a72cd5342dfd9",
+      "config_fingerprint": "c8022305cc8dda36eaf25359491e62feb1c3f1afa435bfa396a3c860dd3a835b",
+      "superseded_fingerprints": [
+        "dfad94459e724849ce39a73bdb034d9ded4753787614f30d26641d0b791f614b",
+        "f94cd9cc33f42ad6a4a960729ddbf1ae56d09f8340d025729af2959763f72b3c"
+      ],
+      "model": "Qwen/Qwen3-4B",
+      "global_seed": 42,
+      "replication_id": "seed_pair_00",
+      "generation": {
+        "do_sample": true,
+        "max_new_tokens": 16384,
+        "temperature": 0.6,
+        "top_k": null,
+        "top_p": 0.95
+      },
+      "max_new_tokens_history": [
+        {
+          "from": 4096,
+          "reason": "truncated generations never stated an answer and were scored wrong",
+          "to": 8192
+        },
+        {
+          "from": 8192,
+          "reason": "truncated generations never stated an answer and were scored wrong",
+          "to": 16384
+        }
+      ],
+      "solver_prompt_version": "icr_v2_phase1_verbatim",
+      "revision_prompt_version": "icr_v3_mid_injection",
+      "answer_parser_version": "icr.parsing_v3@ICR-V3",
+      "excluded_item_ids": [],
+      "exclusion_rule": null,
+      "both_correct_sampling": {
+        "keep_one_in": 1,
+        "label_free": true,
+        "rule": "item_id % keep_one_in == 0",
+        "skip_all_correct_items": true
+      },
+      "completed_revision_conditions": [
+        "none",
+        "true_text",
+        "true_statebridge",
+        "true_latentmas"
+      ],
+      "source_items": 164,
+      "items_with_three_beliefs": 164,
+      "raw_revision_records": 768,
+      "merged_revision_records": 672,
+      "all_correct_sample_records": 96
+    }
+  },
+  "outputs": {
+    "MAIN_TEXT_EVIDENCE.md": "5.1-5.4 main-text material",
+    "APPENDIX_DETAILS.md": "Appendix A-E",
+    "AUDIT_ISSUES.md": "issues grouped by impact",
+    "tables/": [
+      "accuracy_scopes.csv",
+      "answer_transitions.csv",
+      "cost.csv",
+      "count_identity_check.csv",
+      "cr_pr_plot_data.csv",
+      "exclusions_and_reuse.csv",
+      "full_set_accuracy_estimated.csv",
+      "humanevalplus_degenerate_loops.csv",
+      "integrity_checks.csv",
+      "main_results.csv",
+      "paired_vs_no_message.csv",
+      "sample_statistics.csv",
+      "six_direction_detail.csv",
+      "sr_scr.csv",
+      "truncation_contamination.csv"
+    ]
+  },
+  "known_missing": [
+    "E0-E4 development diagnostics and the 75-item MedQA pilot",
+    "Final frozen EGR method and its held-out evaluation",
+    "Per-record EGR artifacts (only aggregate markdown reports survive)",
+    "Per-message construction cost for Full Text and StateBridge",
+    "Item-level development/test split",
+    "Model revision pin and attn_implementation",
+    "HumanEval+ literal-newline evidence",
+    "GPQA-Diamond phase 2 (PENDING, in progress)"
+  ]
+}

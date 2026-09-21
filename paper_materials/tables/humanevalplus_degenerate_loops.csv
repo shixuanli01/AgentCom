@@ -1,0 +1,62 @@
+item_id,agent_id,generation_length,max_new_tokens,parsed_answer_is_none,scored_correct,stage,excluded
+32,A,16384,16384,True,False,phase 1 (belief),NO - item retained; the belief is scored wrong because no answer was emitted
+32,B,16384,16384,True,False,phase 1 (belief),NO - item retained; the belief is scored wrong because no answer was emitted
+113,A,16384,16384,True,False,phase 1 (belief),NO - item retained; the belief is scored wrong because no answer was emitted
+34,B,16384,16384,True,False,phase 1 (belief),NO - item retained; the belief is scored wrong because no answer was emitted
+90,C,16384,16384,True,False,phase 1 (belief),NO - item retained; the belief is scored wrong because no answer was emitted
+94,B,16384,16384,True,False,phase 1 (belief),NO - item retained; the belief is scored wrong because no answer was emitted
+126,B,16384,16384,True,False,phase 1 (belief),NO - item retained; the belief is scored wrong because no answer was emitted
+126,C,16384,16384,True,False,phase 1 (belief),NO - item retained; the belief is scored wrong because no answer was emitted
+134,A,16384,16384,True,False,phase 1 (belief),NO - item retained; the belief is scored wrong because no answer was emitted
+134,B,16384,16384,True,False,phase 1 (belief),NO - item retained; the belief is scored wrong because no answer was emitted
+134,C,16384,16384,True,False,phase 1 (belief),NO - item retained; the belief is scored wrong because no answer was emitted
+158,B,16384,16384,True,False,phase 1 (belief),NO - item retained; the belief is scored wrong because no answer was emitted
+32,B,16384,16384,True,False,"phase 2 (true_latentmas, A_to_B)",NO - record retained and scored wrong
+32,B,16384,16384,True,False,"phase 2 (true_statebridge, A_to_B)",NO - record retained and scored wrong
+32,B,16384,16384,True,False,"phase 2 (true_text, A_to_B)",NO - record retained and scored wrong
+90,A,16384,16384,True,False,"phase 2 (true_text, C_to_A)",NO - record retained and scored wrong
+126,C,16384,16384,True,False,"phase 2 (true_latentmas, A_to_C)",NO - record retained and scored wrong
+134,B,16384,16384,True,False,"phase 2 (none, A_to_B)",NO - record retained and scored wrong
+134,B,16384,16384,True,False,"phase 2 (true_latentmas, A_to_B)",NO - record retained and scored wrong
+134,B,16384,16384,True,False,"phase 2 (true_statebridge, A_to_B)",NO - record retained and scored wrong
+134,B,16384,16384,True,False,"phase 2 (true_text, A_to_B)",NO - record retained and scored wrong
+134,A,16384,16384,True,False,"phase 2 (none, C_to_A)",NO - record retained and scored wrong
+134,A,16384,16384,True,False,"phase 2 (true_statebridge, C_to_A)",NO - record retained and scored wrong
+32,B,16384,16384,True,False,"phase 2 (none, A_to_B)",NO - record retained and scored wrong
+151,B,4096,16384,True,False,"phase 2 (true_text, A_to_B)",NO - record retained and scored wrong
+94,C,16384,16384,True,False,"phase 2 (true_statebridge, A_to_C)",NO - record retained and scored wrong
+94,A,16384,16384,True,False,"phase 2 (true_latentmas, B_to_A)",NO - record retained and scored wrong
+126,A,16384,16384,True,False,"phase 2 (true_latentmas, B_to_A)",NO - record retained and scored wrong
+134,C,16384,16384,True,False,"phase 2 (none, A_to_C)",NO - record retained and scored wrong
+134,C,16384,16384,True,False,"phase 2 (true_latentmas, A_to_C)",NO - record retained and scored wrong
+134,C,16384,16384,True,False,"phase 2 (true_statebridge, A_to_C)",NO - record retained and scored wrong
+134,B,16384,16384,True,False,"phase 2 (none, C_to_B)",NO - record retained and scored wrong
+134,B,16384,16384,True,False,"phase 2 (true_latentmas, C_to_B)",NO - record retained and scored wrong
+134,B,16384,16384,True,False,"phase 2 (true_statebridge, C_to_B)",NO - record retained and scored wrong
+32,C,16384,16384,True,False,"phase 2 (true_text, A_to_C)",NO - record retained and scored wrong
+80,A,4096,16384,True,False,"phase 2 (none, B_to_A)",NO - record retained and scored wrong
+97,A,4096,16384,True,False,"phase 2 (true_statebridge, B_to_A)",NO - record retained and scored wrong
+151,A,4096,16384,True,False,"phase 2 (none, B_to_A)",NO - record retained and scored wrong
+32,A,16384,16384,True,False,"phase 2 (true_latentmas, B_to_A)",NO - record retained and scored wrong
+113,A,16384,16384,True,False,"phase 2 (true_text, B_to_A)",NO - record retained and scored wrong
+134,A,16384,16384,True,False,"phase 2 (none, B_to_A)",NO - record retained and scored wrong
+134,A,16384,16384,True,False,"phase 2 (true_latentmas, B_to_A)",NO - record retained and scored wrong
+134,A,16384,16384,True,False,"phase 2 (true_statebridge, B_to_A)",NO - record retained and scored wrong
+134,A,16384,16384,True,False,"phase 2 (true_text, B_to_A)",NO - record retained and scored wrong
+32,A,16384,16384,True,False,"phase 2 (none, B_to_A)",NO - record retained and scored wrong
+32,A,16384,16384,True,False,"phase 2 (true_statebridge, B_to_A)",NO - record retained and scored wrong
+32,A,16384,16384,True,False,"phase 2 (true_text, B_to_A)",NO - record retained and scored wrong
+91,C,16384,16384,True,False,"phase 2 (true_statebridge, A_to_C)",NO - record retained and scored wrong
+91,C,16384,16384,True,False,"phase 2 (true_text, A_to_C)",NO - record retained and scored wrong
+134,C,16384,16384,True,False,"phase 2 (none, B_to_C)",NO - record retained and scored wrong
+126,B,16384,16384,True,False,"phase 2 (none, C_to_B)",NO - record retained and scored wrong
+126,B,16384,16384,True,False,"phase 2 (true_latentmas, C_to_B)",NO - record retained and scored wrong
+134,C,16384,16384,True,False,"phase 2 (true_latentmas, B_to_C)",NO - record retained and scored wrong
+134,C,16384,16384,True,False,"phase 2 (true_text, B_to_C)",NO - record retained and scored wrong
+32,A,16384,16384,True,False,"phase 2 (none, C_to_A)",NO - record retained and scored wrong
+32,A,16384,16384,True,False,"phase 2 (true_statebridge, C_to_A)",NO - record retained and scored wrong
+32,B,16384,16384,True,False,"phase 2 (none, C_to_B)",NO - record retained and scored wrong
+32,B,16384,16384,True,False,"phase 2 (true_statebridge, C_to_B)",NO - record retained and scored wrong
+90,C,16384,16384,True,False,"phase 2 (none, B_to_C)",NO - record retained and scored wrong
+90,C,16384,16384,True,False,"phase 2 (true_latentmas, B_to_C)",NO - record retained and scored wrong
+94,C,16384,16384,True,False,"phase 2 (none, B_to_C)",NO - record retained and scored wrong

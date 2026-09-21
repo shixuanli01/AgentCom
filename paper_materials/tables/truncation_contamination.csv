@@ -1,0 +1,17 @@
+dataset,subset,denominator,pairs_touching_a_non_terminating_belief,share_pct
+MedQA,CR,116,0,0.0
+MedQA,PR,116,0,0.0
+MedQA,SR,436,4,0.92
+MedQA,SCR,52,0,0.0
+ARC-C,CR,98,2,2.04
+ARC-C,PR,98,2,2.04
+ARC-C,SR,328,4,1.22
+ARC-C,SCR,64,0,0.0
+GSM8K,CR,92,4,4.35
+GSM8K,PR,92,4,4.35
+GSM8K,SR,334,0,0.0
+GSM8K,SCR,46,0,0.0
+HumanEval+,CR,28,9,32.14
+HumanEval+,PR,28,9,32.14
+HumanEval+,SR,92,20,21.74
+HumanEval+,SCR,20,0,0.0

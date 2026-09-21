@@ -1,0 +1,17 @@
+dataset,condition,total,kept_receiver_prior,adopted_sender_answer,moved_to_third_answer,invalid_or_unparsed,normalisation,caveat
+MedQA,No Message,720,693,11,16,0,"parsed answer, stripped and lowercased",
+MedQA,Full Text,720,496,220,3,1,"parsed answer, stripped and lowercased",
+MedQA,StateBridge,720,585,129,5,1,"parsed answer, stripped and lowercased",
+MedQA,LatentMAS,720,503,207,10,0,"parsed answer, stripped and lowercased",
+ARC-C,No Message,588,556,15,13,4,"parsed answer, stripped and lowercased",
+ARC-C,Full Text,588,429,157,1,1,"parsed answer, stripped and lowercased",
+ARC-C,StateBridge,588,455,129,2,2,"parsed answer, stripped and lowercased",
+ARC-C,LatentMAS,588,459,120,7,2,"parsed answer, stripped and lowercased",
+GSM8K,No Message,564,524,20,20,0,"parsed answer, stripped and lowercased",
+GSM8K,Full Text,564,446,108,10,0,"parsed answer, stripped and lowercased",
+GSM8K,StateBridge,564,485,69,10,0,"parsed answer, stripped and lowercased",
+GSM8K,LatentMAS,564,437,118,9,0,"parsed answer, stripped and lowercased",
+HumanEval+,No Message,168,110,2,42,14,"whitespace-normalised program text; string identity only, not semantic adoption",Adoption on a code task is string identity of the extracted program. It is NOT inferred from pass/fail.
+HumanEval+,Full Text,168,97,19,42,10,"whitespace-normalised program text; string identity only, not semantic adoption",Adoption on a code task is string identity of the extracted program. It is NOT inferred from pass/fail.
+HumanEval+,StateBridge,168,105,10,41,12,"whitespace-normalised program text; string identity only, not semantic adoption",Adoption on a code task is string identity of the extracted program. It is NOT inferred from pass/fail.
+HumanEval+,LatentMAS,168,84,28,43,13,"whitespace-normalised program text; string identity only, not semantic adoption",Adoption on a code task is string identity of the extracted program. It is NOT inferred from pass/fail.
