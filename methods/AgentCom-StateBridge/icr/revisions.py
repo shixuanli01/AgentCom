@@ -120,7 +120,10 @@ def main() -> None:
     config = json.loads(config_path.read_text(encoding="utf-8"))
     prebeliefs = load_prebelief_map(cli.artifact_root)
     metadata_by_item = {}
-    if any(condition.endswith("_evidence") for condition in conditions):
+    if any(
+        condition.endswith("_evidence") or condition.endswith("_evidence_v2")
+        for condition in conditions
+    ):
         task = str(config.get("dataset", "medqa"))
         metadata_by_item = benchmark_metadata(task, load_benchmark(task))
     selected_ids = [int(value) for value in config["selected_item_ids"]]
