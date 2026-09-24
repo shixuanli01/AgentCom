@@ -1,0 +1,15 @@
+dataset,condition,condition_key,n_records,n_cr_group,n_pr_group,distinct_question_ids,status_not_complete,non_terminating,unparsed_receiver_output,missing_sender_answer,source_root
+MedQA,No Message,none,232,116,116,58,0,0,0,0,artifacts/icr_v3/medqa_full_seed42
+MedQA,Answer Only,answer_only,232,116,116,58,0,0,0,0,runs/medqa/cr_dnc_v1/icr_root
+MedQA,Full Text,true_text,232,116,116,58,0,0,0,0,artifacts/icr_v3/medqa_full_seed42
+MedQA,StateBridge,true_statebridge,232,116,116,58,0,0,0,0,artifacts/icr_v3/medqa_full_seed42
+MedQA,LatentMAS,true_latentmas,232,116,116,58,0,0,0,0,artifacts/icr_v3/medqa_full_seed42
+GPQA-D,No Message,none,228,114,114,57,0,1,1,0,artifacts/icr_v3/gpqa_full_seed42
+GPQA-D,Answer Only,answer_only,228,114,114,57,0,1,1,12,runs/gpqa/hybrid_root
+GPQA-D,Full Text,true_text,228,114,114,57,0,1,1,0,artifacts/icr_v3/gpqa_full_seed42
+GPQA-D,StateBridge,true_statebridge,228,114,114,57,0,1,1,0,artifacts/icr_v3/gpqa_full_seed42
+GPQA-D,LatentMAS,true_latentmas,228,114,114,57,0,4,4,0,artifacts/icr_v3/gpqa_full_seed42
+MedQA,random_spans,random_spans,BLOCKED,,,,,,,,E0-E4 selector absent from repository (AUDIT_ISSUES C1)
+GPQA-D,random_spans,random_spans,BLOCKED,,,,,,,,E0-E4 selector absent from repository (AUDIT_ISSUES C1)
+MedQA,selected_spans,selected_spans,BLOCKED,,,,,,,,E0-E4 selector absent from repository (AUDIT_ISSUES C1)
+GPQA-D,selected_spans,selected_spans,BLOCKED,,,,,,,,E0-E4 selector absent from repository (AUDIT_ISSUES C1)

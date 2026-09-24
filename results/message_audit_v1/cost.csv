@@ -1,0 +1,65 @@
+dataset,condition,stage,metric,value,unit,note
+MedQA,No Message,message_construction,model_calls,0,calls,answer_only 与 none 不调用模型；其余通道的构造成本未逐条记录
+MedQA,No Message,message_construction,seconds,MISSING,s,未逐条记录
+MedQA,No Message,message_construction,cache_reuse,MISSING,,首次构造与缓存复用未分开记录
+MedQA,No Message,receiver,prompt_tokens_mean,869.1,tokens,
+MedQA,No Message,receiver,output_tokens_mean,860.1,tokens,
+MedQA,No Message,receiver,seconds_mean,19.02,s,
+MedQA,Answer Only,message_construction,model_calls,0,calls,answer_only 与 none 不调用模型；其余通道的构造成本未逐条记录
+MedQA,Answer Only,message_construction,seconds,MISSING,s,未逐条记录
+MedQA,Answer Only,message_construction,cache_reuse,MISSING,,首次构造与缓存复用未分开记录
+MedQA,Answer Only,receiver,prompt_tokens_mean,878.1,tokens,
+MedQA,Answer Only,receiver,output_tokens_mean,1445.5,tokens,
+MedQA,Answer Only,receiver,seconds_mean,31.98,s,
+MedQA,Full Text,message_construction,model_calls,MISSING,calls,answer_only 与 none 不调用模型；其余通道的构造成本未逐条记录
+MedQA,Full Text,message_construction,seconds,MISSING,s,未逐条记录
+MedQA,Full Text,message_construction,cache_reuse,MISSING,,首次构造与缓存复用未分开记录
+MedQA,Full Text,receiver,prompt_tokens_mean,1368.5,tokens,
+MedQA,Full Text,receiver,output_tokens_mean,1288.1,tokens,
+MedQA,Full Text,receiver,seconds_mean,29.25,s,
+MedQA,StateBridge,message_construction,model_calls,MISSING,calls,answer_only 与 none 不调用模型；其余通道的构造成本未逐条记录
+MedQA,StateBridge,message_construction,seconds,MISSING,s,未逐条记录
+MedQA,StateBridge,message_construction,cache_reuse,MISSING,,首次构造与缓存复用未分开记录
+MedQA,StateBridge,receiver,prompt_tokens_mean,940.1,tokens,
+MedQA,StateBridge,receiver,output_tokens_mean,1234.5,tokens,
+MedQA,StateBridge,receiver,seconds_mean,27.37,s,
+MedQA,LatentMAS,message_construction,model_calls,MISSING,calls,answer_only 与 none 不调用模型；其余通道的构造成本未逐条记录
+MedQA,LatentMAS,message_construction,seconds,MISSING,s,未逐条记录
+MedQA,LatentMAS,message_construction,cache_reuse,MISSING,,首次构造与缓存复用未分开记录
+MedQA,LatentMAS,receiver,prompt_tokens_mean,876.1,tokens,
+MedQA,LatentMAS,receiver,output_tokens_mean,737.0,tokens,
+MedQA,LatentMAS,receiver,seconds_mean,17.79,s,
+MedQA,random_spans,ALL,ALL,BLOCKED,,E0-E4 selector absent (AUDIT_ISSUES C1)
+MedQA,selected_spans,ALL,ALL,BLOCKED,,E0-E4 selector absent (AUDIT_ISSUES C1)
+GPQA-D,No Message,message_construction,model_calls,0,calls,answer_only 与 none 不调用模型；其余通道的构造成本未逐条记录
+GPQA-D,No Message,message_construction,seconds,MISSING,s,未逐条记录
+GPQA-D,No Message,message_construction,cache_reuse,MISSING,,首次构造与缓存复用未分开记录
+GPQA-D,No Message,receiver,prompt_tokens_mean,1788.3,tokens,
+GPQA-D,No Message,receiver,output_tokens_mean,3557.4,tokens,
+GPQA-D,No Message,receiver,seconds_mean,65.86,s,
+GPQA-D,Answer Only,message_construction,model_calls,0,calls,answer_only 与 none 不调用模型；其余通道的构造成本未逐条记录
+GPQA-D,Answer Only,message_construction,seconds,MISSING,s,未逐条记录
+GPQA-D,Answer Only,message_construction,cache_reuse,MISSING,,首次构造与缓存复用未分开记录
+GPQA-D,Answer Only,receiver,prompt_tokens_mean,1797.4,tokens,
+GPQA-D,Answer Only,receiver,output_tokens_mean,4647.6,tokens,
+GPQA-D,Answer Only,receiver,seconds_mean,130.12,s,
+GPQA-D,Full Text,message_construction,model_calls,MISSING,calls,answer_only 与 none 不调用模型；其余通道的构造成本未逐条记录
+GPQA-D,Full Text,message_construction,seconds,MISSING,s,未逐条记录
+GPQA-D,Full Text,message_construction,cache_reuse,MISSING,,首次构造与缓存复用未分开记录
+GPQA-D,Full Text,receiver,prompt_tokens_mean,3151.3,tokens,
+GPQA-D,Full Text,receiver,output_tokens_mean,2873.3,tokens,
+GPQA-D,Full Text,receiver,seconds_mean,54.16,s,
+GPQA-D,StateBridge,message_construction,model_calls,MISSING,calls,answer_only 与 none 不调用模型；其余通道的构造成本未逐条记录
+GPQA-D,StateBridge,message_construction,seconds,MISSING,s,未逐条记录
+GPQA-D,StateBridge,message_construction,cache_reuse,MISSING,,首次构造与缓存复用未分开记录
+GPQA-D,StateBridge,receiver,prompt_tokens_mean,1859.2,tokens,
+GPQA-D,StateBridge,receiver,output_tokens_mean,3744.8,tokens,
+GPQA-D,StateBridge,receiver,seconds_mean,68.28,s,
+GPQA-D,LatentMAS,message_construction,model_calls,MISSING,calls,answer_only 与 none 不调用模型；其余通道的构造成本未逐条记录
+GPQA-D,LatentMAS,message_construction,seconds,MISSING,s,未逐条记录
+GPQA-D,LatentMAS,message_construction,cache_reuse,MISSING,,首次构造与缓存复用未分开记录
+GPQA-D,LatentMAS,receiver,prompt_tokens_mean,1795.3,tokens,
+GPQA-D,LatentMAS,receiver,output_tokens_mean,1196.8,tokens,
+GPQA-D,LatentMAS,receiver,seconds_mean,32.04,s,
+GPQA-D,random_spans,ALL,ALL,BLOCKED,,E0-E4 selector absent (AUDIT_ISSUES C1)
+GPQA-D,selected_spans,ALL,ALL,BLOCKED,,E0-E4 selector absent (AUDIT_ISSUES C1)

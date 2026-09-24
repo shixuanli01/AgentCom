@@ -1,0 +1,5 @@
+dataset,status,answer_only_pr_pct,matched_alpha,reference_cr_pct,answer_only_cr_pct,observed_minus_reference_pp,ci_low,ci_high,ci_flag,resamples_total,resamples_matched,resamples_out_of_range,resamples_undefined,resamples_zero_den,matched_frac,note
+MedQA,MATCHED,80.1724,0.3231,30.5703,38.7931,+8.2228,-2.9885,+19.8559,OK,10000,10000,0,0,0,1.0000,
+ARC-C,MATCHED,63.2653,0.5088,45.0233,38.7755,-6.2478,-19.7802,+7.8622,OK,10000,10000,0,0,0,1.0000,
+GSM8K,MATCHED,70.6522,0.5405,33.6075,39.1304,+5.5229,-9.8527,+19.0078,OK,10000,9978,22,0,0,0.9978,
+GPQA-D,MATCHED,63.1579,0.6786,55.1065,56.1404,+1.0338,-14.5243,+15.5665,OK,10000,9997,3,0,0,0.9997,

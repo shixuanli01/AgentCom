@@ -1,0 +1,5 @@
+# StateBridge seed_pair_01 paired against No Message. TWO options; they are not interchangeable.
+"# bootstrap 2000 resamples, analysis seed 20260921"
+no_message_source,n_paired,both_correct,gained,lost,both_wrong,net,revision_seed_matched,delta_acc_pp,ci_low,ci_high,note
+None seed_pair_01,183,24,7,11,141,-4,183/183,-2.1858,-6.5217,+1.6484,seed 一致但不完整
+None seed_pair_00,720,144,56,41,479,15,0/720,+2.0833,-0.4167,+4.5833,完整但跨种子

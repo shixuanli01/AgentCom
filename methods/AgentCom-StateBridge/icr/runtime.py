@@ -61,6 +61,8 @@ class ICRRuntime:
         self.temperature = temperature
         self.top_p = top_p
         self.task = task
+        # V3 "revise" unless a run selects the V4 verify-then-decide policy.
+        self.receiver_policy = "revise"
         self.bridge = StateBridge(
             self.model,
             max_new_tokens=max_new_tokens,
@@ -251,13 +253,19 @@ class ICRRuntime:
         # boundary, documented in experiments/ICR_V3_PROTOCOL_ZH.md section 7.
         if message.condition == "none":
             block = external_block("none")
+        elif "hybrid" in message.condition:
+            # Text-first dispatch would drop the marker and with it the prefix.
+            block = external_block(message.condition, sender_reasoning=message.text)
         elif message.text is not None:
             block = external_block(message.condition, sender_reasoning=message.text)
         elif message.prefix is not None or message.trajectory is not None:
             block = external_block(message.condition)
         else:
             raise RuntimeError("Non-none communication message has no payload")
-        user_content = revision_prompt(
+        builder = revision_prompt
+        if getattr(self, "receiver_policy", "revise") == "verify":
+            from .prompts_v4 import revision_prompt_v4 as builder
+        user_content = builder(
             getattr(self, "task", "medqa"),
             question=question,
             receiver_prior_reasoning=receiver_reasoning,

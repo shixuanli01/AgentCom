@@ -1,7 +1,7 @@
 dataset,condition,cr_pct,pr_pct,si_pct,cr_den,pr_den
 MedQA,No Message,6.8966,98.2759,52.5862,116,116
 MedQA,Full Text,80.1724,42.2414,61.2069,116,116
-MedQA,StateBridge,57.7586,75.0,66.3793,116,116
+MedQA,StateBridge,54.3103,71.5517,62.9310,116,116
 MedQA,LatentMAS,69.8276,32.7586,51.2931,116,116
 ARC-C,No Message,8.1633,92.8571,50.5102,98,98
 ARC-C,Full Text,80.6122,34.6939,57.6531,98,98

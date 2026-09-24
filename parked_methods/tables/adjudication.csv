@@ -1,0 +1,3 @@
+variant,n_records,n_expected,completeness,accuracy_pct,num,den,source_root
+adjudication_v1,360,360,complete,26.94,97,360,runs/medqa/adjudication_v1
+adjudication_v2,315,360,INCOMPLETE 315/360,27.94,88,315,runs/medqa/adjudication_v2

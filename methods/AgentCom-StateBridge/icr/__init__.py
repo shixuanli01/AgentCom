@@ -5,6 +5,9 @@ PROTOCOL_V3 = "ICR-V3"
 CONDITIONS = (
     "none",
     "true_text",
+    "true_answer",
+    "self_answer",
+    "other_answer",
     "self_text",
     "other_text",
     "true_evidence",
@@ -14,6 +17,13 @@ CONDITIONS = (
     "true_evidence_v2",
     "self_evidence_v2",
     "other_evidence_v2",
+    # Claim-suppressed text and the hidden-state prefix in one slot.
+    "true_hybrid",
+    "true_hybrid_keepchain",
+    "true_rawhybrid",
+    "true_hybrid_v3",
+    "self_hybrid",
+    "other_hybrid",
     "true_statebridge",
     "self_statebridge",
     "other_statebridge",

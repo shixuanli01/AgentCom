@@ -1,0 +1,23 @@
+dataset,condition,policy,replication_id,cr_num,cr_den,cr_pct,cr_ci_low,cr_ci_high,pr_num,pr_den,pr_pct,pr_ci_low,pr_ci_high,si_pct,si_ci_low,si_ci_high,n_records,measured_scope
+MedQA,No Message,V3,seed_pair_00,8,116,6.8966,2.5862,12.0690,114,116,98.2759,95.6897,100.0000,52.5862,50.0000,55.6034,232,mixed_directions_only
+MedQA,No Message,V4,seed_pair_00,4,116,3.4483,0.8621,6.8966,115,116,99.1379,97.4138,100.0000,51.2931,49.5690,53.0172,232,mixed_directions_only
+MedQA,Full Text,V3,seed_pair_00,93,116,80.1724,71.5517,87.9310,49,116,42.2414,32.7586,52.5862,61.2069,53.8793,68.5345,232,mixed_directions_only
+MedQA,Full Text,V4,seed_pair_00,66,116,56.8966,47.4138,66.3793,78,116,67.2414,57.7586,76.7241,62.0690,53.8793,69.8276,232,mixed_directions_only
+MedQA,StateBridge,V3,seed_pair_01,63,116,54.3103,43.1034,65.5172,83,116,71.5517,61.2069,81.0345,62.9310,55.6034,70.2586,232,mixed_directions_only
+MedQA,StateBridge,V4,seed_pair_01,32,116,27.5862,18.1034,37.9310,101,116,87.0690,79.3103,93.1034,57.3276,51.2931,63.3621,232,mixed_directions_only
+MedQA,LatentMAS,V3,seed_pair_00,81,116,69.8276,60.3448,79.3103,38,116,32.7586,25.0000,41.3793,51.2931,45.2586,57.3276,232,mixed_directions_only
+MedQA,LatentMAS,V4,seed_pair_00,51,116,43.9655,35.3448,53.4483,91,116,78.4483,69.8276,86.2069,61.2069,54.7414,67.6724,232,mixed_directions_only
+MedQA,Answer Only,V3,seed_pair_00,45,116,38.7931,27.5862,50.0000,93,116,80.1724,71.5517,87.9310,59.4828,53.0172,66.3793,232,mixed_directions_only
+MedQA,Answer Only,V4,,,,MISSING,,,,,,,,,,,,
+MedQA,StateBridge seed01,V3,,,,MISSING,,,,,,,,,,,,
+MedQA,StateBridge seed01,V4,,,,MISSING,,,,,,,,,,,,
+GPQA-D,No Message,V3,seed_pair_00,16,114,14.0351,7.0175,21.9298,110,114,96.4912,92.9825,99.1228,55.2632,51.3158,59.2105,228,mixed_directions_only
+GPQA-D,No Message,V4,seed_pair_00,8,114,7.0175,2.6316,12.2807,111,114,97.3684,93.8596,100.0000,52.1930,49.5614,55.2632,228,mixed_directions_only
+GPQA-D,Full Text,V3,seed_pair_00,85,114,74.5614,64.9123,83.3333,54,114,47.3684,35.9649,58.7719,60.9649,52.6316,69.2982,228,mixed_directions_only
+GPQA-D,Full Text,V4,seed_pair_00,63,114,55.2632,43.8596,66.6667,70,114,61.4035,50.0000,71.9298,58.3333,48.6842,67.5439,228,mixed_directions_only
+GPQA-D,StateBridge,V3,seed_pair_00,73,114,64.0351,54.3860,73.6842,59,114,51.7544,41.2281,62.2807,57.8947,50.0000,65.3509,228,mixed_directions_only
+GPQA-D,StateBridge,V4,seed_pair_00,58,114,50.8772,40.3509,61.4035,80,114,70.1754,60.5263,78.9474,60.5263,52.6316,67.9825,228,mixed_directions_only
+GPQA-D,LatentMAS,V3,seed_pair_00,70,114,61.4035,50.8772,71.9298,58,114,50.8772,40.3509,61.4035,56.1404,47.8070,64.4737,228,mixed_directions_only
+GPQA-D,LatentMAS,V4,seed_pair_00,50,114,43.8596,33.3333,55.2632,85,114,74.5614,64.9123,83.3333,59.2105,52.1930,66.2281,228,mixed_directions_only
+GPQA-D,Answer Only,V3,seed_pair_00,64,114,56.1404,45.6140,65.7895,72,114,63.1579,51.7544,74.5614,59.6491,50.8772,67.9825,228,mixed_directions_only
+GPQA-D,Answer Only,V4,,,,MISSING,,,,,,,,,,,,

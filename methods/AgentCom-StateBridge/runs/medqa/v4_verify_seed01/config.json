@@ -9,8 +9,6 @@
     "skip_all_correct_items": false
   },
   "completed_revision_conditions": [],
-  "cr_dnc_note": "isolated root for CR-DNC method development; prebeliefs symlinked to the published artifact, revisions written here so the baseline config is never modified",
-  "cr_dnc_source_artifact": "artifacts/icr_v3/medqa_full_seed42",
   "dataset": "medqa",
   "dataset_rows": 300,
   "dataset_sha256": "ddee8dc64d3b2a1e5061c409c68d626109237640009168838a038db29efe802c",
@@ -35,14 +33,16 @@
   "model": "Qwen/Qwen3-4B",
   "other_mapping_offset": 137,
   "pair_class_scope": {
-    "true_answer": [
+    "true_statebridge": [
       "correction_opportunity",
       "destruction_risk"
     ]
   },
   "protocol": "ICR-V3",
-  "receiver_policy": "revise",
-  "replication_id": "seed_pair_00",
+  "receiver_policy": "verify",
+  "replication_id": "seed_pair_01",
+  "replication_note": "second replication of the revision pass only. Beliefs and StateBridge prefixes are the frozen seed_pair_00 artifacts, symlinked; only replication_id changes, which changes revision_seed and therefore the receiver sampling. It answers whether an observed rate is stable under resampling, which rerunning the same seed cannot: that pipeline is deterministic.",
+  "replication_source": "artifacts/icr_v3/medqa_full_seed42",
   "revision_conditions": [
     "none",
     "true_text",
@@ -59,21 +59,10 @@
     "other_latentmas"
   ],
   "revision_conditions_requested": [
-    "cr_dnc_a100",
-    "cr_dnc_a025",
-    "cr_dnc_a050",
-    "cr_dnc_a075",
-    "cr_dnc_randdir_a100",
-    "cr_dnc_randnorm_a100",
-    "true_evidence",
-    "other_evidence",
-    "true_evidence_v2",
-    "true_hybrid",
-    "true_rawhybrid",
-    "true_hybrid_v3",
-    "true_answer"
+    "none",
+    "true_statebridge"
   ],
-  "revision_prompt_version": "icr_v3_mid_injection",
+  "revision_prompt_version": "icr_v4_verify_then_decide",
   "selected_item_ids": [
     0,
     1,

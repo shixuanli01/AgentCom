@@ -126,10 +126,19 @@ def external_block(condition: str, *, sender_reasoning: Optional[str] = None) ->
         condition.endswith("_text")
         or condition.endswith("_evidence")
         or condition.endswith("_evidence_v2")
+        or condition.endswith("_answer")
     ):
         if sender_reasoning is None:
             raise ValueError("Textual conditions require a message body")
         return f"{MESSAGE_LEAD_IN}\n{sender_reasoning}"
+    if "hybrid" in condition:
+        # Both payloads occupy the one message slot: the claim-suppressed text,
+        # then the marker where the hidden-state prefix is spliced. Neither part
+        # carries a readable answer token, so the slot stays claim-free while
+        # holding strictly more of the sender than either channel alone.
+        if sender_reasoning is None:
+            raise ValueError("Hybrid conditions require a message body")
+        return f"{MESSAGE_LEAD_IN}\n{sender_reasoning}\n{EMBEDDING_HINT_MARKER}"
     if (
         condition.endswith("_statebridge")
         or condition.endswith("_latentmas")

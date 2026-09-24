@@ -1,0 +1,7 @@
+dataset,channel,si_none_v3,si_chan_v3,G_v3,si_none_v4,si_chan_v4,G_v4,delta_G_pp,ci_low,ci_high,interval_covers_zero,invalid_resamples,note
+MedQA,Full Text,52.5862,61.2069,+8.6207,51.2931,62.0690,+10.7759,+2.1552,-3.8793,+8.1897,YES,0,revision seed controlled
+MedQA,StateBridge,52.5862,62.9310,+10.3448,51.2931,57.3276,+6.0345,-4.3103,-11.6379,+2.5862,YES,0,revision seed controlled
+MedQA,LatentMAS,52.5862,51.2931,-1.2931,51.2931,61.2069,+9.9138,+11.2069,+2.1552,+20.2586,NO,0,revision seed controlled
+GPQA-D,Full Text,55.2632,60.9649,+5.7018,52.1930,58.3333,+6.1404,+0.4386,-7.8947,+8.7719,YES,0,revision seed controlled
+GPQA-D,StateBridge,55.2632,57.8947,+2.6316,52.1930,60.5263,+8.3333,+5.7018,-2.1930,+13.5965,YES,0,revision seed controlled
+GPQA-D,LatentMAS,55.2632,56.1404,+0.8772,52.1930,59.2105,+7.0175,+6.1404,-2.6316,+15.3509,YES,0,revision seed controlled

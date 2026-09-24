@@ -1,0 +1,7 @@
+dataset,variant,condition_key,completeness,n_records,n_expected,cr_pct,cr_num,cr_den,pr_pct,pr_num,pr_den,si_pct,si_minus_50,dpi,adoption_pi_bar_pct,sr_pct,scr_pct,acc_ret_pct,source_root
+MedQA,EGR V1 (evidence),true_evidence,complete,720,720,82.76,96,116,40.52,47,116,61.64,+11.64,23.3,71.1,0.92,100.00,27.64,runs/medqa/cr_dnc_v1/icr_root
+MedQA,EGR V1 cross-item control,other_evidence,complete,720,720,0.00,0,116,93.10,108,116,46.55,-3.45,-3.4,1.7,2.06,94.23,23.06,runs/medqa/cr_dnc_v1/icr_root
+MedQA,EGR V2 (sentence-level),true_evidence_v2,complete,720,720,51.72,60,116,68.97,80,116,60.34,+10.34,23.3,40.1,0.92,100.00,27.22,runs/medqa/cr_dnc_v1/icr_root
+ARC-C,EGR V2 (sentence-level),true_evidence_v2,complete,588,588,41.84,41,98,70.41,69,98,56.12,+6.12,12.2,35.7,0.30,100.00,29.76,runs/arc_challenge/hybrid_root
+GSM8K,EGR V2 (sentence-level),true_evidence_v2,complete,564,564,35.87,33,92,63.04,58,92,49.46,-0.54,3.3,34.2,1.50,100.00,25.18,runs/gsm8k/hybrid_root
+GPQA-D,EGR V2 (sentence-level),true_evidence_v2,INCOMPLETE 633/708,633,708,52.04,51,98,70.09,75,107,61.07,+11.07,28.7,37.7,1.57,100.00,27.96,runs/gpqa/hybrid_root

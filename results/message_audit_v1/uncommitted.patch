@@ -1,0 +1,2310 @@
+diff --git a/methods/AgentCom-StateBridge/egr/evidence_v2.py b/methods/AgentCom-StateBridge/egr/evidence_v2.py
+index 1139de9..4712246 100644
+--- a/methods/AgentCom-StateBridge/egr/evidence_v2.py
++++ b/methods/AgentCom-StateBridge/egr/evidence_v2.py
+@@ -52,6 +52,17 @@ _CONCLUSION_CUES = (
+     "conclusion:", "final answer", "most likely", "best answer", "correct answer",
+     "answer:", "因此", "所以", "答案", "综上",
+ )
++# "the answer is 18", "Final Answer: 18", "so we get 18", "答案是 18"
++_NUMERIC_ASSERTION = (
++    r"(?:answer|result|total(?:s|ing)?|altogether|in all|final|therefore|thus|hence|"
++    r"so\s+(?:the|we|she|he|they)|答案|结果|总共|因此|所以)"
++    r"[^.\n]{{0,40}}?{n}"
++)
++# A sentence showing operands and an operator is a derivation step, not an
++# announcement. "Total = 14 + 20 = 34" states the answer but is also the
++# arithmetic that produces it; removing it leaves the receiver every
++# intermediate quantity and no landing point. "The answer is 34" is not.
++_ARITHMETIC = re.compile(r"[0-9)\}]\s*(?:[-+*/=]|\\times|\\div|\\cdot|x)\s*[0-9(\\]")
+ _LABEL_ASSERTION = (
+     r"(?:answer|option|choice|select|choose|pick|响应|选项|答案)"
+     r"[^.\n]{{0,24}}\b\(?{label}\)?\b"
+@@ -72,7 +83,20 @@ def _content_words(option_text: str) -> list[str]:
+     return [w for w in words if w not in _STOPWORDS]
+ 
+ 
++def _is_matchable(option_text: str) -> bool:
++    """Whether an option's text can be searched for as content.
++
++    Some GPQA items carry the A-D to a-d mapping layer in place of option text,
++    so an "option" is the single character "d". Substring-matching that would
++    delete almost every sentence, since most contain the letter. Options that
++    short are left to the label-assertion rule instead.
++    """
++    return len(_normalise(option_text)) >= 4
++
++
+ def _mentions(sentence: str, option_text: str) -> bool:
++    if not _is_matchable(option_text):
++        return False
+     low = _normalise(sentence)
+     if _normalise(option_text) in low:
+         return True
+@@ -90,6 +114,7 @@ def build_evidence_packet_v2(
+     *,
+     token_counter: Optional[Callable[[str], int]] = None,
+     policy: str = "all_options",
++    numeric_policy: str = "strict",
+ ) -> dict[str, Any]:
+     """Remove whole sentences that assert the sender's answer.
+ 
+@@ -97,6 +122,8 @@ def build_evidence_packet_v2(
+     """
+     if policy not in ("chosen", "all_options"):
+         raise ValueError(f"unknown policy {policy!r}")
++    if numeric_policy not in ("strict", "assertion_only"):
++        raise ValueError(f"unknown numeric_policy {numeric_policy!r}")
+     reasoning = str(sender_record.get("reasoning_text") or "")
+     answer = sender_record.get("parsed_answer")
+     answer = str(answer).strip().lower() if answer is not None else None
+@@ -118,6 +145,12 @@ def build_evidence_packet_v2(
+         }
+ 
+     chosen_text = options.get(answer) if answer else None
++    numeric_answer = None
++    if answer_type == "number" and answer:
++        # A numeric benchmark has no option set, so the claim is the number
++        # itself. Sentences stating it are removed the way option-naming
++        # sentences are; there are no alternatives to stay symmetric with.
++        numeric_answer = re.sub(r"[^0-9.\-]", "", str(answer))
+     sentences = [s for s in _SENTENCE_SPLIT.split(reasoning) if s.strip()]
+     kept, removed, reasons = [], [], {}
+ 
+@@ -125,6 +158,23 @@ def build_evidence_packet_v2(
+         why = None
+         if _BOXED.search(sentence):
+             why = "boxed_span"
++        elif numeric_answer and re.search(
++            rf"(?<![0-9.]){re.escape(numeric_answer)}(?![0-9.])", sentence
++        ) and (
++            numeric_policy == "strict"
++            or (
++                re.search(_NUMERIC_ASSERTION.format(n=re.escape(numeric_answer)),
++                          sentence, re.I)
++                and not _ARITHMETIC.search(sentence)
++            )
++        ):
++            # strict removes every sentence stating the number, which in
++            # arithmetic is the closing step of the derivation: deleting
++            # "48 x 120 = 5760" leaves the receiver a reasoning chain with every
++            # intermediate quantity and no landing point. assertion_only removes
++            # the sentences that announce the number as the answer and keeps the
++            # arithmetic that produced it.
++            why = "numeric_answer" if numeric_policy == "strict" else "numeric_assertion"
+         elif chosen_text and _mentions(sentence, chosen_text):
+             why = "chosen_option_text"
+         elif policy == "all_options" and any(
+@@ -165,6 +215,7 @@ def build_evidence_packet_v2(
+         "removed_sentences": removed,
+         "removal_reasons": reasons,
+         "policy": policy,
++        "numeric_policy": numeric_policy,
+         "sender_answer_text_present_after_filter": bool(
+             chosen_text and _mentions(packet, chosen_text)
+         ),
+diff --git a/methods/AgentCom-StateBridge/icr/__init__.py b/methods/AgentCom-StateBridge/icr/__init__.py
+index 06c4b40..152b020 100644
+--- a/methods/AgentCom-StateBridge/icr/__init__.py
++++ b/methods/AgentCom-StateBridge/icr/__init__.py
+@@ -5,6 +5,9 @@ PROTOCOL_V3 = "ICR-V3"
+ CONDITIONS = (
+     "none",
+     "true_text",
++    "true_answer",
++    "self_answer",
++    "other_answer",
+     "self_text",
+     "other_text",
+     "true_evidence",
+@@ -14,6 +17,13 @@ CONDITIONS = (
+     "true_evidence_v2",
+     "self_evidence_v2",
+     "other_evidence_v2",
++    # Claim-suppressed text and the hidden-state prefix in one slot.
++    "true_hybrid",
++    "true_hybrid_keepchain",
++    "true_rawhybrid",
++    "true_hybrid_v3",
++    "self_hybrid",
++    "other_hybrid",
+     "true_statebridge",
+     "self_statebridge",
+     "other_statebridge",
+diff --git a/methods/AgentCom-StateBridge/icr/channels.py b/methods/AgentCom-StateBridge/icr/channels.py
+index f560f59..448ed7b 100644
+--- a/methods/AgentCom-StateBridge/icr/channels.py
++++ b/methods/AgentCom-StateBridge/icr/channels.py
+@@ -144,6 +144,48 @@ class EvidenceCommunicationChannel(CommunicationChannel):
+         )
+ 
+ 
++class AnswerOnlyCommunicationChannel(CommunicationChannel):
++    """The sender's final answer, normalised, and nothing else.
++
++    It separates two things Full Text conflates: knowing what another process
++    concluded, and seeing why. Whatever Full Text achieves over this condition
++    is what the reasoning itself buys.
++
++    A sender whose answer did not parse sends a fixed placeholder and stays in
++    the population; dropping those records only for this condition would change
++    its denominator relative to every other channel.
++    """
++
++    PLACEHOLDER = "UNPARSEABLE"
++
++    def __init__(self, condition: str, source: str) -> None:
++        self.condition = condition
++        self.source = source
++
++    def build_message(self, sender_record, receiver_record, context):
++        source = {"true": sender_record, "self": receiver_record}.get(self.source)
++        if source is None:
++            source = context["other_sender_record"]
++        answer = source.get("parsed_answer")
++        unparsed = answer is None
++        text = self.PLACEHOLDER if unparsed else str(answer).strip().upper()
++        tokenizer = context["tokenizer"]
++        return CommunicationMessage(
++            condition=self.condition,
++            source_item_id=int(source["item_id"]),
++            source_agent_id=str(source["agent_id"]),
++            text=text,
++            diagnostics={
++                "modality": "answer_only",
++                "sender_answer_unparsed": unparsed,
++                "tokens": len(tokenizer(text, add_special_tokens=False)["input_ids"]),
++                "characters": len(text),
++                "payload_bytes": len(text.encode("utf-8")),
++                "payload_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
++            },
++        )
++
++
+ class EvidenceV2CommunicationChannel(CommunicationChannel):
+     """Sentence-level claim suppression (EGR V2).
+ 
+@@ -212,6 +254,190 @@ class EvidenceV2CommunicationChannel(CommunicationChannel):
+         )
+ 
+ 
++class RawHybridBridgeChannel(CommunicationChannel):
++    """Unfiltered sender text and the StateBridge prefix in one slot.
++
++    The ablation that decides whether the hybrid channel has a mechanism. Its
++    claim is that claim suppression is what makes the text safe to stack: an
++    unfiltered message carries a readable answer, the receiver copies it, and
++    the prefix adds nothing. If this arm performs like the filtered one, the
++    filter contributes nothing and the method is text-plus-prefix.
++    """
++
++    def __init__(self, condition: str, source: str) -> None:
++        self.condition = condition
++        self.source = source
++
++    def build_message(self, sender_record, receiver_record, context):
++        source = {"true": sender_record, "self": receiver_record}.get(self.source)
++        if source is None:
++            source = context["other_sender_record"]
++        text = str(source["reasoning_text"])
++        prefix_path = Path(context["artifact_root"]) / source["statebridge_prefix_file"]
++        prefix = load_file(str(prefix_path), device="cpu")["statebridge_prefix"]
++        tokenizer = context["tokenizer"]
++        return CommunicationMessage(
++            condition=self.condition,
++            source_item_id=int(source["item_id"]),
++            source_agent_id=str(source["agent_id"]),
++            text=text, prefix=prefix,
++            diagnostics={
++                "modality": "raw_text_plus_statebridge",
++                "tokens": len(tokenizer(text, add_special_tokens=False)["input_ids"]),
++                "characters": len(text),
++                "states": int(prefix.shape[1]),
++                "hidden_dimension": int(prefix.shape[2]),
++                "text_payload_bytes": len(text.encode("utf-8")),
++                "prefix_payload_bytes": int(prefix.numel() * prefix.element_size()),
++                "payload_bytes": len(text.encode("utf-8"))
++                + int(prefix.numel() * prefix.element_size()),
++                "payload_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
++            },
++        )
++
++
++class HybridV3BridgeChannel(CommunicationChannel):
++    """EGR V3 text and the StateBridge prefix in one slot.
++
++    V3 applies one criterion to every answer type -- remove a sentence that
++    announces the answer without showing why -- so this arm answers the
++    objection that the filter is designed per dataset. Its offline leakage is
++    much higher than V2's (89% against 8% on MedQA), so if it performs
++    comparably the leakage measure is not what predicts behaviour.
++    """
++
++    def __init__(self, condition: str, source: str) -> None:
++        self.condition = condition
++        self.source = source
++
++    def build_message(self, sender_record, receiver_record, context):
++        from egr.evidence import build_evidence_packet
++        from egr.evidence_v3 import build_evidence_packet_v3
++
++        source = {"true": sender_record, "self": receiver_record}.get(self.source)
++        if source is None:
++            source = context["other_sender_record"]
++        tokenizer = context["tokenizer"]
++
++        def token_count(value: str) -> int:
++            return len(tokenizer(value, add_special_tokens=False)["input_ids"])
++
++        metadata = context["benchmark_metadata_by_item"][int(source["item_id"])]
++        packet = build_evidence_packet_v3(source, metadata, token_counter=token_count)
++        fell_back = False
++        if not str(packet["evidence_packet"]).strip():
++            packet = build_evidence_packet(source, metadata, token_counter=token_count)
++            fell_back = True
++        text = str(packet["evidence_packet"])
++        prefix_path = Path(context["artifact_root"]) / source["statebridge_prefix_file"]
++        prefix = load_file(str(prefix_path), device="cpu")["statebridge_prefix"]
++        return CommunicationMessage(
++            condition=self.condition,
++            source_item_id=int(source["item_id"]),
++            source_agent_id=str(source["agent_id"]),
++            text=text, prefix=prefix,
++            diagnostics={
++                "modality": "hybrid_evidence_v3_plus_statebridge",
++                "fell_back_to_v1_text": fell_back,
++                "tokens": int(packet["evidence_token_count"]),
++                "original_tokens": int(packet["original_token_count"]),
++                "sentences_removed": packet.get("sentences_removed"),
++                "removal_reasons": packet.get("removal_reasons"),
++                "states": int(prefix.shape[1]),
++                "hidden_dimension": int(prefix.shape[2]),
++                "text_payload_bytes": len(text.encode("utf-8")),
++                "prefix_payload_bytes": int(prefix.numel() * prefix.element_size()),
++                "payload_bytes": len(text.encode("utf-8"))
++                + int(prefix.numel() * prefix.element_size()),
++                "payload_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
++                "sender_answer_text_present_after_filter": bool(
++                    packet["sender_answer_text_present_after_filter"]
++                ),
++            },
++        )
++
++
++class HybridEvidenceBridgeChannel(CommunicationChannel):
++    """Claim-suppressed text and the StateBridge prefix in one message slot.
++
++    Every channel measured so far sits on one correction/preservation trade-off
++    curve, and the text family sits on a lower one: CR+PR is 120-123 for Full
++    Text and both EGR versions against 126-133 for StateBridge. Sliding along a
++    curve cannot raise SI, so the only way past it is to raise the sum, which
++    means adding information rather than reallocating it.
++
++    Both payloads are claim-free by construction -- the text has had every
++    option-naming sentence removed, the prefix has no readable answer token --
++    so the combination should keep preservation while carrying more of the
++    sender than either half.
++    """
++
++    def __init__(self, condition: str, source: str,
++                 numeric_policy: str = "strict") -> None:
++        self.condition = condition
++        self.source = source
++        self.numeric_policy = numeric_policy
++
++    def build_message(self, sender_record, receiver_record, context):
++        from egr.evidence import build_evidence_packet
++        from egr.evidence_v2 import build_evidence_packet_v2
++
++        if self.source == "true":
++            source = sender_record
++        elif self.source == "self":
++            source = receiver_record
++        elif self.source == "other":
++            source = context["other_sender_record"]
++        else:
++            raise ValueError(f"Unknown hybrid source: {self.source}")
++
++        tokenizer = context["tokenizer"]
++
++        def token_count(value: str) -> int:
++            return len(tokenizer(value, add_special_tokens=False)["input_ids"])
++
++        metadata = context["benchmark_metadata_by_item"][int(source["item_id"])]
++        packet = build_evidence_packet_v2(
++            source, metadata, token_counter=token_count, policy="all_options",
++            numeric_policy=self.numeric_policy,
++        )
++        fell_back = False
++        if not str(packet["evidence_packet"]).strip():
++            packet = build_evidence_packet(source, metadata, token_counter=token_count)
++            fell_back = True
++        text = str(packet["evidence_packet"])
++
++        prefix_path = Path(context["artifact_root"]) / source["statebridge_prefix_file"]
++        prefix = load_file(str(prefix_path), device="cpu")["statebridge_prefix"]
++
++        return CommunicationMessage(
++            condition=self.condition,
++            source_item_id=int(source["item_id"]),
++            source_agent_id=str(source["agent_id"]),
++            text=text,
++            prefix=prefix,
++            diagnostics={
++                "modality": "hybrid_evidence_v2_plus_statebridge",
++                "numeric_policy": self.numeric_policy,
++                "fell_back_to_v1_text": fell_back,
++                "tokens": int(packet["evidence_token_count"]),
++                "original_tokens": int(packet["original_token_count"]),
++                "characters": len(text),
++                "states": int(prefix.shape[1]),
++                "hidden_dimension": int(prefix.shape[2]),
++                "payload_bytes": len(text.encode("utf-8"))
++                + int(prefix.numel() * prefix.element_size()),
++                "text_payload_bytes": len(text.encode("utf-8")),
++                "prefix_payload_bytes": int(prefix.numel() * prefix.element_size()),
++                "payload_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
++                "sentences_removed": packet.get("sentences_removed"),
++                "sender_answer_text_present_after_filter": bool(
++                    packet["sender_answer_text_present_after_filter"]
++                ),
++            },
++        )
++
++
+ class StateBridgeCommunicationChannel(CommunicationChannel):
+     def __init__(self, condition: str, source: str) -> None:
+         self.condition = condition
+@@ -326,6 +552,19 @@ def make_channel(condition: str) -> CommunicationChannel:
+         return NoCommunicationChannel()
+     if condition.endswith("_text"):
+         return TextCommunicationChannel(condition, condition.removesuffix("_text"))
++    if condition.endswith("_answer"):
++        return AnswerOnlyCommunicationChannel(condition, condition.removesuffix("_answer"))
++    if condition.endswith("_rawhybrid"):
++        return RawHybridBridgeChannel(condition, condition.removesuffix("_rawhybrid"))
++    if condition.endswith("_hybrid_v3"):
++        return HybridV3BridgeChannel(condition, condition.removesuffix("_hybrid_v3"))
++    if condition.endswith("_hybrid_keepchain"):
++        return HybridEvidenceBridgeChannel(
++            condition, condition.removesuffix("_hybrid_keepchain"),
++            numeric_policy="assertion_only",
++        )
++    if condition.endswith("_hybrid"):
++        return HybridEvidenceBridgeChannel(condition, condition.removesuffix("_hybrid"))
+     if condition.endswith("_evidence_v2"):
+         return EvidenceV2CommunicationChannel(
+             condition, condition.removesuffix("_evidence_v2")
+diff --git a/methods/AgentCom-StateBridge/icr/prompts_v3.py b/methods/AgentCom-StateBridge/icr/prompts_v3.py
+index 57545d1..ed0d624 100644
+--- a/methods/AgentCom-StateBridge/icr/prompts_v3.py
++++ b/methods/AgentCom-StateBridge/icr/prompts_v3.py
+@@ -126,10 +126,19 @@ def external_block(condition: str, *, sender_reasoning: Optional[str] = None) ->
+         condition.endswith("_text")
+         or condition.endswith("_evidence")
+         or condition.endswith("_evidence_v2")
++        or condition.endswith("_answer")
+     ):
+         if sender_reasoning is None:
+             raise ValueError("Textual conditions require a message body")
+         return f"{MESSAGE_LEAD_IN}\n{sender_reasoning}"
++    if "hybrid" in condition:
++        # Both payloads occupy the one message slot: the claim-suppressed text,
++        # then the marker where the hidden-state prefix is spliced. Neither part
++        # carries a readable answer token, so the slot stays claim-free while
++        # holding strictly more of the sender than either channel alone.
++        if sender_reasoning is None:
++            raise ValueError("Hybrid conditions require a message body")
++        return f"{MESSAGE_LEAD_IN}\n{sender_reasoning}\n{EMBEDDING_HINT_MARKER}"
+     if (
+         condition.endswith("_statebridge")
+         or condition.endswith("_latentmas")
+diff --git a/methods/AgentCom-StateBridge/icr/revisions.py b/methods/AgentCom-StateBridge/icr/revisions.py
+index 6c8c51a..bce7df6 100644
+--- a/methods/AgentCom-StateBridge/icr/revisions.py
++++ b/methods/AgentCom-StateBridge/icr/revisions.py
+@@ -77,6 +77,25 @@ def parse_args() -> argparse.Namespace:
+             "measured instead of assumed while removing most of the cost."
+         ),
+     )
++    parser.add_argument(
++        "--pair-classes", type=str, default=None,
++        help=(
++            "Comma-separated pair classifications to run, e.g. "
++            "'correction_opportunity,destruction_risk'. Supplementary conditions "
++            "can be measured on the mixed-correctness directions alone, at a "
++            "third of the cost; SR, SCR and retained accuracy are then NOT "
++            "measured for them and must not be filled in by inference."
++        ),
++    )
++    parser.add_argument(
++        "--receiver-policy", choices=("revise", "verify"), default="revise",
++        help=(
++            "How the receiver integrates the message. 'revise' is the frozen V3 "
++            "instruction; 'verify' is the V4 policy that checks the message "
++            "against the problem before deciding. Changing it changes the "
++            "protocol, so every compared condition must use the same value."
++        ),
++    )
+     parser.add_argument(
+         "--cr-dnc-prefix-root", type=Path,
+         default=Path("runs/medqa/cr_dnc_v1/prefixes"),
+@@ -121,7 +140,9 @@ def main() -> None:
+     prebeliefs = load_prebelief_map(cli.artifact_root)
+     metadata_by_item = {}
+     if any(
+-        condition.endswith("_evidence") or condition.endswith("_evidence_v2")
++        condition.endswith("_evidence")
++        or condition.endswith("_evidence_v2")
++        or "hybrid" in condition
+         for condition in conditions
+     ):
+         task = str(config.get("dataset", "medqa"))
+@@ -144,6 +165,15 @@ def main() -> None:
+         existing_conditions = list(config.get("revision_conditions_requested", []))
+         combined_conditions = list(dict.fromkeys((*existing_conditions, *conditions)))
+         config["revision_conditions_requested"] = combined_conditions
++        config["receiver_policy"] = str(cli.receiver_policy)
++        if cli.pair_classes:
++            config.setdefault("pair_class_scope", {})[
++                ",".join(sorted(cli.conditions.split(",")))
++            ] = sorted({p.strip() for p in cli.pair_classes.split(",") if p.strip()})
++        config["revision_prompt_version"] = (
++            "icr_v4_verify_then_decide" if cli.receiver_policy == "verify"
++            else config.get("revision_prompt_version", "icr_v3_mid_injection")
++        )
+         config["both_correct_sampling"] = {
+             "keep_one_in": int(cli.both_correct_sample),
+             "rule": "item_id % keep_one_in == 0",
+@@ -218,6 +248,11 @@ def main() -> None:
+     )
+     suffix = f"_{cli.output_tag}" if cli.output_tag else ""
+     shard_name = f"rank{rank}{suffix}"
++    runtime.receiver_policy = str(cli.receiver_policy)
++    wanted_pair_classes = (
++        {p.strip() for p in cli.pair_classes.split(",") if p.strip()}
++        if cli.pair_classes else None
++    )
+     records_dir = cli.artifact_root / "revisions" / shard_name / "records"
+     globally_completed: set[tuple[int, str, str]] = set()
+     truncated_keys: set[tuple[int, str, str]] = set()
+@@ -262,6 +297,8 @@ def main() -> None:
+             config.get("replication_id"),
+         )
+         pair_class = classify_pair(bool(sender["correct"]), bool(receiver["correct"]))
++        if wanted_pair_classes is not None and pair_class not in wanted_pair_classes:
++            continue
+         if cli.skip_all_correct_items and all(
+             bool(prebeliefs[(item_id, agent)]["correct"]) for agent in AGENTS
+         ):
+diff --git a/methods/AgentCom-StateBridge/icr/runtime.py b/methods/AgentCom-StateBridge/icr/runtime.py
+index 7f5f5ba..49e20cc 100644
+--- a/methods/AgentCom-StateBridge/icr/runtime.py
++++ b/methods/AgentCom-StateBridge/icr/runtime.py
+@@ -61,6 +61,8 @@ class ICRRuntime:
+         self.temperature = temperature
+         self.top_p = top_p
+         self.task = task
++        # V3 "revise" unless a run selects the V4 verify-then-decide policy.
++        self.receiver_policy = "revise"
+         self.bridge = StateBridge(
+             self.model,
+             max_new_tokens=max_new_tokens,
+@@ -251,13 +253,19 @@ class ICRRuntime:
+         # boundary, documented in experiments/ICR_V3_PROTOCOL_ZH.md section 7.
+         if message.condition == "none":
+             block = external_block("none")
++        elif "hybrid" in message.condition:
++            # Text-first dispatch would drop the marker and with it the prefix.
++            block = external_block(message.condition, sender_reasoning=message.text)
+         elif message.text is not None:
+             block = external_block(message.condition, sender_reasoning=message.text)
+         elif message.prefix is not None or message.trajectory is not None:
+             block = external_block(message.condition)
+         else:
+             raise RuntimeError("Non-none communication message has no payload")
+-        user_content = revision_prompt(
++        builder = revision_prompt
++        if getattr(self, "receiver_policy", "revise") == "verify":
++            from .prompts_v4 import revision_prompt_v4 as builder
++        user_content = builder(
+             getattr(self, "task", "medqa"),
+             question=question,
+             receiver_prior_reasoning=receiver_reasoning,
+diff --git a/methods/AgentCom-StateBridge/runs/medqa/cr_dnc_v1/icr_root/config.json b/methods/AgentCom-StateBridge/runs/medqa/cr_dnc_v1/icr_root/config.json
+index e28af53..4203042 100644
+--- a/methods/AgentCom-StateBridge/runs/medqa/cr_dnc_v1/icr_root/config.json
++++ b/methods/AgentCom-StateBridge/runs/medqa/cr_dnc_v1/icr_root/config.json
+@@ -34,7 +34,14 @@
+   ],
+   "model": "Qwen/Qwen3-4B",
+   "other_mapping_offset": 137,
++  "pair_class_scope": {
++    "true_answer": [
++      "correction_opportunity",
++      "destruction_risk"
++    ]
++  },
+   "protocol": "ICR-V3",
++  "receiver_policy": "revise",
+   "replication_id": "seed_pair_00",
+   "revision_conditions": [
+     "none",
+@@ -55,7 +62,16 @@
+     "cr_dnc_a100",
+     "cr_dnc_a025",
+     "cr_dnc_a050",
+-    "cr_dnc_a075"
++    "cr_dnc_a075",
++    "cr_dnc_randdir_a100",
++    "cr_dnc_randnorm_a100",
++    "true_evidence",
++    "other_evidence",
++    "true_evidence_v2",
++    "true_hybrid",
++    "true_rawhybrid",
++    "true_hybrid_v3",
++    "true_answer"
+   ],
+   "revision_prompt_version": "icr_v3_mid_injection",
+   "selected_item_ids": [
+diff --git a/paper_materials/APPENDIX_DETAILS.md b/paper_materials/APPENDIX_DETAILS.md
+deleted file mode 100644
+index bf1582a..0000000
+--- a/paper_materials/APPENDIX_DETAILS.md
++++ /dev/null
+@@ -1,372 +0,0 @@
+-# AgentCom — Appendix details
+-
+-Read-only audit, 2026-09-21. Facts are taken from the on-disk run configuration
+-and per-record artifacts; the markdown reports under `experiments/` were used only
+-to locate material and never to override a raw record.
+-
+----
+-
+-## Appendix A — Reproducible setup
+-
+-### Model and backend (VERIFIED, `models.py:75-95`)
+-
+-| Field | Value |
+-|---|---|
+-| Checkpoint | `Qwen/Qwen3-4B` (`config.json: model`) |
+-| Revision | **MISSING** — no revision or commit pin is recorded in the run config |
+-| Precision | `torch.bfloat16` on CUDA (`torch.float32` on CPU) |
+-| Backend | HuggingFace `transformers` `AutoModelForCausalLM`, eager `.generate()`; no vLLM/TGI |
+-| Attention impl. | **MISSING** — `attn_implementation` is not set, so the transformers default applies |
+-| `use_cache` | True |
+-| Chat template | `enable_thinking=True` at both phases (`icr/runtime.py:71`, `:103`) |
+-
+-### Sampling (VERIFIED, `config.json: generation`)
+-
+-`do_sample=true`, `temperature=0.6`, `top_p=0.95`, `top_k=null`,
+-`max_new_tokens=16384` for all five datasets and both phases.
+-`max_new_tokens_history` records the raise: `8192 → 16384`, reason
+-"truncated generations never stated an answer and were scored wrong".
+-GSM8K and ARC-C also passed through intermediate budgets; the on-disk config is
+-authoritative, and superseded fingerprints are listed in
+-`config.json: superseded_fingerprints`.
+-
+-### Seeds (VERIFIED, `icr/protocol.py:86-128`)
+-
+-`global_seed = 42`, `replication_id = "seed_pair_00"`. Seeds are derived, never
+-drawn:
+-
+-```
+-prebelief_seed  = sha256(global_seed ‖ replication_id ‖ item_id ‖ "agent_<X>_pre")[:8] mod (2^31−1)
+-revision_seed   = sha256(global_seed ‖ replication_id ‖ item_id ‖ direction ‖ "revision")[:8] mod (2^31−1)
+-```
+-
+-A, B and C differ only through the `agent_<X>_pre` field; the prompt is byte-identical.
+-**The revision seed does not include the condition**, so all four channels share one
+-seed per (item, direction). This is what makes the §5.2 B comparison a matched design.
+-
+-### Prompts (VERIFIED)
+-
+-Phase 1: `solver_prompt_version = icr_v2_phase1_verbatim`
+-(`icr/protocol.independent_solver_prompt`). MedQA rendering:
+-
+-```
+-You are an independent problem-solving agent.
+-
+-Solve the medical multiple-choice question carefully and independently.
+-
+-Reason from the evidence in the question.
+-Do not assume another agent will review your answer.
+-
+-At the end, return exactly one final option in benchmark-compatible form: \boxed{A}, replacing A with one of A, B, C, or D.
+-
+-Your response should contain:
+-1. your reasoning
+-2. your final answer
+-
+-Medical multiple-choice question:
+-{question}
+-```
+-
+-GPQA appends a disambiguation line so the model answers with the final A–D list
+-rather than the lowercase a)–d) items quoted inside the options
+-(`GPQA_LAYER_DISAMBIGUATION`).
+-
+-Phase 2: `revision_prompt_version = icr_v3_mid_injection`
+-(`icr/prompts_v3.REVISION_TEMPLATE`, sha256 `e176b57fb1a8b62a…`, 627 chars;
+-code variant `CODE_REVISION_TEMPLATE`, sha256 `cfce430522a2f655…`, 681 chars):
+-
+-```
+-You previously solved this problem independently.
+-
+-Original problem:
+-{question}
+-
+-Your previous reasoning:
+-{receiver_prior_reasoning}
+-
+-Your previous answer:
+-{receiver_prior_answer}
+-
+-{external_block}
+-
+-Your task is to REVISE your belief, not to restart from scratch.
+-
+-Evaluate your previous reasoning and any external message critically.
+-
+-* Change your answer only if you find a concrete error in your previous reasoning, or evidence that is better supported than it.
+-* Do not change your answer merely because an external message is present.
+-* Resolve any disagreement using the evidence in the original problem.
+-
+-{answer_format}
+-```
+-
+-The slot order is Task → receiver's own prior → external information → how to
+-integrate → output format, and only `{external_block}` varies by condition
+-(`external_block` source sha256 `bf8a13d634f032e1…`):
+-
+-| Condition | `{external_block}` |
+-|---|---|
+-| `none` | `No external message is available.` |
+-| `*_text`, `*_evidence` | `An external message from another reasoning process is available.\n\nExternal message:` + sender reasoning |
+-| `*_statebridge`, `*_latentmas` | same lead-in + `[EMBEDDING_CONTEXT_HERE]` marker |
+-
+-Answer formats (`ANSWER_FORMAT`, per task):
+-
+-| Task | sha256 | Text |
+-|---|---|---|
+-| medqa | `dc7804e2a1e8cb37…` | `\boxed{X}`, X ∈ {A,B,C,D} |
+-| arc_challenge | `e3e77d5306590851…` | `\boxed{X}`, X ∈ {A,B,C,D} |
+-| gpqa | `17997fb00d278f09…` | `\boxed{X}`, X ∈ {A,B,C,D} |
+-| gsm8k | `93365f0aae549837…` | `\boxed{N}`, plain digits, no thousands separators, no units |
+-| humanevalplus / mbppplus | `a20f404140edfe25…` | one markdown Python block, no tests or prose inside it |
+-
+-### Versioning and caching (VERIFIED)
+-
+-| Field | Value |
+-|---|---|
+-| Protocol | `ICR-V3` |
+-| Config fingerprint | per dataset, `config.json: fingerprint` (MedQA `355c5073cd75bb6f…`) |
+-| Superseded fingerprints | `config.json: superseded_fingerprints` (MedQA `96d887fc74fa2023…`) |
+-| Dataset hash | `config.json: dataset_sha256` (MedQA `ddee8dc64d3b2a1e…`) |
+-| Answer parser | `icr.parsing_v3@ICR-V3` |
+-| Code version | see `manifest.json: git_commit` |
+-
+-Cache reuse (`--global-resume`) accepts a record only when `status == "complete"`
+-and its `config_fingerprint` is in `accepted_fingerprints(config)`. That check does
+-**not** verify the receiver's prior; this audit verified it independently and found
+-**0 stale priors across all five datasets** (`tables/integrity_checks.csv`).
+-
+-### Metric-name mapping
+-
+-| Artifact column | Paper name |
+-|---|---|
+-| `cr` | CR (correction rate) |
+-| `pr` | PR (preservation rate) |
+-| `si` | SI |
+-| `sr` | SR |
+-| `scr` | SCR |
+-| `accuracy` | Acc_ret (retained-subset accuracy) |
+-| `fcs`, `fws`, `follow_selectivity` | sender-following diagnostics; **not reported on code tasks** |
+-
+----
+-
+-## Appendix B — Communication channel implementations
+-
+-This describes the adapted implementations in this repository. None of them is the
+-original full system.
+-
+-| | Full Text | StateBridge | LatentMAS |
+-|---|---|---|---|
+-| Sender information read | phase-1 reasoning text | last 64 hidden states of the phase-1 trajectory | full all-layer KV cache of the phase-1 trajectory |
+-| Selection | whole text | `last_k`, K=64 of T positions | all `cache_positions` (1,401 in the sampled MedQA record), 36 layers |
+-| Alignment | none | Procrustes, `adaptive_reg=0.001`, `snap_ratio=0.3`, `prefix_scale=1.0`, `prefix_strategy=scale` | none |
+-| Injection | text inside the message slot | `inputs_embeds` spliced at the `[EMBEDDING_CONTEXT_HERE]` marker, i.e. exactly the text slot | `past_key_values` causal prefix before the prompt |
+-| Position is a free parameter | yes | yes | **no** — RoPE is baked into the cache |
+-| Extra generation | none | none | 10 latent steps (`--latent-steps 10`) |
+-| Extra forward passes | none | one alignment per sender belief (`alignment_seconds`, recorded on the belief) | teacher-forces the sender trajectory, then 10 latent steps |
+-| Payload recorded | `characters`, `tokens`, `payload_bytes` | `states=64`, `hidden_dimension=2560`, `dtype=bfloat16`, `payload_bytes=327,680` | `cache_layers=36`, `cache_positions`, `kv_payload_bytes`, `cache_storage="reconstructible_reference"` |
+-| Trajectory rebuilt | no | no | yes (reconstructible reference, not stored verbatim) |
+-
+-Differences from the native frameworks: StateBridge uses
+-`methods/state_bridge.py` unmodified for the alignment algorithm but is driven by
+-the ICR receiver prompt rather than its own pipeline; LatentMAS is reduced to a
+-single sender→receiver hop with one revision, with no multi-round workspace. The
+-fairness limit stated in the main text — LatentMAS has no explicit textual message
+-slot, so its message cannot occupy the same prompt position — follows from the
+-`past_key_values` prefix, not from a design choice made here.
+-
+----
+-
+-## Appendix C — Sample and scoring audit
+-
+-### Belief-pattern distribution (VERIFIED, `tables/sample_statistics.csv`)
+-
+-| Dataset | 3 correct | 2 correct | 1 correct | 0 correct | Items |
+-|---|---:|---:|---:|---:|---:|
+-| MedQA | 180 | 26 | 32 | 62 | 300 |
+-| ARC-C | 1,067 | 32 | 17 | 49 | 1,165 |
+-| GSM8K | 1,225 | 23 | 23 | 48 | 1,319 |
+-| GPQA-D | 80 | 24 | 33 | 61 | 198 |
+-| HumanEval+ | 136 | 10 | 4 | 14 | 164 |
+-
+-### Per-direction detail
+-
+-`tables/six_direction_detail.csv` gives, for each dataset × condition × direction,
+-the numerator and denominator of CR, PR, SR and SCR separately for all six ordered
+-directions.
+-
+-### Exclusions, skips, failures, reuse (VERIFIED, `tables/exclusions_and_reuse.csv`)
+-
+-- **Pre-registered structural exclusion:** ARC-Challenge only, 7 items
+-  (`121, 385, 400, 836, 868, 1037, 1042`), rule
+-  `trailing option count != 4 (label-free, pre-registered)`. Decided by question
+-  structure alone, never by gold or prediction. All other datasets have
+-  `excluded_item_ids = []`.
+-- **Skipped, not excluded:** items every agent answered correctly are not run in
+-  phase 2. They remain in the population and are handled in Appendix E.
+-- **Non-terminating generations are NOT excluded.** They are retained and scored
+-  wrong, because no answer is emitted. The rule depends only on whether generation
+-  terminated (`hit_eos`), never on correctness. Phase-1 non-termination rates:
+-  MedQA 0.11%, ARC-C 0.06%, GSM8K 0.05%, GPQA-D 2.19%, HumanEval+ 2.44%.
+-  Several published commit messages claim these items are excluded; they are not,
+-  and AUDIT_ISSUES A1 is the correction of record. A full exclusion sensitivity is
+-  in `tables/truncation_sensitivity.csv`.
+-- **Cache reuse:** `tables/integrity_checks.csv` lists the shard provenance of every
+-  record (e.g. MedQA `rank0_v3`, ARC-C `rank*_v3` and `rank*_fill`). Zero duplicate
+-  `(item_id, direction, condition)` keys in any dataset.
+-
+-### Scoring and parser
+-
+-`answer_parser_version = icr.parsing_v3@ICR-V3`. Handling of degenerate outcomes:
+-
+-| Outcome | Field | Scored as |
+-|---|---|---|
+-| Generation hits EOS, answer parses | `hit_eos=true`, `parsed_answer` set | correct or wrong on comparison |
+-| Generation exhausts `max_new_tokens` | `hit_eos=false` | `parsed_answer=None` → **wrong** |
+-| Answer does not parse | `parsed_answer=None` | **wrong** |
+-| Worker crash | record absent | not counted; `--require-complete` refuses to merge |
+-
+-Counts per dataset are in `tables/integrity_checks.csv`
+-(`beliefs_truncated`, `revisions_truncated`, `revisions_unparsed_answer`).
+-
+-### Consistency checks run in this audit — all PASS
+-
+-| Check | Result |
+-|---|---|
+-| Closed-form counting identity, all datasets | PASS (20/20 cells) |
+-| Duplicate `(item, direction, condition)` keys | 0 in all five datasets |
+-| Receiver prior byte-identical to the current belief | 3,016 / 3,184 / 3,194 / 3,327 / 768 pristine, 0 stale |
+-| All four conditions share one receiver prior per (item, direction) | 0 divergent pairs |
+-| All four conditions cover the identical evaluation set | PASS (HumanEval+ verified explicitly: 168 pairs each) |
+-| `Acc_mixed = SI` | PASS (20/20 cells) |
+-| `status != complete` records | 0 |
+-
+-### Development / test split
+-
+-**MISSING.** No item-level development-vs-test assignment is recorded in any
+-config. Phase-1 budgets were raised after observing truncation on the same items
+-that are analysed, so there is no held-out set; this is an audit of a single
+-frozen run, not a tuned-then-evaluated protocol. Stated as a limitation, not
+-repaired.
+-
+----
+-
+-## Appendix D — HumanEval+ supplementary results
+-
+-Full results are in `tables/main_results.csv`, `tables/sr_scr.csv`,
+-`tables/paired_vs_no_message.csv` and `tables/answer_transitions.csv`
+-(rows `HumanEval+`).
+-
+-| Condition | Acc_ret | CR | PR | SI |
+-|---|---|---|---|---|
+-| No Message | 71/168 = 42.26% | 16/28 = 57.14% | 26/28 = 92.86% | 75.00% |
+-| Full Text | 76/168 = 45.24% | 21/28 = 75.00% | 26/28 = 92.86% | 83.93% |
+-| StateBridge | 73/168 = 43.45% | 19/28 = 67.86% | 27/28 = 96.43% | 82.14% |
+-| LatentMAS | 67/168 = 39.88% | 24/28 = 85.71% | 17/28 = 60.71% | 73.21% |
+-
+-Verifications requested:
+-
+-1. **Identity and stage of the non-terminating generations** —
+-   `tables/humanevalplus_degenerate_loops.csv`. Phase 1: 12 belief records over
+-   **8 distinct items** (`32, 34, 90, 94, 113, 126, 134, 158`). Phase 2: 49 revision
+-   records over **10 distinct items** (`32, 80, 90, 91, 94, 97, 113, 126, 134, 151`).
+-   The two sets are **not** the same; their intersection is 6 items. The figure "12"
+-   in earlier notes refers to phase-1 *records*, not items.
+-2. **Same evaluation set for all channels** — VERIFIED. Each of the four conditions
+-   covers exactly the same 168 (item, direction) pairs.
+-3. **Exclusion rule fixed in advance** — no HumanEval+ exclusion was applied at all
+-   (`excluded_item_ids = []`). Non-terminating generations are retained and scored
+-   wrong under a rule that depends only on whether generation terminated.
+-4. **Contamination of the analysed subsets** — `tables/truncation_contamination.csv`.
+-   **32.14% of the CR denominator and 32.14% of the PR denominator** involve at
+-   least one non-terminating belief, and 21.74% of SR. For comparison: MedQA 0.00%
+-   CR/PR, ARC-C 2.04%, GSM8K 4.35%.
+-5. **Literal-newline handling in code inputs** — **MISSING**. This audit did not
+-   locate a recorded instance; the raw prompts are retained per record
+-   (`prompt_sha256`, `raw_response`) and the check can be run against them, but no
+-   evidence is presented here.
+-
+-Interpretation limit: with 28 CR pairs and 28 PR pairs, one record is 3.57
+-percentage points, and a third of those pairs rest on a generation that never
+-terminated. These are properties of **this run** — budget, sampling settings and a
+-strict single-code-block output contract — not a statement about the quality of the
+-HumanEval+ dataset. Per-item pass/fail is also not evidence about whether the
+-receiver adopted the sender's program; only whitespace-normalised string identity
+-is reported, in `tables/answer_transitions.csv`.
+-
+----
+-
+-## Appendix E — Extrapolated accuracy and sensitivity
+-
+-### ESTIMATED, NOT MEASURED FULL-SET ACCURACY
+-
+-`tables/full_set_accuracy_estimated.csv`. Every row carries this label.
+-
+-Formula:
+-
+-```
+-Acc_full = ( retained_correct + sample_correct + imputed_records × skipped_item_accuracy )
+-           / ( items × 6 )
+-```
+-
+-| Dataset | Items × 6 | Retained (measured) | Skipped sample (measured) | Imputed | Coverage |
+-|---|---:|---:|---:|---:|---:|
+-| MedQA | 1,800 | 720 | 34 | 1,046 | 41.9% |
+-| ARC-C | 6,990 | 588 | 208 | 6,194 | 11.4% |
+-| GSM8K | 7,914 | 564 | 235 | 7,115 | 10.1% |
+-| GPQA-D | 1,188 | 708 | 124 | 356 | 70.0% |
+-| HumanEval+ | 984 | 168 | 24 | 792 | 19.5% |
+-
+-| Dataset | No Message | Full Text | StateBridge | LatentMAS |
+-|---|---|---|---|---|
+-| MedQA | 70.28% [67.33, 73.23] | 70.89% [67.94, 73.84] | 71.56% [68.61, 74.51] | 69.89% [66.94, 72.84] |
+-| ARC-C | 93.93% [93.13, 94.74] | 94.13% [93.33, 94.94] | 94.11% [93.30, 94.91] | 93.52% [92.38, 94.67] |
+-| GSM8K | 94.74% [94.02, 95.47] | 94.68% [93.96, 95.40] | 94.79% [94.07, 95.52] | 94.69% [93.96, 95.42] |
+-| GPQA-D | 54.58% [53.67, 55.48] | 56.32% [55.68, 56.97] | 55.75% [54.96, 56.53] | 55.06% [54.41, 55.71] |
+-| HumanEval+ | 86.69% [73.75, 99.63] | 90.65% [79.54, 100.00] | 90.35% [79.24, 100.00] | 89.74% [78.63, 100.00] |
+-
+-Intervals are Wilson half-widths on the skipped-population sample, scaled by the
+-imputed share. They cover the extrapolation only and are common to all four
+-channels, so channel *differences* are tighter than the intervals suggest.
+-
+-### Requested verifications
+-
+-1. **Observed and imputed records are disjoint** — VERIFIED. The retained scope
+-   (`revisions/merged.jsonl`) and the skipped scope
+-   (`revisions/all_correct_sample.jsonl`) partition the item set by the
+-   all-three-correct predicate; the estimator reads sample rows only from the second
+-   file.
+-2. **Denominator matches the target population** — VERIFIED.
+-   `items × 6 = retained + skipped` in all four datasets.
+-3. **SCR is NOT borrowed from partially-correct triples** — VERIFIED and material.
+-   The estimator uses the rate measured on the all-correct items themselves. The
+-   two rates differ substantially: on ARC-C, No Message scores 93.8% on
+-   mixed-item both-correct pairs but 100.0% on all-correct items (208 records).
+-   Borrowing the mixed-item rate put ARC-C's full-set accuracy 5.7 points low and
+-   produced a 5.9-point No Message ↔ Full Text gap that direct measurement puts at
+-   0.20 points. **This is the single most consequential estimator choice in the
+-   appendix.**
+-4. **The MedQA extra 34 records are not double-counted** — VERIFIED. They are
+-   present in `all_correct_sample.jsonl` and absent from `merged.jsonl`
+-   (2,880 = 720 × 4). See AUDIT_ISSUES #2 for their provenance.
+-
+-### Assumption and sensitivity
+-
+-The single assumption is that the unsampled skipped records behave like the
+-sampled ones from the same population. A worst-case sensitivity — treating
+-`skipped_item_accuracy` as its Wilson lower bound instead of its point estimate —
+-is what the CI column already expresses. No sensitivity figure is presented as a
+-measured improvement, and no missing records were regenerated to close the gap.
+-
+-### GPQA-Diamond
+-
+-Its phase-2 run originally covered the skipped population in full, which would have
+-made its full-set accuracy measured rather than extrapolated. That was cut short
+-deliberately at 04:53 UTC to save roughly 3.8 hours of the remaining run, leaving
+-495 records on all-correct items — 124 per condition, 25.8% of that population,
+-covering 30 of the 80 all-correct items. Those records were kept, not discarded.
+-
+-The result is that GPQA-Diamond is still extrapolated like the others, but from
+-the largest measured share in the study: 70.0% direct coverage against 41.9%
+-(MedQA), 19.5% (HumanEval+), 11.4% (ARC-C) and 10.1% (GSM8K). Its intervals are
+-correspondingly the tightest, at roughly ±0.7 points.
+diff --git a/paper_materials/MAIN_TEXT_EVIDENCE.md b/paper_materials/MAIN_TEXT_EVIDENCE.md
+deleted file mode 100644
+index 2af6500..0000000
+--- a/paper_materials/MAIN_TEXT_EVIDENCE.md
++++ /dev/null
+@@ -1,330 +0,0 @@
+-# AgentCom — Main-text experimental evidence
+-
+-Generated 2026-09-21 from the ICR-V3 artifacts. Read-only audit: no GPU run was
+-started, no configuration or historical result was modified, nothing was rerun.
+-
+-Status vocabulary: **VERIFIED** (checked against per-record artifacts),
+-**PROVISIONAL** (computed but resting on an assumption stated inline),
+-**INCONSISTENT** (two sources disagree), **MISSING** (not in this repository),
+-**PENDING** (run not finished).
+-
+-| Dataset | Status | Note |
+-|---|---|---|
+-| MedQA | VERIFIED | 300 items, three beliefs each |
+-| ARC-Challenge | VERIFIED | 1,165 items after 7 pre-registered structural exclusions |
+-| GSM8K | VERIFIED | 1,319 items |
+-| GPQA-Diamond | VERIFIED | 198 items; phase 2 completed 10:47 UTC with 0 worker failures |
+-| HumanEval+ | VERIFIED but appendix-only | 32% of its CR/PR denominators touch a non-terminating generation |
+-
+----
+-
+-## 5.1 Experimental Setup
+-
+-### A. Scope (2–3 sentences for the main text)
+-
+-> We audit four communication channels under a single Independent–Communicate–Revise
+-> protocol on Qwen3-4B. For every item, three agents (A, B, C) first produce
+-> independent beliefs from identical prompts under distinct deterministic seeds;
+-> each ordered pair of agents then performs exactly one revision in which the
+-> receiver keeps its own prior reasoning and receives a message from the sender.
+-> Metrics are computed over all six ordered pairs per item, and the receiver's
+-> post-revision answer is the unit of evaluation.
+-
+-### B. Baselines (1–2 sentences each) — VERIFIED against `icr/prompts_v3.py` and `icr/runtime.py`
+-
+-- **No Message.** The receiver re-enters the revision prompt with its own question,
+-  its own prior reasoning and its own prior answer, and the message slot reads
+-  `No external message is available.` It isolates the effect of a second inference
+-  pass from the effect of communication.
+-- **Full Text.** The sender's complete phase-1 reasoning text is placed verbatim in
+-  the message slot. No summarisation, no extra generation call.
+-- **StateBridge.** The last 64 hidden states of the sender's phase-1 trajectory,
+-  Procrustes-aligned into the receiver's space, are spliced into the receiver's
+-  input embeddings at exactly the position the text message would have occupied.
+-- **LatentMAS.** The sender's full all-layer KV cache is prepended as a causal
+-  prefix, followed by 10 generated latent steps. Because RoPE is baked into the
+-  cache, its position is not a free parameter, so this condition cannot occupy the
+-  same mid-prompt slot as the other three.
+-- **Evidence / EGR channels.** MISSING as a frozen final method — see §5.3.
+-
+-### C. Sample statistics — `tables/sample_statistics.csv` (VERIFIED)
+-
+-| Dataset | Source items | Evaluated | Retained items | CR den | PR den | SR den | SCR den (retained) | Records / condition |
+-|---|---:|---:|---:|---:|---:|---:|---:|---:|
+-| MedQA | 300 | 300 | 120 | 116 | 116 | 436 | 52 | 720 |
+-| ARC-C | 1,165 | 1,165 | 98 | 98 | 98 | 328 | 64 | 588 |
+-| GSM8K | 1,319 | 1,319 | 94 | 92 | 92 | 334 | 46 | 564 |
+-| GPQA-D | 198 | 198 | 118 | 114 | 114 | 432 | 48 | 708 |
+-| HumanEval+ | 164 | 164 | 28 | 28 | 28 | 92 | 20 | 168 |
+-
+-"Retained items" are those where the three agents did not all answer correctly;
+-items where all three were correct carry no correction and no destruction pair and
+-are skipped in phase 2 (`--skip-all-correct-items`). Skipped item counts:
+-MedQA 180, ARC-C 1,067, GSM8K 1,225, GPQA-D 80, HumanEval+ 136.
+-
+-**Counting identity — VERIFIED for all five datasets** (`tables/count_identity_check.csv`).
+-For an item with k of 3 correct beliefs the six ordered pairs contain k(3−k)
+-correction pairs, k(3−k) destruction pairs, (3−k)(2−k) both-wrong pairs and
+-k(k−1) both-correct pairs. Closed form equals the observed count in every cell,
+-over all items and over the retained scope separately.
+-
+-### D. Metrics and accuracy scopes — `tables/accuracy_scopes.csv`
+-
+-- **CR** — a receiver that was wrong, facing a sender that was right, ends right.
+-- **PR** — a receiver that was right, facing a sender that was wrong, stays right.
+-- **SI** — the equal-weight mean of CR and PR.
+-- **SR** — both were wrong; the receiver ends right.
+-- **SCR** — both were right; the receiver stays right.
+-
+-Five accuracy scopes, which must never share a column:
+-
+-| Scope | Denominator | Availability |
+-|---|---|---|
+-| Initial-answer accuracy | items × 3 beliefs | VERIFIED |
+-| Mixed-correctness directional accuracy | CR ∪ PR pairs | VERIFIED |
+-| Retained-subset accuracy `Acc_ret` | retained items × 6 | VERIFIED |
+-| Measured full-set accuracy | items × 6, all measured | **NOT AVAILABLE** — coverage is 70.0% (GPQA-D), 41.9% (MedQA), 19.5% (HumanEval+), 11.4% (ARC-C), 10.1% (GSM8K) |
+-| Extrapolated full-set accuracy | items × 6, partly imputed | PROVISIONAL, Appendix E |
+-
+-Initial-answer accuracy: MedQA 69.33%, ARC-C 93.91%, GSM8K 94.62%, GPQA-D 54.04%, HumanEval+ 87.80%.
+-
+-GPQA-Diamond's 54.04% is the figure to quote. An earlier two-agent run reported
+-41.9%, but that ran at an 8,192-token budget where 28% of beliefs never terminated
+-and were therefore scored wrong; at 16,384 the non-termination rate is 2.19%.
+-
+-**Scoring of non-terminating generations — retention, not exclusion.** A phase-1
+-generation that does not terminate within `max_new_tokens` states no answer and is
+-scored wrong. Such items are **retained**, not excluded; the only pre-registered
+-exclusion in the whole study is ARC-Challenge's 7 items whose option count is not
+-four. The phase-1 non-termination rate is 0.11% (MedQA), 0.06% (ARC-C), 0.05%
+-(GSM8K), 2.19% (GPQA-D) and 2.44% (HumanEval+), but because a wrong belief is what
+-puts a pair into the analysed subsets, the share of the CR and PR denominators
+-touching such a generation is larger: 0.00%, 2.04%, 4.35%, 10.53% and 32.14%
+-respectively. `tables/truncation_sensitivity.csv` recomputes every metric with
+-those items dropped; on MedQA, ARC-C and GSM8K the SI shift is at most 2.2 points
+-and on GPQA-D at most 4.5, and in each case it moves all four channels the same way,
+-leaving the ordering unchanged. State the
+-rule and the share; do not switch to exclusion post hoc.
+-
+-**`Acc_mixed = SI` — VERIFIED, all 20 dataset×condition cells.** When both directions
+-of a mixed-correctness pair are present, the mixed-direction accuracy is
+-(CR·N + PR·N)/(2N) = (CR+PR)/2 = SI *identically*. They are one result, not two,
+-and must not be reported as independent evidence.
+-
+----
+-
+-## 5.2 Auditing Communication Behavior
+-
+-### A. Main results — `tables/main_results.csv` (VERIFIED)
+-
+-All percentages are computed from integer counts. CIs are 2,000-resample
+-item-cluster paired bootstrap, analysis seed 20260921; a resample whose
+-denominator is zero is dropped and counted (`bootstrap_undefined_*` columns; all
+-zero for these datasets).
+-
+-| Dataset | Condition | Acc_ret | CR | PR | SI |
+-|---|---|---|---|---|---|
+-| MedQA | No Message | 185/720 = 25.69% | 8/116 = 6.90% | 114/116 = 98.28% | 52.59% |
+-| MedQA | Full Text | 196/720 = 27.22% | 93/116 = 80.17% | 49/116 = 42.24% | 61.21% |
+-| MedQA | StateBridge | 208/720 = 28.89% | 67/116 = 57.76% | 87/116 = 75.00% | 66.38% |
+-| MedQA | LatentMAS | 178/720 = 24.72% | 81/116 = 69.83% | 38/116 = 32.76% | 51.29% |
+-| ARC-C | No Message | 164/588 = 27.89% | 8/98 = 8.16% | 91/98 = 92.86% | 50.51% |
+-| ARC-C | Full Text | 178/588 = 30.27% | 79/98 = 80.61% | 34/98 = 34.69% | 57.65% |
+-| ARC-C | StateBridge | 176/588 = 29.93% | 68/98 = 69.39% | 44/98 = 44.90% | 57.14% |
+-| ARC-C | LatentMAS | 166/588 = 28.23% | 57/98 = 58.16% | 45/98 = 45.92% | 52.04% |
+-| GSM8K | No Message | 148/564 = 26.24% | 12/92 = 13.04% | 85/92 = 92.39% | 52.72% |
+-| GSM8K | Full Text | 143/564 = 25.35% | 47/92 = 51.09% | 48/92 = 52.17% | 51.63% |
+-| GSM8K | StateBridge | 152/564 = 26.95% | 36/92 = 39.13% | 68/92 = 73.91% | 56.52% |
+-| GSM8K | LatentMAS | 144/564 = 25.53% | 55/92 = 59.78% | 43/92 = 46.74% | 53.26% |
+-| GPQA-D | No Message | 180/708 = 25.42% | 16/114 = 14.04% | 110/114 = 96.49% | 55.26% |
+-| GPQA-D | Full Text | 193/708 = 27.26% | 85/114 = 74.56% | 54/114 = 47.37% | 60.96% |
+-| GPQA-D | StateBridge | 190/708 = 26.84% | 73/114 = 64.04% | 59/114 = 51.75% | 57.89% |
+-| GPQA-D | LatentMAS | 178/708 = 25.14% | 70/114 = 61.40% | 58/114 = 50.88% | 56.14% |
+-
+-HumanEval+: see Appendix D.
+-
+-CR–PR plotting data with denominators: `tables/cr_pr_plot_data.csv`.
+-
+-### B. Paired comparison against No Message — `tables/paired_vs_no_message.csv` (VERIFIED)
+-
+-Every channel shares the same (item, direction) records and the same revision seed
+-as No Message, so this is a matched comparison, not two independent rates.
+-
+-Retained scope, discordant cells:
+-
+-| Dataset | Channel | none✗→ch✓ | none✓→ch✗ | Net | Discordant |
+-|---|---|---:|---:|---:|---:|
+-| MedQA | Full Text | 86 | 75 | +11 | 161 |
+-| MedQA | StateBridge | 61 | 38 | +23 | 99 |
+-| MedQA | LatentMAS | 80 | 87 | −7 | 167 |
+-| ARC-C | Full Text | 76 | 62 | +14 | 138 |
+-| ARC-C | StateBridge | 64 | 52 | +12 | 116 |
+-| ARC-C | LatentMAS | 59 | 57 | +2 | 116 |
+-| GSM8K | Full Text | 40 | 45 | −5 | 85 |
+-| GSM8K | StateBridge | 30 | 26 | +4 | 56 |
+-| GSM8K | LatentMAS | 50 | 54 | −4 | 104 |
+-| GPQA-D | Full Text | 78 | 65 | +13 | 143 |
+-| GPQA-D | StateBridge | 69 | 59 | +10 | 128 |
+-| GPQA-D | LatentMAS | 62 | 64 | −2 | 126 |
+-
+-The same table stratified by CR / PR / SR / SCR subset shows where the movement
+-comes from. In the CR stratum the movement is almost purely gain (Full Text and
+-StateBridge lose 0 records on MedQA, ARC-C and GSM8K, and 1 each on GPQA-D); in the PR stratum it is
+-almost purely loss (MedQA: Full Text −65, StateBridge −27, LatentMAS −76 of 116).
+-
+-SI difference vs No Message (percentage points): MedQA Text +8.62, SB +13.79,
+-LatentMAS −1.29; ARC-C +7.14 / +6.63 / +1.53; GSM8K −1.09 / +3.80 / +0.54;
+-GPQA-D +5.70 / +2.63 / +0.88.
+-
+-### C. SR and SCR — `tables/sr_scr.csv` (VERIFIED)
+-
+-SR is near zero everywhere: the best cell is MedQA No Message 11/436 = 2.52%,
+-and GPQA-D's best is StateBridge 11/432 = 2.55%. On the retained scope SCR sits
+-at or near its ceiling — 52/52 (MedQA), 64/64 (ARC-C), 46/46 (GSM8K) in most
+-conditions, and 44–48 of 48 on GPQA-D, where No Message itself loses 4. SCR measured on the *skipped*
+-population is reported separately in Appendix E and is the basis of the
+-extrapolation — it is never borrowed from the retained both-correct pairs.
+-
+-### D. Answer transitions — `tables/answer_transitions.csv` (VERIFIED)
+-
+-Categories: kept the receiver's prior answer / adopted the sender's initial answer /
+-moved to a third answer / invalid or unparsed. Normalisation for choice and numeric
+-tasks is the parsed answer, stripped and lowercased. For HumanEval+ the comparison
+-is whitespace-normalised program text and measures **string identity only**;
+-adoption is never inferred from pass/fail.
+-
+-### E. Findings that can be written into the main text
+-
+-**F1 — Every channel that corrects more than No Message also preserves less.**
+-> Relative to a no-message control, each of the three channels raises the
+-> correction rate and lowers the preservation rate; none raises both.
+-
+-Support: `tables/main_results.csv`, all four verified datasets and HumanEval+ in
+-the appendix. CR rises from 6.90 / 8.16 / 13.04 / 14.04% (No Message on MedQA,
+-ARC-C, GSM8K, GPQA-D) to 39–81%, and PR falls from 98.28 / 92.86 / 92.39 / 96.49%
+-to 32–75%. The paired strata in `tables/paired_vs_no_message.csv` show the
+-mechanism: in the CR stratum Full Text and StateBridge lose at most 1 record; in
+-the PR stratum they gain at most 3. The exception is HumanEval+, where Full Text
+-and StateBridge hold PR at 92.86 / 96.43% — on 28 pairs, so one record is 3.57
+-points and the exception is not resolved.
+-Scope: one model, one replication (`seed_pair_00`), one revision per pair.
+-
+-**F2 — The channels separate far more on correction/preservation than on accuracy.**
+-> On the retained subset the four conditions span 4.2 points of accuracy on MedQA
+-> while spanning 73 points of CR and 66 points of PR.
+-
+-Support: `tables/main_results.csv`. MedQA Acc_ret spans 24.72–28.89% (4.2 points)
+-against CR 6.90–80.17% (73 points) and PR 32.76–98.28% (66 points); GPQA-D spans
+-25.14–27.26% (2.1 points) against CR 14.04–74.56% (61 points) and PR 47.37–96.49%
+-(49 points); ARC-C 27.89–30.27% against CR 8.16–80.61%; GSM8K 25.35–26.95%
+-against CR 13.04–59.78%.
+-Limit: this is a statement about this protocol's retained subset, not a claim that
+-accuracy is uninformative in general.
+-
+-**F3 — StateBridge preserves more than Full Text on all five datasets, and corrects less.**
+-> Across every benchmark tested, the hidden-state channel has a higher
+-> preservation rate and a lower correction rate than the full-text channel.
+-
+-Support, PR then CR (StateBridge vs Full Text):
+-
+-| Dataset | PR | CR |
+-|---|---|---|
+-| MedQA | 75.00 vs 42.24 | 57.76 vs 80.17 |
+-| ARC-C | 44.90 vs 34.69 | 69.39 vs 80.61 |
+-| GSM8K | 73.91 vs 52.17 | 39.13 vs 51.09 |
+-| GPQA-D | 51.75 vs 47.37 | 64.04 vs 74.56 |
+-| HumanEval+ | 96.43 vs 92.86 | 67.86 vs 75.00 |
+-
+-Limits, both of which constrain the wording. StateBridge does **not** have the
+-highest PR of all four conditions on ARC-Challenge — LatentMAS does (45.92 vs
+-44.90) — so the claim is against Full Text, not against every channel. And
+-StateBridge does not have the highest SI everywhere: it leads on MedQA and GSM8K,
+-Full Text leads on ARC-C, GPQA-D and HumanEval+. Neither channel dominates.
+-
+-**F4 — Mixed-correctness directional accuracy is SI, not a second result.**
+-> When both directions of a mixed pair are evaluated, accuracy restricted to those
+-> pairs equals the equal-weight mean of CR and PR by construction.
+-
+-Support: `tables/accuracy_scopes.csv`, `acc_mixed_equals_si = YES` in all 20 cells.
+-Use: prevents double-reporting; state the identity rather than two numbers.
+-
+-**Observation worth one sentence, not a headline.** The accuracy benefit of
+-communication tracks how much headroom the benchmark leaves. Full Text minus No
+-Message on full-set receiver accuracy is +1.74 points on GPQA-D (initial accuracy
+-54.04%), +0.61 on MedQA (69.33%), +0.20 on ARC-C (93.91%) and −0.06 on GSM8K
+-(94.62%). The ordering is monotone in initial accuracy across four points, which
+-is suggestive and nothing more; four points cannot establish a relationship, and
+-the GPQA-D figure carries the largest measured coverage (70.0%) while ARC-C and
+-GSM8K carry the smallest (11.4%, 10.1%).
+-
+-**Not supported by current evidence — do not write:** "best on all datasets";
+-"significantly better than"; "latent channels cannot produce new answers"
+-(third-answer transitions are non-zero, see `tables/answer_transitions.csv`);
+-"latent representations are inherently insufficient".
+-
+----
+-
+-## 5.3 Effectiveness and Cost of EGR
+-
+-**PENDING: Final EGR specification and held-out evaluation.**
+-
+-What exists: `egr/` implements V1 Contrast and Permutation, frozen in
+-`experiments/EGR_V1_METHOD_FREEZE_ZH.md` (2026-09-18), with results reported in
+-`experiments/EGR_MEDQA300_REPORT_ZH.md` and
+-`experiments/EGR_CROSS_BENCHMARK_REPORT_ZH.md`.
+-
+-What is missing for the main text:
+-
+-1. A frozen final EGR method. V1 is explicitly a *receiver-policy* comparison and
+-   its own freeze document states it is not a fair transport comparison against
+-   the latent baselines.
+-2. Per-record EGR artifacts. `find artifacts -name "*contrast*" -o -name
+-   "*permutation*"` returns nothing — only the aggregate numbers in the markdown
+-   reports survive. **MISSING.**
+-3. EGR under the three-agent ICR-V3 protocol. The existing EGR numbers were
+-   produced under the earlier two-agent protocol with different prompts.
+-4. A cost table. Construction-call counts and message-construction latency cannot
+-   be recovered from the surviving reports. **MISSING.**
+-
+-Do not promote V1 Contrast/Permutation into the final method.
+-
+-Cost material that *does* exist for the four audited channels is in
+-`tables/cost.csv`: receiver prompt and output tokens, text message tokens, latent
+-payload bytes, latent steps, and per-record receiver revision seconds. Latent
+-payload bytes are **not** converted to an equivalent token count. Message
+-construction time is recorded only for LatentMAS
+-(`communication_payload.communication_seconds`); for Full Text and StateBridge no
+-extra generation call is made, and for StateBridge the alignment cost is recorded
+-on the phase-1 belief record (`alignment_seconds`), not per message — the
+-per-message construction cost is therefore **MISSING** as a directly comparable
+-quantity. Wall-clock totals are not a controlled throughput comparison: worker
+-count per GPU varied across runs.
+-
+----
+-
+-## 5.4 Analysis of Message Construction
+-
+-### A. Completed E0–E4 development diagnostics — **MISSING**
+-
+-There is no 75-item MedQA pilot and no E0–E4 variant in this repository. A
+-repository-wide search for `E0`, `E1`…`E4`, `75 items`, `n=75` and `pilot` across
+-`*.py`, `*.md` and `*.sh` returns nothing. Nothing can be assembled for this
+-subsection, including: item lists and stratification, per-variant metrics,
+-message lengths, E1−E0 / E3−E2 / E4−E3 paired comparisons, the E2/E3 equal-length
+-check, the E3/E4 identical-segment check, the offline random-mixture reference
+-curve, and the E0 PR failure-case audit.
+-
+-If this pilot exists outside the repository it must be imported before this
+-subsection can be written. It must not be pooled with the ABC main results.
+-
+-### B. Final EGR ablation — **PENDING** (blocked by §5.3).
+-
+-### C. Case material that *is* available
+-
+-`tables/answer_transitions.csv` distinguishes kept-prior, adopted-sender,
+-third-answer and unparsed outcomes per condition, which supports case selection
+-for: successfully resisting a wrong sender (PR stratum, none✓→ch✓), successful
+-correction (CR stratum, none✗→ch✓), correction loss (PR stratum, none✓→ch✗) and
+-other failures (third-answer and unparsed). Raw response text is retained in the
+-per-record JSON under `artifacts/icr_v3/<task>_full_seed42/revisions/*/records/`.
+-No causal narrative is written here.
+diff --git a/paper_materials/manifest.json b/paper_materials/manifest.json
+deleted file mode 100644
+index 2c3060a..0000000
+--- a/paper_materials/manifest.json
++++ /dev/null
+@@ -1,370 +0,0 @@
+-{
+-  "generated_utc": "2026-09-21T11:05:00Z",
+-  "generator": "read-only audit of the ICR-V3 artifacts; no configuration or historical result modified",
+-  "repository": {
+-    "remote": "git@github.com:shixuanli01/AgentCom.git",
+-    "branch": "main",
+-    "git_commit": "122614b99d13b641482c283b40f2bdf3ca7c7296",
+-    "worktree": "DIRTY"
+-  },
+-  "environment": {
+-    "python": "Python 3.12.3",
+-    "transformers": "4.51.3",
+-    "torch": "2.7.1+cu128",
+-    "cuda": "12.8",
+-    "gpus": "4x NVIDIA RTX 5090 (32 GB)",
+-    "model_revision": "MISSING - not pinned in any run config",
+-    "attn_implementation": "MISSING - not set; transformers default applies"
+-  },
+-  "analysis_parameters": {
+-    "bootstrap": "item-cluster paired bootstrap",
+-    "resamples": 2000,
+-    "analysis_seed": 20260921,
+-    "interval": "percentile 2.5 / 97.5",
+-    "zero_denominator_handling": "resample dropped and counted in bootstrap_undefined_* columns",
+-    "note": "published analysis_v2 artifacts use 10,000 resamples and seed 20260920; these tables use the 2,000-resample default requested for the paper materials"
+-  },
+-  "code_paths": {
+-    "protocol_and_seeds": "methods/AgentCom-StateBridge/icr/protocol.py",
+-    "phase1": "methods/AgentCom-StateBridge/icr/prebeliefs.py",
+-    "phase2": "methods/AgentCom-StateBridge/icr/revisions.py",
+-    "prompts": "methods/AgentCom-StateBridge/icr/prompts_v3.py",
+-    "parser": "methods/AgentCom-StateBridge/icr/parsing_v3.py",
+-    "merge_and_scope": "methods/AgentCom-StateBridge/icr/merge.py",
+-    "metrics": "methods/AgentCom-StateBridge/icr/analysis_v2.py",
+-    "full_set_accuracy": "methods/AgentCom-StateBridge/icr/full_set_accuracy.py",
+-    "channels": "methods/AgentCom-StateBridge/icr/runtime.py",
+-    "model_loading": "methods/AgentCom-StateBridge/models.py",
+-    "benchmarks_and_exclusions": "methods/AgentCom-StateBridge/icr/benchmarks.py",
+-    "egr_v1": "methods/AgentCom-StateBridge/egr/",
+-    "cr_dnc_split": "methods/AgentCom-StateBridge/communication/make_split.py"
+-  },
+-  "prompt_hashes": {
+-    "revision_template_sha256_16": "e176b57fb1a8b62a",
+-    "code_revision_template_sha256_16": "cfce430522a2f655",
+-    "external_block_source_sha256_16": "bf8a13d634f032e1"
+-  },
+-  "runs": {
+-    "medqa": {
+-      "artifact_root": "methods/AgentCom-StateBridge/artifacts/icr_v3/medqa_full_seed42",
+-      "status": "VERIFIED",
+-      "protocol": "ICR-V3",
+-      "benchmark_label": "medqa300",
+-      "dataset_sha256": "ddee8dc64d3b2a1e5061c409c68d626109237640009168838a038db29efe802c",
+-      "config_fingerprint": "355c5073cd75bb6fba78bad536a8081cca7855c7263452fe59411417cc2b8f52",
+-      "superseded_fingerprints": [
+-        "96d887fc74fa20233ad0dea5fecb234e265ffe9fb994858e4c3713933ca0446d"
+-      ],
+-      "model": "Qwen/Qwen3-4B",
+-      "global_seed": 42,
+-      "replication_id": "seed_pair_00",
+-      "generation": {
+-        "do_sample": true,
+-        "max_new_tokens": 16384,
+-        "temperature": 0.6,
+-        "top_k": null,
+-        "top_p": 0.95
+-      },
+-      "max_new_tokens_history": [
+-        {
+-          "from": 8192,
+-          "reason": "truncated generations never stated an answer and were scored wrong",
+-          "to": 16384
+-        }
+-      ],
+-      "solver_prompt_version": "icr_v2_phase1_verbatim",
+-      "revision_prompt_version": "icr_v3_mid_injection",
+-      "answer_parser_version": "icr.parsing_v3@ICR-V3",
+-      "excluded_item_ids": [],
+-      "exclusion_rule": null,
+-      "both_correct_sampling": {
+-        "keep_one_in": 1,
+-        "label_free": true,
+-        "rule": "item_id % keep_one_in == 0",
+-        "skip_all_correct_items": true
+-      },
+-      "completed_revision_conditions": [
+-        "none",
+-        "true_text",
+-        "true_statebridge",
+-        "true_latentmas"
+-      ],
+-      "source_items": 300,
+-      "items_with_three_beliefs": 300,
+-      "raw_revision_records": 3016,
+-      "merged_revision_records": 2880,
+-      "all_correct_sample_records": 136
+-    },
+-    "arc_challenge": {
+-      "artifact_root": "methods/AgentCom-StateBridge/artifacts/icr_v3/arc_challenge_full_seed42",
+-      "status": "VERIFIED",
+-      "protocol": "ICR-V3",
+-      "benchmark_label": "arc_challenge",
+-      "dataset_sha256": "e5f26d489a59a1cf0e77ed86ce732a321026a13d294d25582bfcff2129372be6",
+-      "config_fingerprint": "6f992a8ecbda97101e4902c39ef710f195315dac31f18e3cbc04f30f40e537a4",
+-      "superseded_fingerprints": [
+-        "d93cc43d9029c74276e8561d8efdea57eac309a249fb8aff68ede869799df27a",
+-        "2e3f2d9ad36a4b9bdc6de44ddd4542d21736627976faa6cb300a0024d0a3b4fd",
+-        "4acc0c993442d54cbea67385410ca854e20415a164531c40d62a07053a601d99"
+-      ],
+-      "model": "Qwen/Qwen3-4B",
+-      "global_seed": 42,
+-      "replication_id": "seed_pair_00",
+-      "generation": {
+-        "do_sample": true,
+-        "max_new_tokens": 16384,
+-        "temperature": 0.6,
+-        "top_k": null,
+-        "top_p": 0.95
+-      },
+-      "max_new_tokens_history": [
+-        {
+-          "from": 2048,
+-          "reason": "truncated generations never stated an answer and were scored wrong",
+-          "to": 4096
+-        },
+-        {
+-          "from": 4096,
+-          "reason": "truncated generations never stated an answer and were scored wrong",
+-          "to": 8192
+-        },
+-        {
+-          "from": 8192,
+-          "reason": "truncated generations never stated an answer and were scored wrong",
+-          "to": 16384
+-        }
+-      ],
+-      "solver_prompt_version": "icr_v2_phase1_verbatim",
+-      "revision_prompt_version": "icr_v3_mid_injection",
+-      "answer_parser_version": "icr.parsing_v3@ICR-V3",
+-      "excluded_item_ids": [
+-        121,
+-        385,
+-        400,
+-        836,
+-        868,
+-        1037,
+-        1042
+-      ],
+-      "exclusion_rule": "arc_challenge: trailing option count != 4 (label-free, pre-registered)",
+-      "both_correct_sampling": {
+-        "keep_one_in": 1,
+-        "label_free": true,
+-        "rule": "item_id % keep_one_in == 0",
+-        "skip_all_correct_items": true
+-      },
+-      "completed_revision_conditions": [
+-        "none",
+-        "true_text",
+-        "true_statebridge",
+-        "true_latentmas"
+-      ],
+-      "source_items": 1165,
+-      "items_with_three_beliefs": 1165,
+-      "raw_revision_records": 3184,
+-      "merged_revision_records": 2352,
+-      "all_correct_sample_records": 832
+-    },
+-    "gsm8k": {
+-      "artifact_root": "methods/AgentCom-StateBridge/artifacts/icr_v3/gsm8k_full_seed42",
+-      "status": "VERIFIED",
+-      "protocol": "ICR-V3",
+-      "benchmark_label": "gsm8k_test",
+-      "dataset_sha256": "14dbb509584329a3fe0aff683f095cc9a951e1dd8d7fbe024a60351ee4be5a45",
+-      "config_fingerprint": "54423e26f7e585a72ce00775aada36bfe96341e0480f57dbac36f36ca412c7ba",
+-      "superseded_fingerprints": [
+-        "060aadffeca190b23e9adef02f643b66e3cd274815a49fa294e4aa5dbfaa9e14",
+-        "2256105b1a29f3088c730194e7fbe71bda5f9f6b751941d22c4f9b5591c7fd60",
+-        "42cd924cbd5bc7c642348e37ea651f78cc28852923e189707c6d7a4641276ba5"
+-      ],
+-      "model": "Qwen/Qwen3-4B",
+-      "global_seed": 42,
+-      "replication_id": "seed_pair_00",
+-      "generation": {
+-        "do_sample": true,
+-        "max_new_tokens": 16384,
+-        "temperature": 0.6,
+-        "top_k": null,
+-        "top_p": 0.95
+-      },
+-      "max_new_tokens_history": [
+-        {
+-          "from": 2048,
+-          "reason": "truncated generations never stated an answer and were scored wrong",
+-          "to": 4096
+-        },
+-        {
+-          "from": 4096,
+-          "reason": "truncated generations never stated an answer and were scored wrong",
+-          "to": 8192
+-        },
+-        {
+-          "from": 8192,
+-          "reason": "truncated generations never stated an answer and were scored wrong",
+-          "to": 16384
+-        }
+-      ],
+-      "solver_prompt_version": "icr_v2_phase1_verbatim",
+-      "revision_prompt_version": "icr_v3_mid_injection",
+-      "answer_parser_version": "icr.parsing_v3@ICR-V3",
+-      "excluded_item_ids": [],
+-      "exclusion_rule": null,
+-      "both_correct_sampling": {
+-        "keep_one_in": 1,
+-        "label_free": true,
+-        "rule": "item_id % keep_one_in == 0",
+-        "skip_all_correct_items": true
+-      },
+-      "completed_revision_conditions": [
+-        "none",
+-        "true_text",
+-        "true_statebridge",
+-        "true_latentmas"
+-      ],
+-      "source_items": 1319,
+-      "items_with_three_beliefs": 1319,
+-      "raw_revision_records": 3194,
+-      "merged_revision_records": 2256,
+-      "all_correct_sample_records": 938
+-    },
+-    "gpqa": {
+-      "artifact_root": "methods/AgentCom-StateBridge/artifacts/icr_v3/gpqa_full_seed42",
+-      "status": "VERIFIED",
+-      "protocol": "ICR-V3",
+-      "benchmark_label": "gpqa_diamond",
+-      "dataset_sha256": "42cdb10747fbb798116e3b490f470836d6ec1d47d24ae5b06dea7e8cae616f42",
+-      "config_fingerprint": "f3a6568c0975ebe7e0cf9c3d00c827d757363717095bb827c2ae4bf0deea3f2d",
+-      "superseded_fingerprints": [
+-        "cb9f218c2b3571fabd2ab894250af46cf053990d815e1d77bbd5fa897f53af2e"
+-      ],
+-      "model": "Qwen/Qwen3-4B",
+-      "global_seed": 42,
+-      "replication_id": "seed_pair_00",
+-      "generation": {
+-        "do_sample": true,
+-        "max_new_tokens": 16384,
+-        "temperature": 0.6,
+-        "top_k": null,
+-        "top_p": 0.95
+-      },
+-      "max_new_tokens_history": [
+-        {
+-          "from": 8192,
+-          "reason": "truncated generations never stated an answer and were scored wrong",
+-          "to": 16384
+-        }
+-      ],
+-      "solver_prompt_version": "icr_v2_phase1_verbatim",
+-      "revision_prompt_version": "icr_v3_mid_injection",
+-      "answer_parser_version": "icr.parsing_v3@ICR-V3",
+-      "excluded_item_ids": [],
+-      "exclusion_rule": null,
+-      "both_correct_sampling": {
+-        "all_correct_keep_one_in": 0,
+-        "keep_one_in": 1,
+-        "label_free": true,
+-        "rule": "item_id % keep_one_in == 0",
+-        "skip_all_correct_items": true
+-      },
+-      "completed_revision_conditions": [
+-        "none",
+-        "true_text",
+-        "true_statebridge",
+-        "true_latentmas"
+-      ],
+-      "source_items": 198,
+-      "items_with_three_beliefs": 198,
+-      "raw_revision_records": 3327,
+-      "merged_revision_records": 2832,
+-      "all_correct_sample_records": 495
+-    },
+-    "humanevalplus": {
+-      "artifact_root": "methods/AgentCom-StateBridge/artifacts/icr_v3/humanevalplus_full_seed42",
+-      "status": "VERIFIED",
+-      "protocol": "ICR-V3",
+-      "benchmark_label": "humanevalplus_test",
+-      "dataset_sha256": "2669a4b46e251fe9198fcf811dbdbeff6e7d184622ca4891b57a72cd5342dfd9",
+-      "config_fingerprint": "c8022305cc8dda36eaf25359491e62feb1c3f1afa435bfa396a3c860dd3a835b",
+-      "superseded_fingerprints": [
+-        "dfad94459e724849ce39a73bdb034d9ded4753787614f30d26641d0b791f614b",
+-        "f94cd9cc33f42ad6a4a960729ddbf1ae56d09f8340d025729af2959763f72b3c"
+-      ],
+-      "model": "Qwen/Qwen3-4B",
+-      "global_seed": 42,
+-      "replication_id": "seed_pair_00",
+-      "generation": {
+-        "do_sample": true,
+-        "max_new_tokens": 16384,
+-        "temperature": 0.6,
+-        "top_k": null,
+-        "top_p": 0.95
+-      },
+-      "max_new_tokens_history": [
+-        {
+-          "from": 4096,
+-          "reason": "truncated generations never stated an answer and were scored wrong",
+-          "to": 8192
+-        },
+-        {
+-          "from": 8192,
+-          "reason": "truncated generations never stated an answer and were scored wrong",
+-          "to": 16384
+-        }
+-      ],
+-      "solver_prompt_version": "icr_v2_phase1_verbatim",
+-      "revision_prompt_version": "icr_v3_mid_injection",
+-      "answer_parser_version": "icr.parsing_v3@ICR-V3",
+-      "excluded_item_ids": [],
+-      "exclusion_rule": null,
+-      "both_correct_sampling": {
+-        "keep_one_in": 1,
+-        "label_free": true,
+-        "rule": "item_id % keep_one_in == 0",
+-        "skip_all_correct_items": true
+-      },
+-      "completed_revision_conditions": [
+-        "none",
+-        "true_text",
+-        "true_statebridge",
+-        "true_latentmas"
+-      ],
+-      "source_items": 164,
+-      "items_with_three_beliefs": 164,
+-      "raw_revision_records": 768,
+-      "merged_revision_records": 672,
+-      "all_correct_sample_records": 96
+-    }
+-  },
+-  "outputs": {
+-    "MAIN_TEXT_EVIDENCE.md": "5.1-5.4 main-text material",
+-    "APPENDIX_DETAILS.md": "Appendix A-E",
+-    "AUDIT_ISSUES.md": "issues grouped by impact",
+-    "tables/": [
+-      "accuracy_scopes.csv",
+-      "answer_transitions.csv",
+-      "cost.csv",
+-      "count_identity_check.csv",
+-      "cr_pr_plot_data.csv",
+-      "exclusions_and_reuse.csv",
+-      "full_set_accuracy_estimated.csv",
+-      "humanevalplus_degenerate_loops.csv",
+-      "integrity_checks.csv",
+-      "main_results.csv",
+-      "paired_vs_no_message.csv",
+-      "sample_statistics.csv",
+-      "six_direction_detail.csv",
+-      "sr_scr.csv",
+-      "truncation_contamination.csv",
+-      "truncation_sensitivity.csv"
+-    ]
+-  },
+-  "known_missing": [
+-    "E0-E4 development diagnostics and the 75-item MedQA pilot",
+-    "Final frozen EGR method and its held-out evaluation",
+-    "Per-record EGR artifacts (only aggregate markdown reports survive)",
+-    "Per-message construction cost for Full Text and StateBridge",
+-    "Item-level development/test split for the ICR audit (a CR-DNC split exists separately)",
+-    "Model revision pin and attn_implementation",
+-    "HumanEval+ literal-newline evidence"
+-  ]
+-}
+\ No newline at end of file
+diff --git a/paper_materials/tables/README.md b/paper_materials/tables/README.md
+deleted file mode 100644
+index 5ad2fc7..0000000
+--- a/paper_materials/tables/README.md
++++ /dev/null
+@@ -1,41 +0,0 @@
+-# Table index — source and evaluation scope
+-
+-Every table below is derived from the per-record JSON artifacts under
+-`methods/AgentCom-StateBridge/artifacts/icr_v3/<task>_full_seed42/`. Percentages
+-are computed from integer counts; no percentage is aggregated from a rounded
+-percentage.
+-
+-Scope vocabulary:
+-- **retained** — the (item, direction, condition) records in `revisions/merged.jsonl`: items where the three agents did **not** all answer correctly, × 6 ordered directions.
+-- **skipped sample** — records in `revisions/all_correct_sample.jsonl`: a sample of the all-three-correct items that phase 2 otherwise skips.
+-- **all items** — the full item set × 6 directions, only partly measured.
+-
+-| Table | Source | Scope | Status |
+-|---|---|---|---|
+-| `sample_statistics.csv` | `prebeliefs/rank*/records/*.json`, `config.json` | all items | VERIFIED (GPQA row PENDING) |
+-| `count_identity_check.csv` | `prebeliefs/rank*/records/*.json` | all items and retained, separately | VERIFIED |
+-| `integrity_checks.csv` | raw `revisions/*/records/*.json` + `prebeliefs/` | all raw records on disk | VERIFIED |
+-| `main_results.csv` | `revisions/merged.jsonl` | retained | VERIFIED |
+-| `cr_pr_plot_data.csv` | `revisions/merged.jsonl` | retained | VERIFIED |
+-| `paired_vs_no_message.csv` | `revisions/merged.jsonl` | retained, and stratified by pair class | VERIFIED |
+-| `sr_scr.csv` | `revisions/merged.jsonl` + `all_correct_sample.jsonl` | retained (SR, SCR) and skipped sample (SCR) | VERIFIED |
+-| `answer_transitions.csv` | `revisions/merged.jsonl` | retained | VERIFIED; code-task rows are string identity only |
+-| `accuracy_scopes.csv` | `prebeliefs/merged.jsonl`, `revisions/merged.jsonl` | five scopes, one per column group | VERIFIED |
+-| `six_direction_detail.csv` | `revisions/merged.jsonl` | retained, split by the six ordered directions | VERIFIED |
+-| `cost.csv` | `revisions/merged.jsonl` `communication_payload`, `prompt_tokens`, `generation_length`, `generation_seconds` | retained | PARTIAL — construction cost MISSING for 3 of 4 channels |
+-| `truncation_sensitivity.csv` | `prebeliefs/` `hit_eos` + `revisions/merged.jsonl` | retained, recomputed with non-terminating items dropped whole | VERIFIED — sensitivity only, primary analysis is retention |
+-| `truncation_contamination.csv` | `prebeliefs/` `hit_eos` joined to `revisions/merged.jsonl` | retained | VERIFIED |
+-| `exclusions_and_reuse.csv` | `config.json`, shard paths, `prebeliefs/` | all items | VERIFIED |
+-| `full_set_accuracy_estimated.csv` | `icr/full_set_accuracy.py` over both merged files | all items, partly imputed | **ESTIMATED, NOT MEASURED** |
+-| `humanevalplus_degenerate_loops.csv` | HumanEval+ `prebeliefs/` and `revisions/` with `hit_eos == false` | all HumanEval+ records | VERIFIED |
+-
+-Bootstrap columns in `main_results.csv`: item-cluster paired bootstrap, 2,000
+-resamples, analysis seed 20260921, percentile 2.5/97.5 interval. A resample whose
+-denominator is zero is dropped and counted in `bootstrap_undefined_*`. The
+-published `analysis_v2` artifacts use 10,000 resamples and seed 20260920; the
+-difference is recorded in `manifest.json`.
+-
+-All five datasets are present in every table. GPQA-Diamond's phase 2 completed at
+-10:47 UTC on 2026-09-21 with 0 worker failures; its all-correct sample is 124
+-records per condition (25.8% of that population), because the run that would have
+-covered it in full was cut short deliberately to save wall-clock.
+diff --git a/paper_materials/tables/accuracy_scopes.csv b/paper_materials/tables/accuracy_scopes.csv
+deleted file mode 100644
+index 5a51276..0000000
+--- a/paper_materials/tables/accuracy_scopes.csv
++++ /dev/null
+@@ -1,21 +0,0 @@
+-dataset,condition,initial_answer_acc_num,initial_answer_acc_den,initial_answer_acc_pct,acc_mixed_direction_num,acc_mixed_direction_den,acc_mixed_direction_pct,si_pct,acc_mixed_equals_si,acc_ret_num,acc_ret_den,acc_ret_pct,measured_records,full_set_records,measured_coverage_pct,measured_full_set_acc_pct
+-MedQA,No Message,624,900,69.3333,122,232,52.5862,52.5862,YES,185,720,25.6944,754,1800,41.8889,not available (coverage < 100%)
+-MedQA,Full Text,,,,142,232,61.2069,61.2069,YES,196,720,27.2222,754,1800,41.8889,not available (coverage < 100%)
+-MedQA,StateBridge,,,,154,232,66.3793,66.3793,YES,208,720,28.8889,754,1800,41.8889,not available (coverage < 100%)
+-MedQA,LatentMAS,,,,119,232,51.2931,51.2931,YES,178,720,24.7222,754,1800,41.8889,not available (coverage < 100%)
+-ARC-C,No Message,3282,3495,93.9056,99,196,50.5102,50.5102,YES,164,588,27.8912,796,6990,11.3877,not available (coverage < 100%)
+-ARC-C,Full Text,,,,113,196,57.6531,57.6531,YES,178,588,30.2721,796,6990,11.3877,not available (coverage < 100%)
+-ARC-C,StateBridge,,,,112,196,57.1429,57.1429,YES,176,588,29.932,796,6990,11.3877,not available (coverage < 100%)
+-ARC-C,LatentMAS,,,,102,196,52.0408,52.0408,YES,166,588,28.2313,796,6990,11.3877,not available (coverage < 100%)
+-GSM8K,No Message,3744,3957,94.6171,97,184,52.7174,52.7174,YES,148,564,26.2411,799,7914,10.096,not available (coverage < 100%)
+-GSM8K,Full Text,,,,95,184,51.6304,51.6304,YES,143,564,25.3546,799,7914,10.096,not available (coverage < 100%)
+-GSM8K,StateBridge,,,,104,184,56.5217,56.5217,YES,152,564,26.9504,799,7914,10.096,not available (coverage < 100%)
+-GSM8K,LatentMAS,,,,98,184,53.2609,53.2609,YES,144,564,25.5319,797,7914,10.0708,not available (coverage < 100%)
+-GPQA-D,No Message,321,594,54.0404,126,228,55.2632,55.2632,YES,180,708,25.4237,832,1188,70.0337,not available (coverage < 100%)
+-GPQA-D,Full Text,,,,139,228,60.9649,60.9649,YES,193,708,27.2599,832,1188,70.0337,not available (coverage < 100%)
+-GPQA-D,StateBridge,,,,132,228,57.8947,57.8947,YES,190,708,26.8362,832,1188,70.0337,not available (coverage < 100%)
+-GPQA-D,LatentMAS,,,,128,228,56.1404,56.1404,YES,178,708,25.1412,831,1188,69.9495,not available (coverage < 100%)
+-HumanEval+,No Message,432,492,87.8049,42,56,75.0,75.0,YES,71,168,42.2619,192,984,19.5122,not available (coverage < 100%)
+-HumanEval+,Full Text,,,,47,56,83.9286,83.9286,YES,76,168,45.2381,192,984,19.5122,not available (coverage < 100%)
+-HumanEval+,StateBridge,,,,46,56,82.1429,82.1429,YES,73,168,43.4524,192,984,19.5122,not available (coverage < 100%)
+-HumanEval+,LatentMAS,,,,41,56,73.2143,73.2143,YES,67,168,39.881,192,984,19.5122,not available (coverage < 100%)
+diff --git a/paper_materials/tables/answer_transitions.csv b/paper_materials/tables/answer_transitions.csv
+deleted file mode 100644
+index 5fd7d64..0000000
+--- a/paper_materials/tables/answer_transitions.csv
++++ /dev/null
+@@ -1,21 +0,0 @@
+-dataset,condition,total,kept_receiver_prior,adopted_sender_answer,moved_to_third_answer,invalid_or_unparsed,normalisation,caveat
+-MedQA,No Message,720,693,11,16,0,"parsed answer, stripped and lowercased",
+-MedQA,Full Text,720,496,220,3,1,"parsed answer, stripped and lowercased",
+-MedQA,StateBridge,720,585,129,5,1,"parsed answer, stripped and lowercased",
+-MedQA,LatentMAS,720,503,207,10,0,"parsed answer, stripped and lowercased",
+-ARC-C,No Message,588,556,15,13,4,"parsed answer, stripped and lowercased",
+-ARC-C,Full Text,588,429,157,1,1,"parsed answer, stripped and lowercased",
+-ARC-C,StateBridge,588,455,129,2,2,"parsed answer, stripped and lowercased",
+-ARC-C,LatentMAS,588,459,120,7,2,"parsed answer, stripped and lowercased",
+-GSM8K,No Message,564,524,20,20,0,"parsed answer, stripped and lowercased",
+-GSM8K,Full Text,564,446,108,10,0,"parsed answer, stripped and lowercased",
+-GSM8K,StateBridge,564,485,69,10,0,"parsed answer, stripped and lowercased",
+-GSM8K,LatentMAS,564,437,118,9,0,"parsed answer, stripped and lowercased",
+-GPQA-D,No Message,708,637,28,41,2,"parsed answer, stripped and lowercased",
+-GPQA-D,Full Text,708,477,204,26,1,"parsed answer, stripped and lowercased",
+-GPQA-D,StateBridge,708,495,182,30,1,"parsed answer, stripped and lowercased",
+-GPQA-D,LatentMAS,708,511,170,19,8,"parsed answer, stripped and lowercased",
+-HumanEval+,No Message,168,110,2,42,14,"whitespace-normalised program text; string identity only, not semantic adoption",Adoption on a code task is string identity of the extracted program. It is NOT inferred from pass/fail.
+-HumanEval+,Full Text,168,97,19,42,10,"whitespace-normalised program text; string identity only, not semantic adoption",Adoption on a code task is string identity of the extracted program. It is NOT inferred from pass/fail.
+-HumanEval+,StateBridge,168,105,10,41,12,"whitespace-normalised program text; string identity only, not semantic adoption",Adoption on a code task is string identity of the extracted program. It is NOT inferred from pass/fail.
+-HumanEval+,LatentMAS,168,84,28,43,13,"whitespace-normalised program text; string identity only, not semantic adoption",Adoption on a code task is string identity of the extracted program. It is NOT inferred from pass/fail.
+diff --git a/paper_materials/tables/cost.csv b/paper_materials/tables/cost.csv
+deleted file mode 100644
+index a8e44b9..0000000
+--- a/paper_materials/tables/cost.csv
++++ /dev/null
+@@ -1,21 +0,0 @@
+-dataset,condition,records,extra_construction_calls_per_message,construction_note,receiver_prompt_tokens_mean,receiver_output_tokens_mean,receiver_output_tokens_total,message_text_tokens_mean,payload_bytes_mean,payload_bytes_note,latent_steps,message_construction_seconds_mean,receiver_revision_seconds_mean,receiver_revision_seconds_total,wall_clock_note
+-MedQA,No Message,720,0,sender reasoning reused verbatim from phase 1; no extra call,912.2,884.5,636835,,0,,,MISSING,19.929,14349.1,"per-record generation_seconds measured in-process; GPU contention varies with worker count, so totals are not a controlled throughput comparison"
+-MedQA,Full Text,720,0,sender reasoning reused verbatim from phase 1; no extra call,1438.2,978.7,704697,518.1,2212.9,,,MISSING,23.203,16706.1,"per-record generation_seconds measured in-process; GPU contention varies with worker count, so totals are not a controlled throughput comparison"
+-MedQA,StateBridge,720,0,prefix/cache derived from the phase-1 forward pass; no extra generation,983.2,958.3,689968,,327680,hidden-state prefix; NOT convertible to an equivalent token count,,MISSING,21.728,15644.5,"per-record generation_seconds measured in-process; GPU contention varies with worker count, so totals are not a controlled throughput comparison"
+-MedQA,LatentMAS,720,0,sender trajectory teacher-forced plus generated_latent_steps latent steps,919.2,582.6,419444,,0,latent KV payload; NOT convertible to an equivalent token count,10,0.4829,14.452,10405.8,"per-record generation_seconds measured in-process; GPU contention varies with worker count, so totals are not a controlled throughput comparison"
+-ARC-C,No Message,588,0,sender reasoning reused verbatim from phase 1; no extra call,709.7,807.5,474792,,0,,,MISSING,20.726,12186.9,"per-record generation_seconds measured in-process; GPU contention varies with worker count, so totals are not a controlled throughput comparison"
+-ARC-C,Full Text,588,0,sender reasoning reused verbatim from phase 1; no extra call,1195.8,760.1,446915,478.2,2123.3,,,MISSING,16.397,9641.5,"per-record generation_seconds measured in-process; GPU contention varies with worker count, so totals are not a controlled throughput comparison"
+-ARC-C,StateBridge,588,0,prefix/cache derived from the phase-1 forward pass; no extra generation,780.7,773.6,454888,,327680,hidden-state prefix; NOT convertible to an equivalent token count,,MISSING,16.296,9581.9,"per-record generation_seconds measured in-process; GPU contention varies with worker count, so totals are not a controlled throughput comparison"
+-ARC-C,LatentMAS,588,0,sender trajectory teacher-forced plus generated_latent_steps latent steps,716.7,570.0,335186,,0,latent KV payload; NOT convertible to an equivalent token count,10,0.3925,14.686,8635.1,"per-record generation_seconds measured in-process; GPU contention varies with worker count, so totals are not a controlled throughput comparison"
+-GSM8K,No Message,564,0,sender reasoning reused verbatim from phase 1; no extra call,648.0,1012.5,571074,,0,,,MISSING,22.255,12551.7,"per-record generation_seconds measured in-process; GPU contention varies with worker count, so totals are not a controlled throughput comparison"
+-GSM8K,Full Text,564,0,sender reasoning reused verbatim from phase 1; no extra call,1060.8,954.9,538586,404.9,1105.4,,,MISSING,20.808,11735.6,"per-record generation_seconds measured in-process; GPU contention varies with worker count, so totals are not a controlled throughput comparison"
+-GSM8K,StateBridge,564,0,prefix/cache derived from the phase-1 forward pass; no extra generation,719.0,967.3,545531,,327680,hidden-state prefix; NOT convertible to an equivalent token count,,MISSING,21.272,11997.4,"per-record generation_seconds measured in-process; GPU contention varies with worker count, so totals are not a controlled throughput comparison"
+-GSM8K,LatentMAS,564,0,sender trajectory teacher-forced plus generated_latent_steps latent steps,655.0,502.3,283288,,0,latent KV payload; NOT convertible to an equivalent token count,10,0.5471,12.946,7301.7,"per-record generation_seconds measured in-process; GPU contention varies with worker count, so totals are not a controlled throughput comparison"
+-GPQA-D,No Message,708,0,sender reasoning reused verbatim from phase 1; no extra call,1576.1,2908.9,2059532,,0,,,MISSING,53.366,37782.8,"per-record generation_seconds measured in-process; GPU contention varies with worker count, so totals are not a controlled throughput comparison"
+-GPQA-D,Full Text,708,0,sender reasoning reused verbatim from phase 1; no extra call,2742.4,2216.0,1568956,1158.3,3595.1,,,MISSING,41.624,29469.8,"per-record generation_seconds measured in-process; GPU contention varies with worker count, so totals are not a controlled throughput comparison"
+-GPQA-D,StateBridge,708,0,prefix/cache derived from the phase-1 forward pass; no extra generation,1647.1,2539.4,1797927,,327477.5,hidden-state prefix; NOT convertible to an equivalent token count,,MISSING,46.03,32588.9,"per-record generation_seconds measured in-process; GPU contention varies with worker count, so totals are not a controlled throughput comparison"
+-GPQA-D,LatentMAS,708,0,sender trajectory teacher-forced plus generated_latent_steps latent steps,1583.1,920.8,651923,,0,latent KV payload; NOT convertible to an equivalent token count,10,0.7161,23.461,16610.5,"per-record generation_seconds measured in-process; GPU contention varies with worker count, so totals are not a controlled throughput comparison"
+-HumanEval+,No Message,168,0,sender reasoning reused verbatim from phase 1; no extra call,2613.0,4422.4,742965,,0,,,MISSING,119.206,20026.7,"per-record generation_seconds measured in-process; GPU contention varies with worker count, so totals are not a controlled throughput comparison"
+-HumanEval+,Full Text,168,0,sender reasoning reused verbatim from phase 1; no extra call,4894.7,3878.4,651573,2273.7,8675.5,,,MISSING,106.572,17904.1,"per-record generation_seconds measured in-process; GPU contention varies with worker count, so totals are not a controlled throughput comparison"
+-HumanEval+,StateBridge,168,0,prefix/cache derived from the phase-1 forward pass; no extra generation,2682.8,4102.9,689289,,321523.8,hidden-state prefix; NOT convertible to an equivalent token count,,MISSING,101.088,16982.8,"per-record generation_seconds measured in-process; GPU contention varies with worker count, so totals are not a controlled throughput comparison"
+-HumanEval+,LatentMAS,168,0,sender trajectory teacher-forced plus generated_latent_steps latent steps,2620.0,2345.6,394064,,0,latent KV payload; NOT convertible to an equivalent token count,10,0.7212,86.096,14464.1,"per-record generation_seconds measured in-process; GPU contention varies with worker count, so totals are not a controlled throughput comparison"
+diff --git a/paper_materials/tables/count_identity_check.csv b/paper_materials/tables/count_identity_check.csv
+deleted file mode 100644
+index 65a7fc7..0000000
+--- a/paper_materials/tables/count_identity_check.csv
++++ /dev/null
+@@ -1,21 +0,0 @@
+-dataset,metric,closed_form,observed_all_items,observed_retained,identity_holds,rule
+-MedQA,CR,116,116,116,YES,"k(3-k) for CR/PR, (3-k)(2-k) for SR, k(k-1) for SCR; summed over items with k correct beliefs"
+-MedQA,PR,116,116,116,YES,"k(3-k) for CR/PR, (3-k)(2-k) for SR, k(k-1) for SCR; summed over items with k correct beliefs"
+-MedQA,SR,436,436,436,YES,"k(3-k) for CR/PR, (3-k)(2-k) for SR, k(k-1) for SCR; summed over items with k correct beliefs"
+-MedQA,SCR,1132,1132,52,YES,"k(3-k) for CR/PR, (3-k)(2-k) for SR, k(k-1) for SCR; summed over items with k correct beliefs"
+-ARC-C,CR,98,98,98,YES,"k(3-k) for CR/PR, (3-k)(2-k) for SR, k(k-1) for SCR; summed over items with k correct beliefs"
+-ARC-C,PR,98,98,98,YES,"k(3-k) for CR/PR, (3-k)(2-k) for SR, k(k-1) for SCR; summed over items with k correct beliefs"
+-ARC-C,SR,328,328,328,YES,"k(3-k) for CR/PR, (3-k)(2-k) for SR, k(k-1) for SCR; summed over items with k correct beliefs"
+-ARC-C,SCR,6466,6466,64,YES,"k(3-k) for CR/PR, (3-k)(2-k) for SR, k(k-1) for SCR; summed over items with k correct beliefs"
+-GSM8K,CR,92,92,92,YES,"k(3-k) for CR/PR, (3-k)(2-k) for SR, k(k-1) for SCR; summed over items with k correct beliefs"
+-GSM8K,PR,92,92,92,YES,"k(3-k) for CR/PR, (3-k)(2-k) for SR, k(k-1) for SCR; summed over items with k correct beliefs"
+-GSM8K,SR,334,334,334,YES,"k(3-k) for CR/PR, (3-k)(2-k) for SR, k(k-1) for SCR; summed over items with k correct beliefs"
+-GSM8K,SCR,7396,7396,46,YES,"k(3-k) for CR/PR, (3-k)(2-k) for SR, k(k-1) for SCR; summed over items with k correct beliefs"
+-GPQA-D,CR,114,114,114,YES,"k(3-k) for CR/PR, (3-k)(2-k) for SR, k(k-1) for SCR; summed over items with k correct beliefs"
+-GPQA-D,PR,114,114,114,YES,"k(3-k) for CR/PR, (3-k)(2-k) for SR, k(k-1) for SCR; summed over items with k correct beliefs"
+-GPQA-D,SR,432,432,432,YES,"k(3-k) for CR/PR, (3-k)(2-k) for SR, k(k-1) for SCR; summed over items with k correct beliefs"
+-GPQA-D,SCR,528,528,48,YES,"k(3-k) for CR/PR, (3-k)(2-k) for SR, k(k-1) for SCR; summed over items with k correct beliefs"
+-HumanEval+,CR,28,28,28,YES,"k(3-k) for CR/PR, (3-k)(2-k) for SR, k(k-1) for SCR; summed over items with k correct beliefs"
+-HumanEval+,PR,28,28,28,YES,"k(3-k) for CR/PR, (3-k)(2-k) for SR, k(k-1) for SCR; summed over items with k correct beliefs"
+-HumanEval+,SR,92,92,92,YES,"k(3-k) for CR/PR, (3-k)(2-k) for SR, k(k-1) for SCR; summed over items with k correct beliefs"
+-HumanEval+,SCR,836,836,20,YES,"k(3-k) for CR/PR, (3-k)(2-k) for SR, k(k-1) for SCR; summed over items with k correct beliefs"
+diff --git a/paper_materials/tables/cr_pr_plot_data.csv b/paper_materials/tables/cr_pr_plot_data.csv
+deleted file mode 100644
+index d1b56cf..0000000
+--- a/paper_materials/tables/cr_pr_plot_data.csv
++++ /dev/null
+@@ -1,21 +0,0 @@
+-dataset,condition,cr_pct,pr_pct,si_pct,cr_den,pr_den
+-MedQA,No Message,6.8966,98.2759,52.5862,116,116
+-MedQA,Full Text,80.1724,42.2414,61.2069,116,116
+-MedQA,StateBridge,57.7586,75.0,66.3793,116,116
+-MedQA,LatentMAS,69.8276,32.7586,51.2931,116,116
+-ARC-C,No Message,8.1633,92.8571,50.5102,98,98
+-ARC-C,Full Text,80.6122,34.6939,57.6531,98,98
+-ARC-C,StateBridge,69.3878,44.898,57.1429,98,98
+-ARC-C,LatentMAS,58.1633,45.9184,52.0408,98,98
+-GSM8K,No Message,13.0435,92.3913,52.7174,92,92
+-GSM8K,Full Text,51.087,52.1739,51.6304,92,92
+-GSM8K,StateBridge,39.1304,73.913,56.5217,92,92
+-GSM8K,LatentMAS,59.7826,46.7391,53.2609,92,92
+-GPQA-D,No Message,14.0351,96.4912,55.2632,114,114
+-GPQA-D,Full Text,74.5614,47.3684,60.9649,114,114
+-GPQA-D,StateBridge,64.0351,51.7544,57.8947,114,114
+-GPQA-D,LatentMAS,61.4035,50.8772,56.1404,114,114
+-HumanEval+,No Message,57.1429,92.8571,75.0,28,28
+-HumanEval+,Full Text,75.0,92.8571,83.9286,28,28
+-HumanEval+,StateBridge,67.8571,96.4286,82.1429,28,28
+-HumanEval+,LatentMAS,85.7143,60.7143,73.2143,28,28
+diff --git a/paper_materials/tables/exclusions_and_reuse.csv b/paper_materials/tables/exclusions_and_reuse.csv
+deleted file mode 100644
+index f2a0552..0000000
+--- a/paper_materials/tables/exclusions_and_reuse.csv
++++ /dev/null
+@@ -1,6 +0,0 @@
+-dataset,items_source,items_with_three_beliefs,items_dropped_structural,beliefs_truncated_at_16384,truncated_item_ids,truncation_rule,items_all_correct_skipped,skip_rule,revision_shards,cache_reuse_rule
+-MedQA,300,300,see benchmarks.structural_exclusions(); ARC-C drops items without exactly four options,1,26,"a generation that does not terminate within max_new_tokens is a degenerate repetition loop; the rule depends only on termination, never on whether the answer was right",180,--skip-all-correct-items: items every agent answered correctly carry no correction or destruction pair; a 10% leftover sample of them is retained separately,rank0_v3:264|rank1_v3:500|rank2_v3:268|rank3_v3:488|rank4_v3:284|rank5_v3:504|rank6_v3:236|rank7_v3:472,--global-resume reuses a record only when status==complete and its config_fingerprint is in accepted_fingerprints(config); receiver priors were additionally verified byte-identical in this audit (0 stale across all datasets)
+-ARC-C,1165,1165,see benchmarks.structural_exclusions(); ARC-C drops items without exactly four options,2,10|1163,"a generation that does not terminate within max_new_tokens is a degenerate repetition loop; the rule depends only on termination, never on whether the answer was right",1067,--skip-all-correct-items: items every agent answered correctly carry no correction or destruction pair; a 10% leftover sample of them is retained separately,rank0_fill2:16|rank0_v3:364|rank1_fill:237|rank1_fill2:12|rank1_v3:488|rank2_fill2:12|rank2_v3:376|rank3_fill2:16|rank3_v3:484|rank4_v3:444|rank5_v3:532|rank6_v3:196|rank7_v3:7,--global-resume reuses a record only when status==complete and its config_fingerprint is in accepted_fingerprints(config); receiver priors were additionally verified byte-identical in this audit (0 stale across all datasets)
+-GSM8K,1319,1319,see benchmarks.structural_exclusions(); ARC-C drops items without exactly four options,2,154|570,"a generation that does not terminate within max_new_tokens is a degenerate repetition loop; the rule depends only on termination, never on whether the answer was right",1225,--skip-all-correct-items: items every agent answered correctly carry no correction or destruction pair; a 10% leftover sample of them is retained separately,rank0_fill:157|rank0_v3:306|rank1_v3:560|rank2_v3:192|rank3_v3:304|rank4_v3:467|rank5_v3:600|rank6_v3:260|rank7_v3:348,--global-resume reuses a record only when status==complete and its config_fingerprint is in accepted_fingerprints(config); receiver priors were additionally verified byte-identical in this audit (0 stale across all datasets)
+-GPQA-D,198,198,see benchmarks.structural_exclusions(); ARC-C drops items without exactly four options,9,21|32|44|53|58|63|65|154|162,"a generation that does not terminate within max_new_tokens is a degenerate repetition loop; the rule depends only on termination, never on whether the answer was right",80,--skip-all-correct-items: items every agent answered correctly carry no correction or destruction pair; a 10% leftover sample of them is retained separately,rank0_v3:756|rank1_v3:752|rank2_v3:855|rank3_v3:812|rank4_v3:76|rank5_v3:76,--global-resume reuses a record only when status==complete and its config_fingerprint is in accepted_fingerprints(config); receiver priors were additionally verified byte-identical in this audit (0 stale across all datasets)
+-HumanEval+,164,164,see benchmarks.structural_exclusions(); ARC-C drops items without exactly four options,8,32|34|90|94|113|126|134|158,"a generation that does not terminate within max_new_tokens is a degenerate repetition loop; the rule depends only on termination, never on whether the answer was right",136,--skip-all-correct-items: items every agent answered correctly carry no correction or destruction pair; a 10% leftover sample of them is retained separately,rank0_fill:17|rank0_fill2:77|rank0_v3:81|rank1_fill:48|rank1_fill2:80|rank1_v3:132|rank2_fill:36|rank2_fill2:74|rank2_v3:3|rank3_fill:30|rank3_fill2:71|rank3_v3:19|rank4_v3:26|rank5_v3:7|rank6_v3:7|rank7_v3:60,--global-resume reuses a record only when status==complete and its config_fingerprint is in accepted_fingerprints(config); receiver priors were additionally verified byte-identical in this audit (0 stale across all datasets)
+diff --git a/paper_materials/tables/full_set_accuracy_estimated.csv b/paper_materials/tables/full_set_accuracy_estimated.csv
+deleted file mode 100644
+index 8e07e0e..0000000
+--- a/paper_materials/tables/full_set_accuracy_estimated.csv
++++ /dev/null
+@@ -1,21 +0,0 @@
+-status,dataset,condition,items,full_set_records,all_correct_items,skipped_records,measured_retained,measured_skipped_sample,imputed_records,disjoint_check,denominator_matches_population,scr_source,skipped_item_accuracy_pct,estimated_accuracy_pct,ci_low_pct,ci_high_pct,item_unit_accuracy_pct,formula,assumption
+-"ESTIMATED, NOT MEASURED FULL-SET ACCURACY",MedQA,No Message,300,1800,180,1080,720,34,1046,YES: retained scope and skipped scope partition the item set; sample rows are read from all_correct_sample.jsonl only,YES: items x 6 == retained + skipped,"measured on the skipped population itself (all-correct items), NOT borrowed from mixed-item both_correct pairs",100.0,70.2778,67.3281,73.2274,70.25,(retained_correct + sample_correct + imputed_records * skipped_item_accuracy) / (items * 6),the unsampled skipped records behave like the sampled ones from the same population
+-"ESTIMATED, NOT MEASURED FULL-SET ACCURACY",MedQA,Full Text,300,1800,180,1080,720,34,1046,YES: retained scope and skipped scope partition the item set; sample rows are read from all_correct_sample.jsonl only,YES: items x 6 == retained + skipped,"measured on the skipped population itself (all-correct items), NOT borrowed from mixed-item both_correct pairs",100.0,70.8889,67.9392,73.8385,71.0833,(retained_correct + sample_correct + imputed_records * skipped_item_accuracy) / (items * 6),the unsampled skipped records behave like the sampled ones from the same population
+-"ESTIMATED, NOT MEASURED FULL-SET ACCURACY",MedQA,StateBridge,300,1800,180,1080,720,34,1046,YES: retained scope and skipped scope partition the item set; sample rows are read from all_correct_sample.jsonl only,YES: items x 6 == retained + skipped,"measured on the skipped population itself (all-correct items), NOT borrowed from mixed-item both_correct pairs",100.0,71.5556,68.6059,74.5052,72.0,(retained_correct + sample_correct + imputed_records * skipped_item_accuracy) / (items * 6),the unsampled skipped records behave like the sampled ones from the same population
+-"ESTIMATED, NOT MEASURED FULL-SET ACCURACY",MedQA,LatentMAS,300,1800,180,1080,720,34,1046,YES: retained scope and skipped scope partition the item set; sample rows are read from all_correct_sample.jsonl only,YES: items x 6 == retained + skipped,"measured on the skipped population itself (all-correct items), NOT borrowed from mixed-item both_correct pairs",100.0,69.8889,66.9392,72.8385,69.9167,(retained_correct + sample_correct + imputed_records * skipped_item_accuracy) / (items * 6),the unsampled skipped records behave like the sampled ones from the same population
+-"ESTIMATED, NOT MEASURED FULL-SET ACCURACY",ARC-C,No Message,1165,6990,1067,6402,588,208,6194,YES: retained scope and skipped scope partition the item set; sample rows are read from all_correct_sample.jsonl only,YES: items x 6 == retained + skipped,"measured on the skipped population itself (all-correct items), NOT borrowed from mixed-item both_correct pairs",100.0,93.9342,93.1307,94.7377,94.1631,(retained_correct + sample_correct + imputed_records * skipped_item_accuracy) / (items * 6),the unsampled skipped records behave like the sampled ones from the same population
+-"ESTIMATED, NOT MEASURED FULL-SET ACCURACY",ARC-C,Full Text,1165,6990,1067,6402,588,208,6194,YES: retained scope and skipped scope partition the item set; sample rows are read from all_correct_sample.jsonl only,YES: items x 6 == retained + skipped,"measured on the skipped population itself (all-correct items), NOT borrowed from mixed-item both_correct pairs",100.0,94.1345,93.331,94.9379,94.1845,(retained_correct + sample_correct + imputed_records * skipped_item_accuracy) / (items * 6),the unsampled skipped records behave like the sampled ones from the same population
+-"ESTIMATED, NOT MEASURED FULL-SET ACCURACY",ARC-C,StateBridge,1165,6990,1067,6402,588,208,6194,YES: retained scope and skipped scope partition the item set; sample rows are read from all_correct_sample.jsonl only,YES: items x 6 == retained + skipped,"measured on the skipped population itself (all-correct items), NOT borrowed from mixed-item both_correct pairs",100.0,94.1059,93.3024,94.9093,94.0987,(retained_correct + sample_correct + imputed_records * skipped_item_accuracy) / (items * 6),the unsampled skipped records behave like the sampled ones from the same population
+-"ESTIMATED, NOT MEASURED FULL-SET ACCURACY",ARC-C,LatentMAS,1165,6990,1067,6402,588,208,6194,YES: retained scope and skipped scope partition the item set; sample rows are read from all_correct_sample.jsonl only,YES: items x 6 == retained + skipped,"measured on the skipped population itself (all-correct items), NOT borrowed from mixed-item both_correct pairs",99.5192,93.5225,92.376,94.669,94.0343,(retained_correct + sample_correct + imputed_records * skipped_item_accuracy) / (items * 6),the unsampled skipped records behave like the sampled ones from the same population
+-"ESTIMATED, NOT MEASURED FULL-SET ACCURACY",GSM8K,No Message,1319,7914,1225,7350,564,235,7115,YES: retained scope and skipped scope partition the item set; sample rows are read from all_correct_sample.jsonl only,YES: items x 6 == retained + skipped,"measured on the skipped population itself (all-correct items), NOT borrowed from mixed-item both_correct pairs",100.0,94.7435,94.0205,95.4665,94.7119,(retained_correct + sample_correct + imputed_records * skipped_item_accuracy) / (items * 6),the unsampled skipped records behave like the sampled ones from the same population
+-"ESTIMATED, NOT MEASURED FULL-SET ACCURACY",GSM8K,Full Text,1319,7914,1225,7350,564,235,7115,YES: retained scope and skipped scope partition the item set; sample rows are read from all_correct_sample.jsonl only,YES: items x 6 == retained + skipped,"measured on the skipped population itself (all-correct items), NOT borrowed from mixed-item both_correct pairs",100.0,94.6803,93.9573,95.4033,94.674,(retained_correct + sample_correct + imputed_records * skipped_item_accuracy) / (items * 6),the unsampled skipped records behave like the sampled ones from the same population
+-"ESTIMATED, NOT MEASURED FULL-SET ACCURACY",GSM8K,StateBridge,1319,7914,1225,7350,564,235,7115,YES: retained scope and skipped scope partition the item set; sample rows are read from all_correct_sample.jsonl only,YES: items x 6 == retained + skipped,"measured on the skipped population itself (all-correct items), NOT borrowed from mixed-item both_correct pairs",100.0,94.794,94.071,95.5171,94.7498,(retained_correct + sample_correct + imputed_records * skipped_item_accuracy) / (items * 6),the unsampled skipped records behave like the sampled ones from the same population
+-"ESTIMATED, NOT MEASURED FULL-SET ACCURACY",GSM8K,LatentMAS,1319,7914,1225,7350,564,233,7117,YES: retained scope and skipped scope partition the item set; sample rows are read from all_correct_sample.jsonl only,YES: items x 6 == retained + skipped,"measured on the skipped population itself (all-correct items), NOT borrowed from mixed-item both_correct pairs",100.0,94.6929,93.9636,95.4223,94.5982,(retained_correct + sample_correct + imputed_records * skipped_item_accuracy) / (items * 6),the unsampled skipped records behave like the sampled ones from the same population
+-"ESTIMATED, NOT MEASURED FULL-SET ACCURACY",GPQA-D,No Message,198,1188,80,480,708,124,356,YES: retained scope and skipped scope partition the item set; sample rows are read from all_correct_sample.jsonl only,YES: items x 6 == retained + skipped,"measured on the skipped population itself (all-correct items), NOT borrowed from mixed-item both_correct pairs",97.5806,54.578,53.6722,55.4839,54.0404,(retained_correct + sample_correct + imputed_records * skipped_item_accuracy) / (items * 6),the unsampled skipped records behave like the sampled ones from the same population
+-"ESTIMATED, NOT MEASURED FULL-SET ACCURACY",GPQA-D,Full Text,198,1188,80,480,708,124,356,YES: retained scope and skipped scope partition the item set; sample rows are read from all_correct_sample.jsonl only,YES: items x 6 == retained + skipped,"measured on the skipped population itself (all-correct items), NOT borrowed from mixed-item both_correct pairs",99.1935,56.324,55.6821,56.9659,56.6919,(retained_correct + sample_correct + imputed_records * skipped_item_accuracy) / (items * 6),the unsampled skipped records behave like the sampled ones from the same population
+-"ESTIMATED, NOT MEASURED FULL-SET ACCURACY",GPQA-D,StateBridge,198,1188,80,480,708,124,356,YES: retained scope and skipped scope partition the item set; sample rows are read from all_correct_sample.jsonl only,YES: items x 6 == retained + skipped,"measured on the skipped population itself (all-correct items), NOT borrowed from mixed-item both_correct pairs",98.3871,55.7456,54.9595,56.5318,55.9343,(retained_correct + sample_correct + imputed_records * skipped_item_accuracy) / (items * 6),the unsampled skipped records behave like the sampled ones from the same population
+-"ESTIMATED, NOT MEASURED FULL-SET ACCURACY",GPQA-D,LatentMAS,198,1188,80,480,708,123,357,YES: retained scope and skipped scope partition the item set; sample rows are read from all_correct_sample.jsonl only,YES: items x 6 == retained + skipped,"measured on the skipped population itself (all-correct items), NOT borrowed from mixed-item both_correct pairs",99.187,55.0587,54.4099,55.7075,55.4293,(retained_correct + sample_correct + imputed_records * skipped_item_accuracy) / (items * 6),the unsampled skipped records behave like the sampled ones from the same population
+-"ESTIMATED, NOT MEASURED FULL-SET ACCURACY",HumanEval+,No Message,164,984,136,816,168,24,792,YES: retained scope and skipped scope partition the item set; sample rows are read from all_correct_sample.jsonl only,YES: items x 6 == retained + skipped,"measured on the skipped population itself (all-correct items), NOT borrowed from mixed-item both_correct pairs",95.8333,86.687,73.7481,99.6259,N/A (code task),(retained_correct + sample_correct + imputed_records * skipped_item_accuracy) / (items * 6),the unsampled skipped records behave like the sampled ones from the same population
+-"ESTIMATED, NOT MEASURED FULL-SET ACCURACY",HumanEval+,Full Text,164,984,136,816,168,24,792,YES: retained scope and skipped scope partition the item set; sample rows are read from all_correct_sample.jsonl only,YES: items x 6 == retained + skipped,"measured on the skipped population itself (all-correct items), NOT borrowed from mixed-item both_correct pairs",100.0,90.6504,79.5447,100.0,N/A (code task),(retained_correct + sample_correct + imputed_records * skipped_item_accuracy) / (items * 6),the unsampled skipped records behave like the sampled ones from the same population
+-"ESTIMATED, NOT MEASURED FULL-SET ACCURACY",HumanEval+,StateBridge,164,984,136,816,168,24,792,YES: retained scope and skipped scope partition the item set; sample rows are read from all_correct_sample.jsonl only,YES: items x 6 == retained + skipped,"measured on the skipped population itself (all-correct items), NOT borrowed from mixed-item both_correct pairs",100.0,90.3455,79.2398,100.0,N/A (code task),(retained_correct + sample_correct + imputed_records * skipped_item_accuracy) / (items * 6),the unsampled skipped records behave like the sampled ones from the same population
+-"ESTIMATED, NOT MEASURED FULL-SET ACCURACY",HumanEval+,LatentMAS,164,984,136,816,168,24,792,YES: retained scope and skipped scope partition the item set; sample rows are read from all_correct_sample.jsonl only,YES: items x 6 == retained + skipped,"measured on the skipped population itself (all-correct items), NOT borrowed from mixed-item both_correct pairs",100.0,89.7358,78.63,100.0,N/A (code task),(retained_correct + sample_correct + imputed_records * skipped_item_accuracy) / (items * 6),the unsampled skipped records behave like the sampled ones from the same population
+diff --git a/paper_materials/tables/humanevalplus_degenerate_loops.csv b/paper_materials/tables/humanevalplus_degenerate_loops.csv
+deleted file mode 100644
+index ad18fcd..0000000
+--- a/paper_materials/tables/humanevalplus_degenerate_loops.csv
++++ /dev/null
+@@ -1,62 +0,0 @@
+-item_id,agent_id,generation_length,max_new_tokens,parsed_answer_is_none,scored_correct,stage,excluded
+-32,A,16384,16384,True,False,phase 1 (belief),NO - item retained; the belief is scored wrong because no answer was emitted
+-32,B,16384,16384,True,False,phase 1 (belief),NO - item retained; the belief is scored wrong because no answer was emitted
+-113,A,16384,16384,True,False,phase 1 (belief),NO - item retained; the belief is scored wrong because no answer was emitted
+-34,B,16384,16384,True,False,phase 1 (belief),NO - item retained; the belief is scored wrong because no answer was emitted
+-90,C,16384,16384,True,False,phase 1 (belief),NO - item retained; the belief is scored wrong because no answer was emitted
+-94,B,16384,16384,True,False,phase 1 (belief),NO - item retained; the belief is scored wrong because no answer was emitted
+-126,B,16384,16384,True,False,phase 1 (belief),NO - item retained; the belief is scored wrong because no answer was emitted
+-126,C,16384,16384,True,False,phase 1 (belief),NO - item retained; the belief is scored wrong because no answer was emitted
+-134,A,16384,16384,True,False,phase 1 (belief),NO - item retained; the belief is scored wrong because no answer was emitted
+-134,B,16384,16384,True,False,phase 1 (belief),NO - item retained; the belief is scored wrong because no answer was emitted
+-134,C,16384,16384,True,False,phase 1 (belief),NO - item retained; the belief is scored wrong because no answer was emitted
+-158,B,16384,16384,True,False,phase 1 (belief),NO - item retained; the belief is scored wrong because no answer was emitted
+-32,B,16384,16384,True,False,"phase 2 (true_latentmas, A_to_B)",NO - record retained and scored wrong
+-32,B,16384,16384,True,False,"phase 2 (true_statebridge, A_to_B)",NO - record retained and scored wrong
+-32,B,16384,16384,True,False,"phase 2 (true_text, A_to_B)",NO - record retained and scored wrong
+-90,A,16384,16384,True,False,"phase 2 (true_text, C_to_A)",NO - record retained and scored wrong
+-126,C,16384,16384,True,False,"phase 2 (true_latentmas, A_to_C)",NO - record retained and scored wrong
+-134,B,16384,16384,True,False,"phase 2 (none, A_to_B)",NO - record retained and scored wrong
+-134,B,16384,16384,True,False,"phase 2 (true_latentmas, A_to_B)",NO - record retained and scored wrong
+-134,B,16384,16384,True,False,"phase 2 (true_statebridge, A_to_B)",NO - record retained and scored wrong
+-134,B,16384,16384,True,False,"phase 2 (true_text, A_to_B)",NO - record retained and scored wrong
+-134,A,16384,16384,True,False,"phase 2 (none, C_to_A)",NO - record retained and scored wrong
+-134,A,16384,16384,True,False,"phase 2 (true_statebridge, C_to_A)",NO - record retained and scored wrong
+-32,B,16384,16384,True,False,"phase 2 (none, A_to_B)",NO - record retained and scored wrong
+-151,B,4096,16384,True,False,"phase 2 (true_text, A_to_B)",NO - record retained and scored wrong
+-94,C,16384,16384,True,False,"phase 2 (true_statebridge, A_to_C)",NO - record retained and scored wrong
+-94,A,16384,16384,True,False,"phase 2 (true_latentmas, B_to_A)",NO - record retained and scored wrong
+-126,A,16384,16384,True,False,"phase 2 (true_latentmas, B_to_A)",NO - record retained and scored wrong
+-134,C,16384,16384,True,False,"phase 2 (none, A_to_C)",NO - record retained and scored wrong
+-134,C,16384,16384,True,False,"phase 2 (true_latentmas, A_to_C)",NO - record retained and scored wrong
+-134,C,16384,16384,True,False,"phase 2 (true_statebridge, A_to_C)",NO - record retained and scored wrong
+-134,B,16384,16384,True,False,"phase 2 (none, C_to_B)",NO - record retained and scored wrong
+-134,B,16384,16384,True,False,"phase 2 (true_latentmas, C_to_B)",NO - record retained and scored wrong
+-134,B,16384,16384,True,False,"phase 2 (true_statebridge, C_to_B)",NO - record retained and scored wrong
+-32,C,16384,16384,True,False,"phase 2 (true_text, A_to_C)",NO - record retained and scored wrong
+-80,A,4096,16384,True,False,"phase 2 (none, B_to_A)",NO - record retained and scored wrong
+-97,A,4096,16384,True,False,"phase 2 (true_statebridge, B_to_A)",NO - record retained and scored wrong
+-151,A,4096,16384,True,False,"phase 2 (none, B_to_A)",NO - record retained and scored wrong
+-32,A,16384,16384,True,False,"phase 2 (true_latentmas, B_to_A)",NO - record retained and scored wrong
+-113,A,16384,16384,True,False,"phase 2 (true_text, B_to_A)",NO - record retained and scored wrong
+-134,A,16384,16384,True,False,"phase 2 (none, B_to_A)",NO - record retained and scored wrong
+-134,A,16384,16384,True,False,"phase 2 (true_latentmas, B_to_A)",NO - record retained and scored wrong
+-134,A,16384,16384,True,False,"phase 2 (true_statebridge, B_to_A)",NO - record retained and scored wrong
+-134,A,16384,16384,True,False,"phase 2 (true_text, B_to_A)",NO - record retained and scored wrong
+-32,A,16384,16384,True,False,"phase 2 (none, B_to_A)",NO - record retained and scored wrong
+-32,A,16384,16384,True,False,"phase 2 (true_statebridge, B_to_A)",NO - record retained and scored wrong
+-32,A,16384,16384,True,False,"phase 2 (true_text, B_to_A)",NO - record retained and scored wrong
+-91,C,16384,16384,True,False,"phase 2 (true_statebridge, A_to_C)",NO - record retained and scored wrong
+-91,C,16384,16384,True,False,"phase 2 (true_text, A_to_C)",NO - record retained and scored wrong
+-134,C,16384,16384,True,False,"phase 2 (none, B_to_C)",NO - record retained and scored wrong
+-126,B,16384,16384,True,False,"phase 2 (none, C_to_B)",NO - record retained and scored wrong
+-126,B,16384,16384,True,False,"phase 2 (true_latentmas, C_to_B)",NO - record retained and scored wrong
+-134,C,16384,16384,True,False,"phase 2 (true_latentmas, B_to_C)",NO - record retained and scored wrong
+-134,C,16384,16384,True,False,"phase 2 (true_text, B_to_C)",NO - record retained and scored wrong
+-32,A,16384,16384,True,False,"phase 2 (none, C_to_A)",NO - record retained and scored wrong
+-32,A,16384,16384,True,False,"phase 2 (true_statebridge, C_to_A)",NO - record retained and scored wrong
+-32,B,16384,16384,True,False,"phase 2 (none, C_to_B)",NO - record retained and scored wrong
+-32,B,16384,16384,True,False,"phase 2 (true_statebridge, C_to_B)",NO - record retained and scored wrong
+-90,C,16384,16384,True,False,"phase 2 (none, B_to_C)",NO - record retained and scored wrong
+-90,C,16384,16384,True,False,"phase 2 (true_latentmas, B_to_C)",NO - record retained and scored wrong
+-94,C,16384,16384,True,False,"phase 2 (none, B_to_C)",NO - record retained and scored wrong
+diff --git a/paper_materials/tables/integrity_checks.csv b/paper_materials/tables/integrity_checks.csv
+deleted file mode 100644
+index 72ab61d..0000000
+--- a/paper_materials/tables/integrity_checks.csv
++++ /dev/null
+@@ -1,6 +0,0 @@
+-dataset,status,items_with_three_beliefs,items_partial,raw_revision_records,duplicate_keys,shards,receiver_prior_pristine,receiver_prior_stale,receiver_prior_no_belief,pairs_with_divergent_prior_across_conditions,revisions_status_not_complete,revisions_truncated,revisions_unparsed_answer,beliefs_total,beliefs_truncated,beliefs_unparsed,merged_records,all_correct_sample_records
+-MedQA,VERIFIED,300,0,3016,0,rank0_v3:264|rank1_v3:500|rank2_v3:268|rank3_v3:488|rank4_v3:284|rank5_v3:504|rank6_v3:236|rank7_v3:472,3016,0,0,0,0,2,2,900,1,1,2880,136
+-ARC-C,VERIFIED,1165,0,3184,0,rank0_fill2:16|rank0_v3:364|rank1_fill:237|rank1_fill2:12|rank1_v3:488|rank2_fill2:12|rank2_v3:376|rank3_fill2:16|rank3_v3:484|rank4_v3:444|rank5_v3:532|rank6_v3:196|rank7_v3:7,3184,0,0,0,0,9,9,3495,2,2,2352,832
+-GSM8K,VERIFIED,1319,0,3194,0,rank0_fill:157|rank0_v3:306|rank1_v3:560|rank2_v3:192|rank3_v3:304|rank4_v3:467|rank5_v3:600|rank6_v3:260|rank7_v3:348,3194,0,0,0,0,2,0,3957,2,0,2256,938
+-GPQA-D,VERIFIED,198,0,3327,0,rank0_v3:756|rank1_v3:752|rank2_v3:855|rank3_v3:812|rank4_v3:76|rank5_v3:76,3327,0,0,0,0,14,14,594,13,13,2832,495
+-HumanEval+,VERIFIED,164,0,768,0,rank0_fill:17|rank0_fill2:77|rank0_v3:81|rank1_fill:48|rank1_fill2:80|rank1_v3:132|rank2_fill:36|rank2_fill2:74|rank2_v3:3|rank3_fill:30|rank3_fill2:71|rank3_v3:19|rank4_v3:26|rank5_v3:7|rank6_v3:7|rank7_v3:60,768,0,0,0,0,49,50,492,12,12,672,96
+diff --git a/paper_materials/tables/main_results.csv b/paper_materials/tables/main_results.csv
+deleted file mode 100644
+index 022893a..0000000
+--- a/paper_materials/tables/main_results.csv
++++ /dev/null
+@@ -1,21 +0,0 @@
+-dataset,condition,condition_key,status,acc_ret_num,acc_ret_den,acc_ret_pct,acc_ret_ci_low,acc_ret_ci_high,cr_num,cr_den,cr_pct,cr_ci_low,cr_ci_high,pr_num,pr_den,pr_pct,pr_ci_low,pr_ci_high,si_pct,bootstrap_resamples,bootstrap_seed,bootstrap_undefined_acc,bootstrap_undefined_cr,bootstrap_undefined_pr
+-MedQA,No Message,none,VERIFIED,185,720,25.6944,20.6944,30.9722,8,116,6.8966,2.1425,12.0968,114,116,98.2759,95.5357,100.0,52.5862,2000,20260921,0,0,0
+-MedQA,Full Text,true_text,VERIFIED,196,720,27.2222,21.25,33.3368,93,116,80.1724,72.0588,88.1356,49,116,42.2414,31.9955,52.8996,61.2069,2000,20260921,0,0,0
+-MedQA,StateBridge,true_statebridge,VERIFIED,208,720,28.8889,22.5,35.5556,67,116,57.7586,47.0577,68.0328,87,116,75.0,65.092,84.4454,66.3793,2000,20260921,0,0,0
+-MedQA,LatentMAS,true_latentmas,VERIFIED,178,720,24.7222,19.7222,29.8611,81,116,69.8276,60.2036,79.0928,38,116,32.7586,24.5278,40.7727,51.2931,2000,20260921,0,0,0
+-ARC-C,No Message,none,VERIFIED,164,588,27.8912,21.9345,34.0136,8,98,8.1633,2.9412,14.8168,91,98,92.8571,86.7347,97.8734,50.5102,2000,20260921,0,0,0
+-ARC-C,Full Text,true_text,VERIFIED,178,588,30.2721,23.6352,37.9252,79,98,80.6122,71.1538,89.7727,34,98,34.6939,23.999,45.9184,57.6531,2000,20260921,0,0,0
+-ARC-C,StateBridge,true_statebridge,VERIFIED,176,588,29.932,23.2993,37.415,68,98,69.3878,58.9994,80.2089,44,98,44.898,33.3259,57.5529,57.1429,2000,20260921,0,0,0
+-ARC-C,LatentMAS,true_latentmas,VERIFIED,166,588,28.2313,21.7645,35.2041,57,98,58.1633,48.2143,67.594,45,98,45.9184,35.1832,57.3193,52.0408,2000,20260921,0,0,0
+-GSM8K,No Message,none,VERIFIED,148,564,26.2411,19.6809,32.4468,12,92,13.0435,4.6512,23.2558,85,92,92.3913,85.1064,98.1132,52.7174,2000,20260921,0,0,0
+-GSM8K,Full Text,true_text,VERIFIED,143,564,25.3546,17.9078,32.4468,47,92,51.087,37.8042,64.4479,48,92,52.1739,38.6758,65.7162,51.6304,2000,20260921,0,0,0
+-GSM8K,StateBridge,true_statebridge,VERIFIED,152,564,26.9504,19.8537,33.8652,36,92,39.1304,26.3141,52.1739,68,92,73.913,64.1297,83.3333,56.5217,2000,20260921,0,0,0
+-GSM8K,LatentMAS,true_latentmas,VERIFIED,144,564,25.5319,18.7943,32.2695,55,92,59.7826,46.9355,71.5686,43,92,46.7391,34.2053,58.6988,53.2609,2000,20260921,0,0,0
+-GPQA-D,No Message,none,VERIFIED,180,708,25.4237,20.1977,30.7945,16,114,14.0351,7.1397,22.0345,110,114,96.4912,92.7268,99.1803,55.2632,2000,20260921,0,0,0
+-GPQA-D,Full Text,true_text,VERIFIED,193,708,27.2599,21.1864,33.3333,85,114,74.5614,65.2164,83.3333,54,114,47.3684,36.11,59.1671,60.9649,2000,20260921,0,0,0
+-GPQA-D,StateBridge,true_statebridge,VERIFIED,190,708,26.8362,20.7627,32.7684,73,114,64.0351,54.0984,73.0787,59,114,51.7544,41.2268,63.0802,57.8947,2000,20260921,0,0,0
+-GPQA-D,LatentMAS,true_latentmas,VERIFIED,178,708,25.1412,19.4915,31.2147,70,114,61.4035,50.8178,71.5554,58,114,50.8772,40.3502,61.5385,56.1404,2000,20260921,0,0,0
+-HumanEval+,No Message,none,VERIFIED,71,168,42.2619,27.9762,55.9524,16,28,57.1429,36.6667,76.6667,26,28,92.8571,82.1429,100.0,75.0,2000,20260921,0,0,0
+-HumanEval+,Full Text,true_text,VERIFIED,76,168,45.2381,29.1667,60.119,21,28,75.0,53.5714,92.8571,26,28,92.8571,81.8182,100.0,83.9286,2000,20260921,0,0,0
+-HumanEval+,StateBridge,true_statebridge,VERIFIED,73,168,43.4524,28.5714,57.7381,19,28,67.8571,46.8698,85.7143,27,28,96.4286,87.5,100.0,82.1429,2000,20260921,0,0,0
+-HumanEval+,LatentMAS,true_latentmas,VERIFIED,67,168,39.881,25.5952,53.5714,24,28,85.7143,72.2222,96.4345,17,28,60.7143,39.2857,81.8182,73.2143,2000,20260921,0,0,0
+diff --git a/paper_materials/tables/paired_vs_no_message.csv b/paper_materials/tables/paired_vs_no_message.csv
+deleted file mode 100644
+index b7c14b1..0000000
+--- a/paper_materials/tables/paired_vs_no_message.csv
++++ /dev/null
+@@ -1,91 +0,0 @@
+-dataset,condition,stratum,paired_records,both_correct,none_wrong_channel_correct,none_correct_channel_wrong,both_wrong,net_change,net_change_pct_of_stratum,discordant
+-MedQA,Full Text,all_retained,720,110,86,75,449,11,1.5278,161
+-MedQA,Full Text,cr_stratum,116,8,85,0,23,85,73.2759,85
+-MedQA,Full Text,pr_stratum,116,49,0,65,2,-65,-56.0345,65
+-MedQA,Full Text,sr_stratum,436,1,1,10,424,-9,-2.0642,11
+-MedQA,Full Text,scr_stratum,52,52,0,0,0,0,0.0,0
+-MedQA,StateBridge,all_retained,720,147,61,38,474,23,3.1944,99
+-MedQA,StateBridge,cr_stratum,116,8,59,0,49,59,50.8621,59
+-MedQA,StateBridge,pr_stratum,116,85,2,29,0,-27,-23.2759,31
+-MedQA,StateBridge,sr_stratum,436,2,0,9,425,-9,-2.0642,9
+-MedQA,StateBridge,scr_stratum,52,52,0,0,0,0,0.0,0
+-MedQA,LatentMAS,all_retained,720,98,80,87,455,-7,-0.9722,167
+-MedQA,LatentMAS,cr_stratum,116,6,75,2,33,73,62.931,77
+-MedQA,LatentMAS,pr_stratum,116,38,0,76,2,-76,-65.5172,76
+-MedQA,LatentMAS,sr_stratum,436,2,5,9,420,-4,-0.9174,14
+-MedQA,LatentMAS,scr_stratum,52,52,0,0,0,0,0.0,0
+-MedQA,Full Text,si_difference_vs_none,,,,,,,8.6207,
+-MedQA,StateBridge,si_difference_vs_none,,,,,,,13.7931,
+-MedQA,LatentMAS,si_difference_vs_none,,,,,,,-1.2931,
+-ARC-C,Full Text,all_retained,588,102,76,62,348,14,2.381,138
+-ARC-C,Full Text,cr_stratum,98,8,71,0,19,71,72.449,71
+-ARC-C,Full Text,pr_stratum,98,34,0,57,7,-57,-58.1633,57
+-ARC-C,Full Text,sr_stratum,328,0,1,5,322,-4,-1.2195,6
+-ARC-C,Full Text,scr_stratum,64,60,4,0,0,4,6.25,4
+-ARC-C,StateBridge,all_retained,588,112,64,52,360,12,2.0408,116
+-ARC-C,StateBridge,cr_stratum,98,8,60,0,30,60,61.2245,60
+-ARC-C,StateBridge,pr_stratum,98,44,0,47,7,-47,-47.9592,47
+-ARC-C,StateBridge,sr_stratum,328,1,0,4,323,-4,-1.2195,4
+-ARC-C,StateBridge,scr_stratum,64,59,4,1,0,3,4.6875,5
+-ARC-C,LatentMAS,all_retained,588,107,59,57,365,2,0.3401,116
+-ARC-C,LatentMAS,cr_stratum,98,5,52,3,38,49,50.0,55
+-ARC-C,LatentMAS,pr_stratum,98,43,2,48,5,-46,-46.9388,50
+-ARC-C,LatentMAS,sr_stratum,328,0,3,5,320,-2,-0.6098,8
+-ARC-C,LatentMAS,scr_stratum,64,59,2,1,2,1,1.5625,3
+-ARC-C,Full Text,si_difference_vs_none,,,,,,,7.1429,
+-ARC-C,StateBridge,si_difference_vs_none,,,,,,,6.6327,
+-ARC-C,LatentMAS,si_difference_vs_none,,,,,,,1.5306,
+-GSM8K,Full Text,all_retained,564,103,40,45,376,-5,-0.8865,85
+-GSM8K,Full Text,cr_stratum,92,12,35,0,45,35,38.0435,35
+-GSM8K,Full Text,pr_stratum,92,45,3,40,4,-37,-40.2174,43
+-GSM8K,Full Text,sr_stratum,334,1,1,5,327,-4,-1.1976,6
+-GSM8K,Full Text,scr_stratum,46,45,1,0,0,1,2.1739,1
+-GSM8K,StateBridge,all_retained,564,122,30,26,386,4,0.7092,56
+-GSM8K,StateBridge,cr_stratum,92,12,24,0,56,24,26.087,24
+-GSM8K,StateBridge,pr_stratum,92,65,3,20,4,-17,-18.4783,23
+-GSM8K,StateBridge,sr_stratum,334,1,2,5,326,-3,-0.8982,7
+-GSM8K,StateBridge,scr_stratum,46,44,1,1,0,0,0.0,2
+-GSM8K,LatentMAS,all_retained,564,94,50,54,366,-4,-0.7092,104
+-GSM8K,LatentMAS,cr_stratum,92,10,45,2,35,43,46.7391,47
+-GSM8K,LatentMAS,pr_stratum,92,40,3,45,4,-42,-45.6522,48
+-GSM8K,LatentMAS,sr_stratum,334,0,2,6,326,-4,-1.1976,8
+-GSM8K,LatentMAS,scr_stratum,46,44,0,1,1,-1,-2.1739,1
+-GSM8K,Full Text,si_difference_vs_none,,,,,,,-1.087,
+-GSM8K,StateBridge,si_difference_vs_none,,,,,,,3.8043,
+-GSM8K,LatentMAS,si_difference_vs_none,,,,,,,0.5435,
+-GPQA-D,Full Text,all_retained,708,115,78,65,450,13,1.8362,143
+-GPQA-D,Full Text,cr_stratum,114,15,70,1,28,69,60.5263,71
+-GPQA-D,Full Text,pr_stratum,114,54,0,56,4,-56,-49.1228,56
+-GPQA-D,Full Text,sr_stratum,432,2,4,8,418,-4,-0.9259,12
+-GPQA-D,Full Text,scr_stratum,48,44,4,0,0,4,8.3333,4
+-GPQA-D,StateBridge,all_retained,708,121,69,59,459,10,1.4124,128
+-GPQA-D,StateBridge,cr_stratum,114,15,58,1,40,57,50.0,59
+-GPQA-D,StateBridge,pr_stratum,114,59,0,51,4,-51,-44.7368,51
+-GPQA-D,StateBridge,sr_stratum,432,4,7,6,415,1,0.2315,13
+-GPQA-D,StateBridge,scr_stratum,48,43,4,1,0,3,6.25,5
+-GPQA-D,LatentMAS,all_retained,708,116,62,64,466,-2,-0.2825,126
+-GPQA-D,LatentMAS,cr_stratum,114,14,56,2,42,54,47.3684,58
+-GPQA-D,LatentMAS,pr_stratum,114,57,1,53,3,-52,-45.614,54
+-GPQA-D,LatentMAS,sr_stratum,432,3,1,7,421,-6,-1.3889,8
+-GPQA-D,LatentMAS,scr_stratum,48,42,4,2,0,2,4.1667,6
+-GPQA-D,Full Text,si_difference_vs_none,,,,,,,5.7017,
+-GPQA-D,StateBridge,si_difference_vs_none,,,,,,,2.6315,
+-GPQA-D,LatentMAS,si_difference_vs_none,,,,,,,0.8772,
+-HumanEval+,Full Text,all_retained,168,63,13,8,84,5,2.9762,21
+-HumanEval+,Full Text,cr_stratum,28,14,7,2,5,5,17.8571,9
+-HumanEval+,Full Text,pr_stratum,28,24,2,2,0,0,0.0,4
+-HumanEval+,Full Text,sr_stratum,92,5,4,4,79,0,0.0,8
+-HumanEval+,Full Text,scr_stratum,20,20,0,0,0,0,0.0,0
+-HumanEval+,StateBridge,all_retained,168,62,11,9,86,2,1.1905,20
+-HumanEval+,StateBridge,cr_stratum,28,14,5,2,7,3,10.7143,7
+-HumanEval+,StateBridge,pr_stratum,28,25,2,1,0,1,3.5714,3
+-HumanEval+,StateBridge,sr_stratum,92,4,4,5,79,-1,-1.087,9
+-HumanEval+,StateBridge,scr_stratum,20,19,0,1,0,-1,-5.0,1
+-HumanEval+,LatentMAS,all_retained,168,54,13,17,84,-4,-2.381,30
+-HumanEval+,LatentMAS,cr_stratum,28,16,8,0,4,8,28.5714,8
+-HumanEval+,LatentMAS,pr_stratum,28,16,1,10,1,-9,-32.1429,11
+-HumanEval+,LatentMAS,sr_stratum,92,2,4,7,79,-3,-3.2609,11
+-HumanEval+,LatentMAS,scr_stratum,20,20,0,0,0,0,0.0,0
+-HumanEval+,Full Text,si_difference_vs_none,,,,,,,8.9286,
+-HumanEval+,StateBridge,si_difference_vs_none,,,,,,,7.1429,
+-HumanEval+,LatentMAS,si_difference_vs_none,,,,,,,-1.7857,
+diff --git a/paper_materials/tables/sample_statistics.csv b/paper_materials/tables/sample_statistics.csv
+deleted file mode 100644
+index b418aae..0000000
+--- a/paper_materials/tables/sample_statistics.csv
++++ /dev/null
+@@ -1,6 +0,0 @@
+-dataset,benchmark_label,status,source_items,items_evaluated,items_all_correct_skipped,items_retained,cr_denominator,pr_denominator,sr_denominator,scr_denominator_retained,scr_denominator_all_items,records_per_condition_retained,all_correct_sample_per_condition,k3,k2,k1,k0
+-MedQA,medqa300,VERIFIED,300,300,180,120,116,116,436,52,1132,720,34,180,26,32,62
+-ARC-C,arc_challenge,VERIFIED,1165,1165,1067,98,98,98,328,64,6466,588,208,1067,32,17,49
+-GSM8K,gsm8k_test,VERIFIED,1319,1319,1225,94,92,92,334,46,7396,564,235,1225,23,23,48
+-GPQA-D,gpqa_diamond,VERIFIED,198,198,80,118,114,114,432,48,528,708,124,80,24,33,61
+-HumanEval+,humanevalplus_test,VERIFIED,164,164,136,28,28,28,92,20,836,168,24,136,10,4,14
+diff --git a/paper_materials/tables/six_direction_detail.csv b/paper_materials/tables/six_direction_detail.csv
+deleted file mode 100644
+index 9b75841..0000000
+--- a/paper_materials/tables/six_direction_detail.csv
++++ /dev/null
+@@ -1,121 +0,0 @@
+-dataset,condition,direction,records,cr_num,cr_den,pr_num,pr_den,sr_num,sr_den,scr_num,scr_den
+-MedQA,none,A_to_B,120,1,18,21,22,2,72,8,8
+-MedQA,none,A_to_C,120,1,18,19,20,2,74,8,8
+-MedQA,none,B_to_A,120,0,22,18,18,3,72,8,8
+-MedQA,none,B_to_C,120,1,20,18,18,3,72,10,10
+-MedQA,none,C_to_A,120,2,20,18,18,1,74,8,8
+-MedQA,none,C_to_B,120,3,18,20,20,0,72,10,10
+-MedQA,true_text,A_to_B,120,12,18,8,22,1,72,8,8
+-MedQA,true_text,A_to_C,120,16,18,9,20,0,74,8,8
+-MedQA,true_text,B_to_A,120,18,22,5,18,0,72,8,8
+-MedQA,true_text,B_to_C,120,14,20,11,18,0,72,10,10
+-MedQA,true_text,C_to_A,120,16,20,9,18,1,74,8,8
+-MedQA,true_text,C_to_B,120,17,18,7,20,0,72,10,10
+-MedQA,true_statebridge,A_to_B,120,9,18,13,22,0,72,8,8
+-MedQA,true_statebridge,A_to_C,120,15,18,18,20,1,74,8,8
+-MedQA,true_statebridge,B_to_A,120,10,22,12,18,1,72,8,8
+-MedQA,true_statebridge,B_to_C,120,8,20,16,18,0,72,10,10
+-MedQA,true_statebridge,C_to_A,120,13,20,14,18,0,74,8,8
+-MedQA,true_statebridge,C_to_B,120,12,18,14,20,0,72,10,10
+-MedQA,true_latentmas,A_to_B,120,14,18,7,22,1,72,8,8
+-MedQA,true_latentmas,A_to_C,120,10,18,7,20,1,74,8,8
+-MedQA,true_latentmas,B_to_A,120,16,22,4,18,1,72,8,8
+-MedQA,true_latentmas,B_to_C,120,13,20,8,18,1,72,10,10
+-MedQA,true_latentmas,C_to_A,120,14,20,5,18,3,74,8,8
+-MedQA,true_latentmas,C_to_B,120,14,18,7,20,0,72,10,10
+-ARC-C,none,A_to_B,98,3,16,14,15,1,57,10,10
+-ARC-C,none,A_to_C,98,0,15,16,19,1,53,11,11
+-ARC-C,none,B_to_A,98,0,15,16,16,0,57,9,10
+-ARC-C,none,B_to_C,98,3,14,19,19,1,54,10,11
+-ARC-C,none,C_to_A,98,1,19,13,15,0,53,10,11
+-ARC-C,none,C_to_B,98,1,19,13,14,2,54,10,11
+-ARC-C,true_text,A_to_B,98,13,16,2,15,1,57,10,10
+-ARC-C,true_text,A_to_C,98,13,15,3,19,0,53,11,11
+-ARC-C,true_text,B_to_A,98,12,15,7,16,0,57,10,10
+-ARC-C,true_text,B_to_C,98,10,14,6,19,0,54,11,11
+-ARC-C,true_text,C_to_A,98,15,19,8,15,0,53,11,11
+-ARC-C,true_text,C_to_B,98,16,19,8,14,0,54,11,11
+-ARC-C,true_statebridge,A_to_B,98,8,16,5,15,0,57,10,10
+-ARC-C,true_statebridge,A_to_C,98,13,15,8,19,1,53,11,11
+-ARC-C,true_statebridge,B_to_A,98,11,15,8,16,0,57,10,10
+-ARC-C,true_statebridge,B_to_C,98,11,14,8,19,0,54,11,11
+-ARC-C,true_statebridge,C_to_A,98,11,19,7,15,0,53,11,11
+-ARC-C,true_statebridge,C_to_B,98,14,19,8,14,0,54,10,11
+-ARC-C,true_latentmas,A_to_B,98,8,16,6,15,0,57,10,10
+-ARC-C,true_latentmas,A_to_C,98,9,15,6,19,0,53,11,11
+-ARC-C,true_latentmas,B_to_A,98,9,15,7,16,2,57,9,10
+-ARC-C,true_latentmas,B_to_C,98,8,14,10,19,1,54,10,11
+-ARC-C,true_latentmas,C_to_A,98,11,19,8,15,0,53,10,11
+-ARC-C,true_latentmas,C_to_B,98,12,19,8,14,0,54,11,11
+-GSM8K,none,A_to_B,94,1,16,13,15,0,56,7,7
+-GSM8K,none,A_to_C,94,4,15,13,16,1,55,8,8
+-GSM8K,none,B_to_A,94,2,15,16,16,1,56,6,7
+-GSM8K,none,B_to_C,94,3,14,14,16,2,56,8,8
+-GSM8K,none,C_to_A,94,1,16,15,15,2,55,8,8
+-GSM8K,none,C_to_B,94,1,16,14,14,0,56,8,8
+-GSM8K,true_text,A_to_B,94,5,16,7,15,0,56,7,7
+-GSM8K,true_text,A_to_C,94,9,15,7,16,0,55,8,8
+-GSM8K,true_text,B_to_A,94,6,15,7,16,0,56,7,7
+-GSM8K,true_text,B_to_C,94,8,14,12,16,2,56,8,8
+-GSM8K,true_text,C_to_A,94,9,16,7,15,0,55,8,8
+-GSM8K,true_text,C_to_B,94,10,16,8,14,0,56,8,8
+-GSM8K,true_statebridge,A_to_B,94,6,16,10,15,0,56,6,7
+-GSM8K,true_statebridge,A_to_C,94,7,15,13,16,2,55,8,8
+-GSM8K,true_statebridge,B_to_A,94,4,15,12,16,1,56,7,7
+-GSM8K,true_statebridge,B_to_C,94,8,14,12,16,0,56,8,8
+-GSM8K,true_statebridge,C_to_A,94,5,16,9,15,0,55,8,8
+-GSM8K,true_statebridge,C_to_B,94,6,16,12,14,0,56,8,8
+-GSM8K,true_latentmas,A_to_B,94,10,16,7,15,1,56,6,7
+-GSM8K,true_latentmas,A_to_C,94,9,15,9,16,0,55,8,8
+-GSM8K,true_latentmas,B_to_A,94,9,15,7,16,1,56,6,7
+-GSM8K,true_latentmas,B_to_C,94,9,14,7,16,0,56,8,8
+-GSM8K,true_latentmas,C_to_A,94,8,16,7,15,0,55,8,8
+-GSM8K,true_latentmas,C_to_B,94,10,16,6,14,0,56,8,8
+-GPQA-D,none,A_to_B,118,3,19,23,23,1,70,5,6
+-GPQA-D,none,A_to_C,118,1,15,16,17,3,76,9,10
+-GPQA-D,none,B_to_A,118,5,23,19,19,1,70,6,6
+-GPQA-D,none,B_to_C,118,3,21,16,19,1,70,8,8
+-GPQA-D,none,C_to_A,118,3,17,15,15,3,76,9,10
+-GPQA-D,none,C_to_B,118,1,19,21,21,1,70,7,8
+-GPQA-D,true_text,A_to_B,118,13,19,12,23,0,70,6,6
+-GPQA-D,true_text,A_to_C,118,11,15,9,17,3,76,10,10
+-GPQA-D,true_text,B_to_A,118,15,23,7,19,0,70,6,6
+-GPQA-D,true_text,B_to_C,118,18,21,7,19,1,70,8,8
+-GPQA-D,true_text,C_to_A,118,13,17,6,15,1,76,10,10
+-GPQA-D,true_text,C_to_B,118,15,19,13,21,1,70,8,8
+-GPQA-D,true_statebridge,A_to_B,118,12,19,10,23,3,70,6,6
+-GPQA-D,true_statebridge,A_to_C,118,8,15,12,17,4,76,9,10
+-GPQA-D,true_statebridge,B_to_A,118,19,23,8,19,0,70,6,6
+-GPQA-D,true_statebridge,B_to_C,118,13,21,7,19,1,70,8,8
+-GPQA-D,true_statebridge,C_to_A,118,8,17,10,15,2,76,10,10
+-GPQA-D,true_statebridge,C_to_B,118,13,19,12,21,1,70,8,8
+-GPQA-D,true_latentmas,A_to_B,118,12,19,14,23,0,70,5,6
+-GPQA-D,true_latentmas,A_to_C,118,8,15,9,17,1,76,10,10
+-GPQA-D,true_latentmas,B_to_A,118,15,23,5,19,1,70,6,6
+-GPQA-D,true_latentmas,B_to_C,118,13,21,12,19,0,70,8,8
+-GPQA-D,true_latentmas,C_to_A,118,10,17,7,15,2,76,9,10
+-GPQA-D,true_latentmas,C_to_B,118,12,19,11,21,0,70,8,8
+-HumanEval+,none,A_to_B,28,3,5,3,3,2,15,5,5
+-HumanEval+,none,A_to_C,28,4,7,3,3,1,15,3,3
+-HumanEval+,none,B_to_A,28,1,3,5,5,1,15,5,5
+-HumanEval+,none,B_to_C,28,3,6,3,4,3,16,2,2
+-HumanEval+,none,C_to_A,28,2,3,6,7,2,15,3,3
+-HumanEval+,none,C_to_B,28,3,4,6,6,0,16,2,2
+-HumanEval+,true_text,A_to_B,28,3,5,3,3,1,15,5,5
+-HumanEval+,true_text,A_to_C,28,6,7,3,3,1,15,3,3
+-HumanEval+,true_text,B_to_A,28,2,3,5,5,1,15,5,5
+-HumanEval+,true_text,B_to_C,28,4,6,4,4,3,16,2,2
+-HumanEval+,true_text,C_to_A,28,2,3,6,7,1,15,3,3
+-HumanEval+,true_text,C_to_B,28,4,4,5,6,2,16,2,2
+-HumanEval+,true_statebridge,A_to_B,28,3,5,3,3,0,15,5,5
+-HumanEval+,true_statebridge,A_to_C,28,4,7,2,3,2,15,2,3
+-HumanEval+,true_statebridge,B_to_A,28,2,3,5,5,1,15,5,5
+-HumanEval+,true_statebridge,B_to_C,28,4,6,4,4,3,16,2,2
+-HumanEval+,true_statebridge,C_to_A,28,3,3,7,7,0,15,3,3
+-HumanEval+,true_statebridge,C_to_B,28,3,4,6,6,2,16,2,2
+-HumanEval+,true_latentmas,A_to_B,28,4,5,2,3,1,15,5,5
+-HumanEval+,true_latentmas,A_to_C,28,7,7,1,3,0,15,3,3
+-HumanEval+,true_latentmas,B_to_A,28,2,3,3,5,0,15,5,5
+-HumanEval+,true_latentmas,B_to_C,28,5,6,4,4,1,16,2,2
+-HumanEval+,true_latentmas,C_to_A,28,3,3,4,7,2,15,3,3
+-HumanEval+,true_latentmas,C_to_B,28,3,4,3,6,2,16,2,2
+diff --git a/paper_materials/tables/sr_scr.csv b/paper_materials/tables/sr_scr.csv
+deleted file mode 100644
+index 5acb97b..0000000
+--- a/paper_materials/tables/sr_scr.csv
++++ /dev/null
+@@ -1,21 +0,0 @@
+-dataset,condition,sr_num,sr_den,sr_pct,scr_retained_num,scr_retained_den,scr_retained_pct,scr_skipped_sample_num,scr_skipped_sample_den
+-MedQA,No Message,11,436,2.5229,52,52,100.0,34,34
+-MedQA,Full Text,2,436,0.4587,52,52,100.0,34,34
+-MedQA,StateBridge,2,436,0.4587,52,52,100.0,34,34
+-MedQA,LatentMAS,7,436,1.6055,52,52,100.0,34,34
+-ARC-C,No Message,5,328,1.5244,60,64,93.75,208,208
+-ARC-C,Full Text,1,328,0.3049,64,64,100.0,208,208
+-ARC-C,StateBridge,1,328,0.3049,63,64,98.4375,208,208
+-ARC-C,LatentMAS,3,328,0.9146,61,64,95.3125,207,208
+-GSM8K,No Message,6,334,1.7964,45,46,97.8261,235,235
+-GSM8K,Full Text,2,334,0.5988,46,46,100.0,235,235
+-GSM8K,StateBridge,3,334,0.8982,45,46,97.8261,235,235
+-GSM8K,LatentMAS,2,334,0.5988,44,46,95.6522,233,233
+-GPQA-D,No Message,10,432,2.3148,44,48,91.6667,121,124
+-GPQA-D,Full Text,6,432,1.3889,48,48,100.0,123,124
+-GPQA-D,StateBridge,11,432,2.5463,47,48,97.9167,122,124
+-GPQA-D,LatentMAS,4,432,0.9259,46,48,95.8333,122,123
+-HumanEval+,No Message,9,92,9.7826,20,20,100.0,23,24
+-HumanEval+,Full Text,9,92,9.7826,20,20,100.0,24,24
+-HumanEval+,StateBridge,8,92,8.6957,19,20,95.0,24,24
+-HumanEval+,LatentMAS,6,92,6.5217,20,20,100.0,24,24
+diff --git a/paper_materials/tables/truncation_contamination.csv b/paper_materials/tables/truncation_contamination.csv
+deleted file mode 100644
+index 47c3d35..0000000
+--- a/paper_materials/tables/truncation_contamination.csv
++++ /dev/null
+@@ -1,21 +0,0 @@
+-dataset,subset,denominator,pairs_touching_a_non_terminating_belief,share_pct
+-MedQA,CR,116,0,0.0
+-MedQA,PR,116,0,0.0
+-MedQA,SR,436,4,0.92
+-MedQA,SCR,52,0,0.0
+-ARC-C,CR,98,2,2.04
+-ARC-C,PR,98,2,2.04
+-ARC-C,SR,328,4,1.22
+-ARC-C,SCR,64,0,0.0
+-GSM8K,CR,92,4,4.35
+-GSM8K,PR,92,4,4.35
+-GSM8K,SR,334,0,0.0
+-GSM8K,SCR,46,0,0.0
+-GPQA-D,CR,114,12,10.53
+-GPQA-D,PR,114,12,10.53
+-GPQA-D,SR,432,18,4.17
+-GPQA-D,SCR,48,0,0.0
+-HumanEval+,CR,28,9,32.14
+-HumanEval+,PR,28,9,32.14
+-HumanEval+,SR,92,20,21.74
+-HumanEval+,SCR,20,0,0.0
+diff --git a/paper_materials/tables/truncation_sensitivity.csv b/paper_materials/tables/truncation_sensitivity.csv
+deleted file mode 100644
+index 4b92c74..0000000
+--- a/paper_materials/tables/truncation_sensitivity.csv
++++ /dev/null
+@@ -1,21 +0,0 @@
+-dataset,condition,phase1_beliefs_total,phase1_beliefs_non_terminating,phase1_non_termination_pct,items_touched,cr_retained_num,cr_retained_den,cr_retained_pct,cr_excluded_num,cr_excluded_den,cr_excluded_pct,pr_retained_num,pr_retained_den,pr_retained_pct,pr_excluded_num,pr_excluded_den,pr_excluded_pct,sr_retained_num,sr_retained_den,sr_retained_pct,sr_excluded_num,sr_excluded_den,sr_excluded_pct,scr_retained_num,scr_retained_den,scr_retained_pct,scr_excluded_num,scr_excluded_den,scr_excluded_pct,si_retained_pct,acc_ret_retained_num,acc_ret_retained_den,acc_ret_retained_pct,si_excluded_pct,acc_ret_excluded_num,acc_ret_excluded_den,acc_ret_excluded_pct,si_delta_pp,exclusion_rule,primary_analysis
+-MedQA,No Message,900,1,0.111,1,8,116,6.897,8,116,6.897,114,116,98.276,114,116,98.276,11,436,2.523,11,430,2.558,52,52,100.0,52,52,100.0,52.586,185,720,25.694,52.586,185,714,25.91,0.0,"drop every item carrying at least one phase-1 generation that did not terminate within max_new_tokens; whole item, all six directions, label-free (depends only on hit_eos)",retained
+-MedQA,Full Text,900,1,0.111,1,93,116,80.172,93,116,80.172,49,116,42.241,49,116,42.241,2,436,0.459,2,430,0.465,52,52,100.0,52,52,100.0,61.207,196,720,27.222,61.207,196,714,27.451,0.0,"drop every item carrying at least one phase-1 generation that did not terminate within max_new_tokens; whole item, all six directions, label-free (depends only on hit_eos)",retained
+-MedQA,StateBridge,900,1,0.111,1,67,116,57.759,67,116,57.759,87,116,75.0,87,116,75.0,2,436,0.459,2,430,0.465,52,52,100.0,52,52,100.0,66.379,208,720,28.889,66.379,208,714,29.132,0.0,"drop every item carrying at least one phase-1 generation that did not terminate within max_new_tokens; whole item, all six directions, label-free (depends only on hit_eos)",retained
+-MedQA,LatentMAS,900,1,0.111,1,81,116,69.828,81,116,69.828,38,116,32.759,38,116,32.759,7,436,1.606,7,430,1.628,52,52,100.0,52,52,100.0,51.293,178,720,24.722,51.293,178,714,24.93,0.0,"drop every item carrying at least one phase-1 generation that did not terminate within max_new_tokens; whole item, all six directions, label-free (depends only on hit_eos)",retained
+-ARC-C,No Message,3495,2,0.057,2,8,98,8.163,8,96,8.333,91,98,92.857,89,96,92.708,5,328,1.524,5,322,1.553,60,64,93.75,58,62,93.548,50.51,164,588,27.891,50.521,160,576,27.778,0.011,"drop every item carrying at least one phase-1 generation that did not terminate within max_new_tokens; whole item, all six directions, label-free (depends only on hit_eos)",retained
+-ARC-C,Full Text,3495,2,0.057,2,79,98,80.612,77,96,80.208,34,98,34.694,32,96,33.333,1,328,0.305,1,322,0.311,64,64,100.0,62,62,100.0,57.653,178,588,30.272,56.771,172,576,29.861,-0.882,"drop every item carrying at least one phase-1 generation that did not terminate within max_new_tokens; whole item, all six directions, label-free (depends only on hit_eos)",retained
+-ARC-C,StateBridge,3495,2,0.057,2,68,98,69.388,66,96,68.75,44,98,44.898,42,96,43.75,1,328,0.305,1,322,0.311,63,64,98.438,61,62,98.387,57.143,176,588,29.932,56.25,170,576,29.514,-0.893,"drop every item carrying at least one phase-1 generation that did not terminate within max_new_tokens; whole item, all six directions, label-free (depends only on hit_eos)",retained
+-ARC-C,LatentMAS,3495,2,0.057,2,57,98,58.163,55,96,57.292,45,98,45.918,43,96,44.792,3,328,0.915,3,322,0.932,61,64,95.312,59,62,95.161,52.041,166,588,28.231,51.042,160,576,27.778,-0.999,"drop every item carrying at least one phase-1 generation that did not terminate within max_new_tokens; whole item, all six directions, label-free (depends only on hit_eos)",retained
+-GSM8K,No Message,3957,2,0.051,2,12,92,13.043,8,88,9.091,85,92,92.391,81,88,92.045,6,334,1.796,6,334,1.796,45,46,97.826,41,42,97.619,52.717,148,564,26.241,50.568,136,552,24.638,-2.149,"drop every item carrying at least one phase-1 generation that did not terminate within max_new_tokens; whole item, all six directions, label-free (depends only on hit_eos)",retained
+-GSM8K,Full Text,3957,2,0.051,2,47,92,51.087,43,88,48.864,48,92,52.174,44,88,50.0,2,334,0.599,2,334,0.599,46,46,100.0,42,42,100.0,51.63,143,564,25.355,49.432,131,552,23.732,-2.198,"drop every item carrying at least one phase-1 generation that did not terminate within max_new_tokens; whole item, all six directions, label-free (depends only on hit_eos)",retained
+-GSM8K,StateBridge,3957,2,0.051,2,36,92,39.13,32,88,36.364,68,92,73.913,64,88,72.727,3,334,0.898,3,334,0.898,45,46,97.826,41,42,97.619,56.522,152,564,26.95,54.545,140,552,25.362,-1.977,"drop every item carrying at least one phase-1 generation that did not terminate within max_new_tokens; whole item, all six directions, label-free (depends only on hit_eos)",retained
+-GSM8K,LatentMAS,3957,2,0.051,2,55,92,59.783,51,88,57.955,43,92,46.739,39,88,44.318,2,334,0.599,2,334,0.599,44,46,95.652,40,42,95.238,53.261,144,564,25.532,51.136,132,552,23.913,-2.125,"drop every item carrying at least one phase-1 generation that did not terminate within max_new_tokens; whole item, all six directions, label-free (depends only on hit_eos)",retained
+-GPQA-D,No Message,594,13,2.189,9,16,114,14.035,9,100,9.0,110,114,96.491,96,100,96.0,10,432,2.315,6,412,1.456,44,48,91.667,39,42,92.857,55.263,180,708,25.424,52.5,150,654,22.936,-2.763,"drop every item carrying at least one phase-1 generation that did not terminate within max_new_tokens; whole item, all six directions, label-free (depends only on hit_eos)",retained
+-GPQA-D,Full Text,594,13,2.189,9,85,114,74.561,72,100,72.0,54,114,47.368,41,100,41.0,6,432,1.389,4,412,0.971,48,48,100.0,42,42,100.0,60.965,193,708,27.26,56.5,159,654,24.312,-4.465,"drop every item carrying at least one phase-1 generation that did not terminate within max_new_tokens; whole item, all six directions, label-free (depends only on hit_eos)",retained
+-GPQA-D,StateBridge,594,13,2.189,9,73,114,64.035,61,100,61.0,59,114,51.754,47,100,47.0,11,432,2.546,6,412,1.456,47,48,97.917,41,42,97.619,57.895,190,708,26.836,54.0,155,654,23.7,-3.895,"drop every item carrying at least one phase-1 generation that did not terminate within max_new_tokens; whole item, all six directions, label-free (depends only on hit_eos)",retained
+-GPQA-D,LatentMAS,594,13,2.189,9,70,114,61.404,56,100,56.0,58,114,50.877,48,100,48.0,4,432,0.926,2,412,0.485,46,48,95.833,40,42,95.238,56.14,178,708,25.141,52.0,146,654,22.324,-4.14,"drop every item carrying at least one phase-1 generation that did not terminate within max_new_tokens; whole item, all six directions, label-free (depends only on hit_eos)",retained
+-HumanEval+,No Message,492,12,2.439,8,16,28,57.143,8,18,44.444,26,28,92.857,17,18,94.444,9,92,9.783,5,72,6.944,20,20,100.0,12,12,100.0,75.0,71,168,42.262,69.444,42,120,35.0,-5.556,"drop every item carrying at least one phase-1 generation that did not terminate within max_new_tokens; whole item, all six directions, label-free (depends only on hit_eos)",retained
+-HumanEval+,Full Text,492,12,2.439,8,21,28,75.0,14,18,77.778,26,28,92.857,17,18,94.444,9,92,9.783,2,72,2.778,20,20,100.0,12,12,100.0,83.929,76,168,45.238,86.111,45,120,37.5,2.182,"drop every item carrying at least one phase-1 generation that did not terminate within max_new_tokens; whole item, all six directions, label-free (depends only on hit_eos)",retained
+-HumanEval+,StateBridge,492,12,2.439,8,19,28,67.857,10,18,55.556,27,28,96.429,17,18,94.444,8,92,8.696,3,72,4.167,19,20,95.0,12,12,100.0,82.143,73,168,43.452,75.0,42,120,35.0,-7.143,"drop every item carrying at least one phase-1 generation that did not terminate within max_new_tokens; whole item, all six directions, label-free (depends only on hit_eos)",retained
+-HumanEval+,LatentMAS,492,12,2.439,8,24,28,85.714,14,18,77.778,17,28,60.714,9,18,50.0,6,92,6.522,2,72,2.778,20,20,100.0,12,12,100.0,73.214,67,168,39.881,63.889,37,120,30.833,-9.325,"drop every item carrying at least one phase-1 generation that did not terminate within max_new_tokens; whole item, all six directions, label-free (depends only on hit_eos)",retained
+diff --git a/paper_materials/AUDIT_ISSUES.md b/results/AUDIT_ISSUES.md
+similarity index 100%
+rename from paper_materials/AUDIT_ISSUES.md
+rename to results/AUDIT_ISSUES.md

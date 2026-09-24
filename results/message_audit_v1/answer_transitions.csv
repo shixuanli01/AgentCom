@@ -1,0 +1,21 @@
+dataset,condition,group,n,kept_receiver_prior,matched_sender_answer,third_answer,unparsed_output,missing_sender_answer
+MedQA,No Message,correction_opportunity,116,108,8,0,0,0
+MedQA,No Message,destruction_risk,116,114,1,1,0,0
+MedQA,Answer Only,correction_opportunity,116,71,45,0,0,0
+MedQA,Answer Only,destruction_risk,116,93,23,0,0,0
+MedQA,Full Text,correction_opportunity,116,23,93,0,0,0
+MedQA,Full Text,destruction_risk,116,49,67,0,0,0
+MedQA,StateBridge,correction_opportunity,116,49,67,0,0,0
+MedQA,StateBridge,destruction_risk,116,87,29,0,0,0
+MedQA,LatentMAS,correction_opportunity,116,35,81,0,0,0
+MedQA,LatentMAS,destruction_risk,116,38,78,0,0,0
+GPQA-D,No Message,correction_opportunity,114,90,16,7,1,0
+GPQA-D,No Message,destruction_risk,114,110,1,3,0,0
+GPQA-D,Answer Only,correction_opportunity,114,48,64,2,0,0
+GPQA-D,Answer Only,destruction_risk,114,60,38,3,1,12
+GPQA-D,Full Text,correction_opportunity,114,29,85,0,0,0
+GPQA-D,Full Text,destruction_risk,114,54,58,1,1,0
+GPQA-D,StateBridge,correction_opportunity,114,40,73,0,1,0
+GPQA-D,StateBridge,destruction_risk,114,59,53,2,0,0
+GPQA-D,LatentMAS,correction_opportunity,114,44,70,0,0,0
+GPQA-D,LatentMAS,destruction_risk,114,58,52,0,4,0

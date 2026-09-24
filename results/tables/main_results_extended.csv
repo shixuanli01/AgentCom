@@ -1,0 +1,31 @@
+dataset,channel,scope,n_records,cr_pct,cr_num,cr_den,pr_pct,pr_num,pr_den,si_pct,si_minus_50,pi_cr_pct,pi_pr_pct,adoption_pi_bar_pct,discrimination_dpi,answer_changed_pct,sr_pct,sr_num,sr_den,scr_pct,scr_num,scr_den,acc_ret_pct,acc_ret_num,acc_ret_den
+MedQA,Keep Initial,analytic,,0.00,0,,100.00,,,50.00,+0.00,0.00,0.00,0.00,0.00,0.00,NOT_APPLICABLE,,,NOT_APPLICABLE,,,NOT_APPLICABLE,,
+MedQA,No Message,all_six_directions,720,6.90,8,116,98.28,114,116,52.59,+2.59,6.9,0.9,3.9,6.0,3.8,2.52,11,436,100.00,52,52,25.69,185,720
+MedQA,Answer Only,mixed_directions_only,232,38.79,45,116,80.17,93,116,59.48,+9.48,38.8,19.8,29.3,19.0,29.3,NOT_MEASURED,,,NOT_MEASURED,,,NOT_MEASURED,,
+MedQA,Full Text,all_six_directions,720,80.17,93,116,42.24,49,116,61.21,+11.21,80.2,57.8,69.0,22.4,31.1,0.46,2,436,100.00,52,52,27.22,196,720
+MedQA,StateBridge,all_six_directions,720,54.31,63,116,71.55,83,116,62.93,+12.93,54.3,28.4,41.4,25.9,18.3,0.46,2,436,100.00,52,52,27.78,200,720
+MedQA,LatentMAS,all_six_directions,720,69.83,81,116,32.76,38,116,51.29,+1.29,69.8,67.2,68.5,2.6,30.1,1.61,7,436,100.00,52,52,24.72,178,720
+ARC-C,Keep Initial,analytic,,0.00,0,,100.00,,,50.00,+0.00,0.00,0.00,0.00,0.00,0.00,NOT_APPLICABLE,,,NOT_APPLICABLE,,,NOT_APPLICABLE,,
+ARC-C,No Message,all_six_directions,588,8.16,8,98,92.86,91,98,50.51,+0.51,8.2,7.1,7.7,1.0,4.9,1.52,5,328,93.75,60,64,27.89,164,588
+ARC-C,Answer Only,mixed_directions_only,196,38.78,38,98,63.27,62,98,51.02,+1.02,38.8,36.7,37.8,2.0,37.8,NOT_MEASURED,,,NOT_MEASURED,,,NOT_MEASURED,,
+ARC-C,Full Text,all_six_directions,588,80.61,79,98,34.69,34,98,57.65,+7.65,80.6,65.3,73.0,15.3,27.0,0.30,1,328,100.00,64,64,30.27,178,588
+ARC-C,StateBridge,all_six_directions,588,69.39,68,98,44.90,44,98,57.14,+7.14,69.4,53.1,61.2,16.3,22.6,0.30,1,328,98.44,63,64,29.93,176,588
+ARC-C,LatentMAS,all_six_directions,588,58.16,57,98,45.92,45,98,52.04,+2.04,58.2,54.1,56.1,4.1,21.6,0.91,3,328,95.31,61,64,28.23,166,588
+GSM8K,Keep Initial,analytic,,0.00,0,,100.00,,,50.00,+0.00,0.00,0.00,0.00,0.00,0.00,NOT_APPLICABLE,,,NOT_APPLICABLE,,,NOT_APPLICABLE,,
+GSM8K,No Message,all_six_directions,564,13.04,12,92,92.39,85,92,52.72,+2.72,13.0,5.4,9.2,7.6,7.1,1.80,6,334,97.83,45,46,26.24,148,564
+GSM8K,Answer Only,mixed_directions_only,184,39.13,36,92,70.65,65,92,54.89,+4.89,39.1,25.0,32.1,14.1,34.8,NOT_MEASURED,,,NOT_MEASURED,,,NOT_MEASURED,,
+GSM8K,Full Text,all_six_directions,564,51.09,47,92,52.17,48,92,51.63,+1.63,51.1,46.7,48.9,4.3,20.9,0.60,2,334,100.00,46,46,25.35,143,564
+GSM8K,StateBridge,all_six_directions,564,39.13,36,92,73.91,68,92,56.52,+6.52,39.1,23.9,31.5,15.2,14.0,0.90,3,334,97.83,45,46,26.95,152,564
+GSM8K,LatentMAS,all_six_directions,564,59.78,55,92,46.74,43,92,53.26,+3.26,59.8,52.2,56.0,7.6,22.5,0.60,2,334,95.65,44,46,25.53,144,564
+GPQA-D,Keep Initial,analytic,,0.00,0,,100.00,,,50.00,+0.00,0.00,0.00,0.00,0.00,0.00,NOT_APPLICABLE,,,NOT_APPLICABLE,,,NOT_APPLICABLE,,
+GPQA-D,No Message,all_six_directions,708,14.04,16,114,96.49,110,114,55.26,+5.26,14.0,0.9,7.5,13.2,9.9,2.31,10,432,91.67,44,48,25.42,180,708
+GPQA-D,Answer Only,mixed_directions_only,228,56.14,64,114,63.16,72,114,59.65,+9.65,56.1,33.3,44.7,22.8,47.4,NOT_MEASURED,,,NOT_MEASURED,,,NOT_MEASURED,,
+GPQA-D,Full Text,all_six_directions,708,74.56,85,114,47.37,54,114,60.96,+10.96,74.6,51.8,63.2,22.8,32.6,1.39,6,432,100.00,48,48,27.26,193,708
+GPQA-D,StateBridge,all_six_directions,708,64.04,73,114,51.75,59,114,57.89,+7.89,64.0,46.5,55.3,17.5,29.9,2.55,11,432,97.92,47,48,26.84,190,708
+GPQA-D,LatentMAS,all_six_directions,708,61.40,70,114,50.88,58,114,56.14,+6.14,61.4,49.1,55.3,12.3,27.8,0.93,4,432,95.83,46,48,25.14,178,708
+HumanEval+,Keep Initial,analytic,,0.00,0,,100.00,,,50.00,+0.00,0.00,0.00,0.00,0.00,0.00,NOT_APPLICABLE,,,NOT_APPLICABLE,,,NOT_APPLICABLE,,
+HumanEval+,No Message,all_six_directions,168,57.14,16,28,92.86,26,28,75.00,+25.00,7.1,3.6,5.4,3.6,27.4,9.78,9,92,100.00,20,20,42.26,71,168
+HumanEval+,Answer Only,NOT_RUN,,,,,,,,,,,,,,,,,,,,,,,
+HumanEval+,Full Text,all_six_directions,168,75.00,21,28,92.86,26,28,83.93,+33.93,39.3,3.6,21.4,35.7,38.7,9.78,9,92,100.00,20,20,45.24,76,168
+HumanEval+,StateBridge,all_six_directions,168,67.86,19,28,96.43,27,28,82.14,+32.14,17.9,3.6,10.7,14.3,32.1,8.70,8,92,95.00,19,20,43.45,73,168
+HumanEval+,LatentMAS,all_six_directions,168,85.71,24,28,60.71,17,28,73.21,+23.21,32.1,32.1,32.1,0.0,44.0,6.52,6,92,100.00,20,20,39.88,67,168

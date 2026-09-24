@@ -1,0 +1,21 @@
+dataset,condition,condition_key,items_with_three_beliefs,closed_form_cr_pr_count,n_cr_group,n_pr_group,n_records,matches_expected_denominator,duplicate_keys,missing_vs_no_message,extra_vs_no_message,status_not_complete,non_terminating,unparsed_receiver_output,missing_sender_answer,replication_id,config_fingerprints,source_root
+MedQA,No Message,none,300,116,116,116,232,YES,0,0,0,0,0,0,0,seed_pair_00,355c5073cd75|96d887fc74fa,artifacts/icr_v3/medqa_full_seed42
+MedQA,Answer Only,true_answer,300,116,116,116,232,YES,0,0,0,0,0,0,0,seed_pair_00,355c5073cd75,runs/medqa/cr_dnc_v1/icr_root
+MedQA,Full Text,true_text,300,116,116,116,232,YES,0,0,0,0,0,0,0,seed_pair_00,355c5073cd75|96d887fc74fa,artifacts/icr_v3/medqa_full_seed42
+ARC-C,No Message,none,1165,98,98,98,196,YES,0,0,0,0,1,1,0,seed_pair_00,6f992a8ecbda|d93cc43d9029,artifacts/icr_v3/arc_challenge_full_seed42
+ARC-C,Answer Only,true_answer,1165,98,98,98,196,YES,0,0,0,0,0,0,2,seed_pair_00,6f992a8ecbda,runs/arc_challenge/hybrid_root
+ARC-C,Full Text,true_text,1165,98,98,98,196,YES,0,0,0,0,0,0,0,seed_pair_00,6f992a8ecbda|d93cc43d9029,artifacts/icr_v3/arc_challenge_full_seed42
+GSM8K,No Message,none,1319,92,92,92,184,YES,0,0,0,0,0,0,0,seed_pair_00,2256105b1a29|54423e26f7e5,artifacts/icr_v3/gsm8k_full_seed42
+GSM8K,Answer Only,true_answer,1319,92,92,92,184,YES,0,0,0,0,0,0,0,seed_pair_00,54423e26f7e5,runs/gsm8k/hybrid_root
+GSM8K,Full Text,true_text,1319,92,92,92,184,YES,0,0,0,0,0,0,0,seed_pair_00,2256105b1a29|54423e26f7e5,artifacts/icr_v3/gsm8k_full_seed42
+GPQA-D,No Message,none,198,114,114,114,228,YES,0,0,0,0,1,1,0,seed_pair_00,cb9f218c2b35|f3a6568c0975,artifacts/icr_v3/gpqa_full_seed42
+GPQA-D,Answer Only,true_answer,198,114,114,114,228,YES,0,0,0,0,1,1,12,seed_pair_00,f3a6568c0975,runs/gpqa/hybrid_root
+GPQA-D,Full Text,true_text,198,114,114,114,228,YES,0,0,0,0,1,1,0,seed_pair_00,cb9f218c2b35|f3a6568c0975,artifacts/icr_v3/gpqa_full_seed42
+MedQA,E2_random_spans,E2_random_spans,,,,,BLOCKED,,,,,,,,,,,absent from repository and from all 48 git commits
+MedQA,E3_selected_spans,E3_selected_spans,,,,,BLOCKED,,,,,,,,,,,absent from repository and from all 48 git commits
+ARC-C,E2_random_spans,E2_random_spans,,,,,BLOCKED,,,,,,,,,,,absent from repository and from all 48 git commits
+ARC-C,E3_selected_spans,E3_selected_spans,,,,,BLOCKED,,,,,,,,,,,absent from repository and from all 48 git commits
+GSM8K,E2_random_spans,E2_random_spans,,,,,BLOCKED,,,,,,,,,,,absent from repository and from all 48 git commits
+GSM8K,E3_selected_spans,E3_selected_spans,,,,,BLOCKED,,,,,,,,,,,absent from repository and from all 48 git commits
+GPQA-D,E2_random_spans,E2_random_spans,,,,,BLOCKED,,,,,,,,,,,absent from repository and from all 48 git commits
+GPQA-D,E3_selected_spans,E3_selected_spans,,,,,BLOCKED,,,,,,,,,,,absent from repository and from all 48 git commits

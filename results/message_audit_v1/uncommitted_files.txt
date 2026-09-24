@@ -1,0 +1,52 @@
+ M methods/AgentCom-StateBridge/egr/evidence_v2.py
+ M methods/AgentCom-StateBridge/icr/__init__.py
+ M methods/AgentCom-StateBridge/icr/channels.py
+ M methods/AgentCom-StateBridge/icr/prompts_v3.py
+ M methods/AgentCom-StateBridge/icr/revisions.py
+ M methods/AgentCom-StateBridge/icr/runtime.py
+ M methods/AgentCom-StateBridge/runs/medqa/cr_dnc_v1/icr_root/config.json
+ D paper_materials/APPENDIX_DETAILS.md
+ D paper_materials/MAIN_TEXT_EVIDENCE.md
+ D paper_materials/manifest.json
+ D paper_materials/tables/README.md
+ D paper_materials/tables/accuracy_scopes.csv
+ D paper_materials/tables/answer_transitions.csv
+ D paper_materials/tables/cost.csv
+ D paper_materials/tables/count_identity_check.csv
+ D paper_materials/tables/cr_pr_plot_data.csv
+ D paper_materials/tables/exclusions_and_reuse.csv
+ D paper_materials/tables/full_set_accuracy_estimated.csv
+ D paper_materials/tables/humanevalplus_degenerate_loops.csv
+ D paper_materials/tables/integrity_checks.csv
+ D paper_materials/tables/main_results.csv
+ D paper_materials/tables/paired_vs_no_message.csv
+ D paper_materials/tables/sample_statistics.csv
+ D paper_materials/tables/six_direction_detail.csv
+ D paper_materials/tables/sr_scr.csv
+ D paper_materials/tables/truncation_contamination.csv
+ D paper_materials/tables/truncation_sensitivity.csv
+R  paper_materials/AUDIT_ISSUES.md -> results/AUDIT_ISSUES.md
+?? methods/AgentCom-StateBridge/communication/self_consistency.py
+?? methods/AgentCom-StateBridge/egr/evidence_v3.py
+?? methods/AgentCom-StateBridge/egr/run_adjudication.py
+?? methods/AgentCom-StateBridge/icr/prompts_v4.py
+?? methods/AgentCom-StateBridge/runs/answer_only_baseline.md
+?? methods/AgentCom-StateBridge/runs/arc_challenge/
+?? methods/AgentCom-StateBridge/runs/gpqa/
+?? methods/AgentCom-StateBridge/runs/gsm8k/
+?? methods/AgentCom-StateBridge/runs/humanevalplus/
+?? methods/AgentCom-StateBridge/runs/medqa/adjudication_v1/
+?? methods/AgentCom-StateBridge/runs/medqa/adjudication_v2/
+?? methods/AgentCom-StateBridge/runs/medqa/cr_dnc_v1/icr_root/.config.lock
+?? methods/AgentCom-StateBridge/runs/medqa/cr_dnc_v1/icr_root/messages
+?? methods/AgentCom-StateBridge/runs/medqa/cr_dnc_v1/icr_root/prebeliefs
+?? methods/AgentCom-StateBridge/runs/medqa/cr_dnc_v1/icr_root/revisions/
+?? methods/AgentCom-StateBridge/runs/medqa/cr_dnc_v1/prefixes/
+?? methods/AgentCom-StateBridge/runs/medqa/cr_dnc_v1/sender_cache/
+?? methods/AgentCom-StateBridge/runs/medqa/replication_01/.config.lock
+?? methods/AgentCom-StateBridge/runs/medqa/replication_01/messages
+?? methods/AgentCom-StateBridge/runs/medqa/replication_01/prebeliefs
+?? methods/AgentCom-StateBridge/runs/medqa/replication_01/revisions/
+?? methods/AgentCom-StateBridge/runs/medqa/self_consistency/
+?? methods/AgentCom-StateBridge/runs/medqa/v4_verify/
+?? parked_methods/

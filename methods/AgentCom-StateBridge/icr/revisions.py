@@ -78,6 +78,25 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--pair-classes", type=str, default=None,
+        help=(
+            "Comma-separated pair classifications to run, e.g. "
+            "'correction_opportunity,destruction_risk'. Supplementary conditions "
+            "can be measured on the mixed-correctness directions alone, at a "
+            "third of the cost; SR, SCR and retained accuracy are then NOT "
+            "measured for them and must not be filled in by inference."
+        ),
+    )
+    parser.add_argument(
+        "--receiver-policy", choices=("revise", "verify"), default="revise",
+        help=(
+            "How the receiver integrates the message. 'revise' is the frozen V3 "
+            "instruction; 'verify' is the V4 policy that checks the message "
+            "against the problem before deciding. Changing it changes the "
+            "protocol, so every compared condition must use the same value."
+        ),
+    )
+    parser.add_argument(
         "--cr-dnc-prefix-root", type=Path,
         default=Path("runs/medqa/cr_dnc_v1/prefixes"),
         help=(
@@ -121,7 +140,9 @@ def main() -> None:
     prebeliefs = load_prebelief_map(cli.artifact_root)
     metadata_by_item = {}
     if any(
-        condition.endswith("_evidence") or condition.endswith("_evidence_v2")
+        condition.endswith("_evidence")
+        or condition.endswith("_evidence_v2")
+        or "hybrid" in condition
         for condition in conditions
     ):
         task = str(config.get("dataset", "medqa"))
@@ -144,6 +165,15 @@ def main() -> None:
         existing_conditions = list(config.get("revision_conditions_requested", []))
         combined_conditions = list(dict.fromkeys((*existing_conditions, *conditions)))
         config["revision_conditions_requested"] = combined_conditions
+        config["receiver_policy"] = str(cli.receiver_policy)
+        if cli.pair_classes:
+            config.setdefault("pair_class_scope", {})[
+                ",".join(sorted(cli.conditions.split(",")))
+            ] = sorted({p.strip() for p in cli.pair_classes.split(",") if p.strip()})
+        config["revision_prompt_version"] = (
+            "icr_v4_verify_then_decide" if cli.receiver_policy == "verify"
+            else config.get("revision_prompt_version", "icr_v3_mid_injection")
+        )
         config["both_correct_sampling"] = {
             "keep_one_in": int(cli.both_correct_sample),
             "rule": "item_id % keep_one_in == 0",
@@ -218,6 +248,11 @@ def main() -> None:
     )
     suffix = f"_{cli.output_tag}" if cli.output_tag else ""
     shard_name = f"rank{rank}{suffix}"
+    runtime.receiver_policy = str(cli.receiver_policy)
+    wanted_pair_classes = (
+        {p.strip() for p in cli.pair_classes.split(",") if p.strip()}
+        if cli.pair_classes else None
+    )
     records_dir = cli.artifact_root / "revisions" / shard_name / "records"
     globally_completed: set[tuple[int, str, str]] = set()
     truncated_keys: set[tuple[int, str, str]] = set()
@@ -262,6 +297,8 @@ def main() -> None:
             config.get("replication_id"),
         )
         pair_class = classify_pair(bool(sender["correct"]), bool(receiver["correct"]))
+        if wanted_pair_classes is not None and pair_class not in wanted_pair_classes:
+            continue
         if cli.skip_all_correct_items and all(
             bool(prebeliefs[(item_id, agent)]["correct"]) for agent in AGENTS
         ):

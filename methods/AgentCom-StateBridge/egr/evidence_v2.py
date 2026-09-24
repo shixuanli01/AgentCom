@@ -52,6 +52,17 @@ _CONCLUSION_CUES = (
     "conclusion:", "final answer", "most likely", "best answer", "correct answer",
     "answer:", "因此", "所以", "答案", "综上",
 )
+# "the answer is 18", "Final Answer: 18", "so we get 18", "答案是 18"
+_NUMERIC_ASSERTION = (
+    r"(?:answer|result|total(?:s|ing)?|altogether|in all|final|therefore|thus|hence|"
+    r"so\s+(?:the|we|she|he|they)|答案|结果|总共|因此|所以)"
+    r"[^.\n]{{0,40}}?{n}"
+)
+# A sentence showing operands and an operator is a derivation step, not an
+# announcement. "Total = 14 + 20 = 34" states the answer but is also the
+# arithmetic that produces it; removing it leaves the receiver every
+# intermediate quantity and no landing point. "The answer is 34" is not.
+_ARITHMETIC = re.compile(r"[0-9)\}]\s*(?:[-+*/=]|\\times|\\div|\\cdot|x)\s*[0-9(\\]")
 _LABEL_ASSERTION = (
     r"(?:answer|option|choice|select|choose|pick|响应|选项|答案)"
     r"[^.\n]{{0,24}}\b\(?{label}\)?\b"
@@ -72,7 +83,20 @@ def _content_words(option_text: str) -> list[str]:
     return [w for w in words if w not in _STOPWORDS]
 
 
+def _is_matchable(option_text: str) -> bool:
+    """Whether an option's text can be searched for as content.
+
+    Some GPQA items carry the A-D to a-d mapping layer in place of option text,
+    so an "option" is the single character "d". Substring-matching that would
+    delete almost every sentence, since most contain the letter. Options that
+    short are left to the label-assertion rule instead.
+    """
+    return len(_normalise(option_text)) >= 4
+
+
 def _mentions(sentence: str, option_text: str) -> bool:
+    if not _is_matchable(option_text):
+        return False
     low = _normalise(sentence)
     if _normalise(option_text) in low:
         return True
@@ -90,6 +114,7 @@ def build_evidence_packet_v2(
     *,
     token_counter: Optional[Callable[[str], int]] = None,
     policy: str = "all_options",
+    numeric_policy: str = "strict",
 ) -> dict[str, Any]:
     """Remove whole sentences that assert the sender's answer.
 
@@ -97,6 +122,8 @@ def build_evidence_packet_v2(
     """
     if policy not in ("chosen", "all_options"):
         raise ValueError(f"unknown policy {policy!r}")
+    if numeric_policy not in ("strict", "assertion_only"):
+        raise ValueError(f"unknown numeric_policy {numeric_policy!r}")
     reasoning = str(sender_record.get("reasoning_text") or "")
     answer = sender_record.get("parsed_answer")
     answer = str(answer).strip().lower() if answer is not None else None
@@ -118,6 +145,12 @@ def build_evidence_packet_v2(
         }
 
     chosen_text = options.get(answer) if answer else None
+    numeric_answer = None
+    if answer_type == "number" and answer:
+        # A numeric benchmark has no option set, so the claim is the number
+        # itself. Sentences stating it are removed the way option-naming
+        # sentences are; there are no alternatives to stay symmetric with.
+        numeric_answer = re.sub(r"[^0-9.\-]", "", str(answer))
     sentences = [s for s in _SENTENCE_SPLIT.split(reasoning) if s.strip()]
     kept, removed, reasons = [], [], {}
 
@@ -125,6 +158,23 @@ def build_evidence_packet_v2(
         why = None
         if _BOXED.search(sentence):
             why = "boxed_span"
+        elif numeric_answer and re.search(
+            rf"(?<![0-9.]){re.escape(numeric_answer)}(?![0-9.])", sentence
+        ) and (
+            numeric_policy == "strict"
+            or (
+                re.search(_NUMERIC_ASSERTION.format(n=re.escape(numeric_answer)),
+                          sentence, re.I)
+                and not _ARITHMETIC.search(sentence)
+            )
+        ):
+            # strict removes every sentence stating the number, which in
+            # arithmetic is the closing step of the derivation: deleting
+            # "48 x 120 = 5760" leaves the receiver a reasoning chain with every
+            # intermediate quantity and no landing point. assertion_only removes
+            # the sentences that announce the number as the answer and keeps the
+            # arithmetic that produced it.
+            why = "numeric_answer" if numeric_policy == "strict" else "numeric_assertion"
         elif chosen_text and _mentions(sentence, chosen_text):
             why = "chosen_option_text"
         elif policy == "all_options" and any(
@@ -165,6 +215,7 @@ def build_evidence_packet_v2(
         "removed_sentences": removed,
         "removal_reasons": reasons,
         "policy": policy,
+        "numeric_policy": numeric_policy,
         "sender_answer_text_present_after_filter": bool(
             chosen_text and _mentions(packet, chosen_text)
         ),

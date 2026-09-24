@@ -1,0 +1,86 @@
+{
+  "name": "MedQA StateBridge unified to seed_pair_01",
+  "generated_at": "2026-09-23",
+  "new_model_generation": 0,
+  "authoritative_source": {
+    "artifact_root": "methods/AgentCom-StateBridge/runs/medqa/replication_01",
+    "records_glob": "runs/medqa/replication_01/revisions/*/records/*.json  (condition == true_statebridge)",
+    "n_records": 720,
+    "replication_id": "seed_pair_01",
+    "global_seed": 42,
+    "config_fingerprint": "355c5073cd75bb6fba78bad536a8081cca7855c7263452fe59411417cc2b8f52",
+    "revision_prompt_version": "icr_v3_mid_injection",
+    "receiver_policy": "revise",
+    "policy_label": "V3 (icr_v3_mid_injection, receiver policy = revise)",
+    "solver_prompt_version": "icr_v2_phase1_verbatim",
+    "answer_parser_version": "icr.parsing_v3@ICR-V3",
+    "model": "Qwen/Qwen3-4B",
+    "generation": {
+      "do_sample": true,
+      "max_new_tokens": 16384,
+      "temperature": 0.6,
+      "top_k": null,
+      "top_p": 0.95
+    },
+    "dataset": "medqa",
+    "dataset_sha256": "ddee8dc64d3b2a1e5061c409c68d626109237640009168838a038db29efe802c",
+    "dataset_rows": 300,
+    "prebeliefs_symlink": "/workspace/AgentCom/methods/AgentCom-StateBridge/artifacts/icr_v3/medqa_full_seed42/prebeliefs",
+    "messages_symlink": "/workspace/AgentCom/methods/AgentCom-StateBridge/artifacts/icr_v3/medqa_full_seed42/messages",
+    "phase1_trajectory_content_sha256": "56c3379a69a3ea0f1de72b3136eb85e76441cbf0a8cd49b753ad740a80a8fc43",
+    "seed_derivation": "replicated_stable_seed(global_seed, replication_id, item_id, direction); condition NOT in the seed",
+    "strata": {
+      "correction_opportunity": 116,
+      "destruction_risk": 116,
+      "both_wrong": 436,
+      "both_correct": 52
+    },
+    "verification": "all six declared statistics reproduce exactly from these records: CR 63/116, PR 83/116, SR 2/436, SCR 52/52, SI 62.9310%, Acc_ret 200/720"
+  },
+  "companion_records_in_the_same_run": {
+    "none": {
+      "n_records": 183,
+      "expected_for_full_pairing": 720,
+      "status": "INCOMPLETE",
+      "strata": {
+        "correction_opportunity": 22,
+        "both_wrong": 133,
+        "both_correct": 6,
+        "destruction_risk": 22
+      },
+      "impact": "a seed-consistent StateBridge-vs-No-Message pairing at seed_pair_01 covers only 183 of 720 directions"
+    },
+    "true_text": {
+      "n_records": 0,
+      "status": "MISSING"
+    },
+    "true_latentmas": {
+      "n_records": 0,
+      "status": "MISSING"
+    },
+    "all_correct_sample.jsonl": {
+      "status": "MISSING",
+      "impact": "no measured skipped sample exists at seed_pair_01; the 34/34 figure belongs to seed_pair_00 and is not reused"
+    }
+  },
+  "seed_pair_01_V4": {
+    "status": "DOES NOT EXIST",
+    "search": "every artifact root under artifacts/ and runs/ was scanned; the only root carrying replication_id seed_pair_01 is runs/medqa/replication_01, whose config is revision_prompt_version=icr_v3_mid_injection, receiver_policy=revise (i.e. V3)",
+    "existing_V4_run": {
+      "root": "runs/medqa/v4_verify",
+      "replication_id": "seed_pair_00",
+      "conditions": [
+        "none",
+        "true_text",
+        "true_statebridge",
+        "true_latentmas"
+      ],
+      "n_per_condition": 720
+    },
+    "consequence": "the policy ablation cannot be unified to seed_pair_01 from existing records. No seed_pair_00 value is used as a substitute."
+  },
+  "bootstrap": {
+    "main_table": "2000 resamples, analysis seed 20260921 (matches the other rows of the main table)",
+    "note": "the pre-existing export at runs/medqa/replication_01/export used 10000 resamples / seed 20260922. Those intervals are NOT mixed into the main table."
+  }
+}

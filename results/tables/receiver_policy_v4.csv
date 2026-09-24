@@ -1,0 +1,9 @@
+dataset,channel,policy,n,cr_pct,pr_pct,si_pct,si_minus_50,dpi,adoption_pi_bar_pct
+MedQA,No Message,V3 revise,720,6.90,98.28,52.59,+2.59,6.0,3.9
+MedQA,No Message,V4 verify-then-decide,720,3.45,99.14,51.29,+1.29,2.6,2.2
+MedQA,Full Text,V3 revise,720,80.17,42.24,61.21,+11.21,22.4,69.0
+MedQA,Full Text,V4 verify-then-decide,720,56.90,67.24,62.07,+12.07,24.1,44.8
+MedQA,StateBridge,V3 revise (seed_pair_01),720,54.31,71.55,62.93,+12.93,25.9,41.4
+MedQA,StateBridge,V4 verify-then-decide (seed_pair_01),232,27.59,87.07,57.33,+7.33,14.7,20.3
+MedQA,LatentMAS,V3 revise,720,69.83,32.76,51.29,+1.29,2.6,68.5
+MedQA,LatentMAS,V4 verify-then-decide,720,43.97,78.45,61.21,+11.21,22.4,32.8

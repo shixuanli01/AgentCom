@@ -1,0 +1,6 @@
+dataset,comparison,status,delta_cr_pp,delta_pr_pp,delta_si_pp,ci_low,ci_high,reason
+MedQA,E3_selected_spans - E2_random_spans,NOT_COMPUTABLE,,,,,,neither condition exists in the repository or in git history; see span_selection_audit.csv
+ARC-C,E3_selected_spans - E2_random_spans,NOT_COMPUTABLE,,,,,,neither condition exists in the repository or in git history; see span_selection_audit.csv
+GSM8K,E3_selected_spans - E2_random_spans,NOT_COMPUTABLE,,,,,,neither condition exists in the repository or in git history; see span_selection_audit.csv
+GPQA-D,E3_selected_spans - E2_random_spans,NOT_COMPUTABLE,,,,,,neither condition exists in the repository or in git history; see span_selection_audit.csv
+MedQA75 (historical),E3 - E2,NOT_PRESENT,,,,,,"no MedQA75 pilot artifacts, item list, prompt or budget config found anywhere"

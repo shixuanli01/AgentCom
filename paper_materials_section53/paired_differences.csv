@@ -1,0 +1,29 @@
+dataset,comparison,stratum,n_paired,both_correct,gained_correctness,lost_correctness,both_wrong,base_num,comp_num,den,base_pct,comp_pct,delta_pp,ci_low,ci_high,interval_covers_zero
+MedQA,Answer Only - No Message,CR,116,8,37,0,71,8,45,116,6.8966,38.7931,+31.8966,+21.5517,+43.1034,NO
+MedQA,Answer Only - No Message,PR,116,92,1,22,1,114,93,116,98.2759,80.1724,-18.1034,-26.7241,-10.3448,NO
+MedQA,Answer Only - No Message,SI,232,,,,,,,,52.5862,59.4828,+6.8966,+0.8621,+12.9310,NO
+MedQA,Full Text - Answer Only,CR,116,42,51,3,20,45,93,116,38.7931,80.1724,+41.3793,+30.1724,+52.5862,NO
+MedQA,Full Text - Answer Only,PR,116,46,3,47,20,93,49,116,80.1724,42.2414,-37.9310,-49.1379,-26.7241,NO
+MedQA,Full Text - Answer Only,SI,232,,,,,,,,59.4828,61.2069,+1.7241,-4.3103,+7.7586,YES
+ARC-C,Answer Only - No Message,CR,98,6,32,2,58,8,38,98,8.1633,38.7755,+30.6122,+19.3878,+42.8571,NO
+ARC-C,Answer Only - No Message,PR,98,62,0,29,7,91,62,98,92.8571,63.2653,-29.5918,-40.8163,-19.3878,NO
+ARC-C,Answer Only - No Message,SI,196,,,,,,,,50.5102,51.0204,+0.5102,-6.6327,+7.6531,YES
+ARC-C,Full Text - Answer Only,CR,98,36,43,2,17,38,79,98,38.7755,80.6122,+41.8367,+28.5714,+54.0816,NO
+ARC-C,Full Text - Answer Only,PR,98,30,4,32,32,62,34,98,63.2653,34.6939,-28.5714,-40.8163,-16.3265,NO
+ARC-C,Full Text - Answer Only,SI,196,,,,,,,,51.0204,57.6531,+6.6327,-0.5102,+13.2653,YES
+GSM8K,Answer Only - No Message,CR,92,12,24,0,56,12,36,92,13.0435,39.1304,+26.0870,+15.2174,+38.0435,NO
+GSM8K,Answer Only - No Message,PR,92,65,0,20,7,85,65,92,92.3913,70.6522,-21.7391,-33.6957,-11.9565,NO
+GSM8K,Answer Only - No Message,SI,184,,,,,,,,52.7174,54.8913,+2.1739,-6.5217,+10.3261,YES
+GSM8K,Full Text - Answer Only,CR,92,28,19,8,37,36,47,92,39.1304,51.0870,+11.9565,+0.0000,+23.9130,YES
+GSM8K,Full Text - Answer Only,PR,92,41,7,24,20,65,48,92,70.6522,52.1739,-18.4783,-31.5217,-5.4348,NO
+GSM8K,Full Text - Answer Only,SI,184,,,,,,,,54.8913,51.6304,-3.2609,-12.5000,+6.5217,YES
+GPQA-D,Answer Only - No Message,CR,114,12,52,4,46,16,64,114,14.0351,56.1404,+42.1053,+30.7018,+53.5088,NO
+GPQA-D,Answer Only - No Message,PR,114,70,2,40,2,110,72,114,96.4912,63.1579,-33.3333,-44.7368,-21.9298,NO
+GPQA-D,Answer Only - No Message,SI,228,,,,,,,,55.2632,59.6491,+4.3860,-3.5088,+11.8421,YES
+GPQA-D,Full Text - Answer Only,CR,114,55,30,9,20,64,85,114,56.1404,74.5614,+18.4211,+8.7719,+28.0702,NO
+GPQA-D,Full Text - Answer Only,PR,114,46,8,26,34,72,54,114,63.1579,47.3684,-15.7895,-26.3158,-6.1404,NO
+GPQA-D,Full Text - Answer Only,SI,228,,,,,,,,59.6491,60.9649,+1.3158,-6.1404,+8.7719,YES
+MedQA,E3_selected_spans - E2_random_spans,ALL,BLOCKED,,,,,,,,,,,,,
+ARC-C,E3_selected_spans - E2_random_spans,ALL,BLOCKED,,,,,,,,,,,,,
+GSM8K,E3_selected_spans - E2_random_spans,ALL,BLOCKED,,,,,,,,,,,,,
+GPQA-D,E3_selected_spans - E2_random_spans,ALL,BLOCKED,,,,,,,,,,,,,

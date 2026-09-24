@@ -1,0 +1,13 @@
+dataset,condition,status,target_pr_pct,matched_alpha,reference_cr_pct,observed_cr_pct,observed_minus_reference_pct,ci_low,ci_high,matchable_resample_frac,ci_stable,note
+MedQA,Answer Only,MATCHED,80.17,0.3231,30.57,38.79,+8.22,-2.99,+19.86,1.0000,YES,
+MedQA,StateBridge,MATCHED,75.00,0.4154,37.33,57.76,+20.42,+6.36,+35.22,1.0000,YES,
+MedQA,LatentMAS,OUT_OF_RANGE,32.76,1.1692,,,69.83,,,,,"target PR 落在 [PR_none, PR_full] 之外，不外推、不裁剪"
+MedQA,Full Text,MATCHED,42.24,1.0000,80.17,80.17,+0.00,+0.00,+0.00,1.0000,YES,
+MedQA,random_spans,BLOCKED,,,,,,,,,,E0-E4 selector absent (AUDIT_ISSUES C1)
+MedQA,selected_spans,BLOCKED,,,,,,,,,,E0-E4 selector absent (AUDIT_ISSUES C1)
+GPQA-D,Answer Only,MATCHED,63.16,0.6786,55.11,56.14,+1.03,-14.52,+15.57,0.9997,YES,
+GPQA-D,StateBridge,MATCHED,51.75,0.9107,69.16,64.04,-5.12,-16.42,+9.70,0.8246,NO,仅 82.5% 的重采样可匹配，区间不稳定，不作常规 95% CI 使用
+GPQA-D,LatentMAS,MATCHED,50.88,0.9286,70.24,61.40,-8.83,-19.64,+8.55,0.7506,NO,仅 75.1% 的重采样可匹配，区间不稳定，不作常规 95% CI 使用
+GPQA-D,Full Text,MATCHED,47.37,1.0000,74.56,74.56,+0.00,+0.00,+0.00,1.0000,YES,
+GPQA-D,random_spans,BLOCKED,,,,,,,,,,E0-E4 selector absent (AUDIT_ISSUES C1)
+GPQA-D,selected_spans,BLOCKED,,,,,,,,,,E0-E4 selector absent (AUDIT_ISSUES C1)

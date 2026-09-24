@@ -1,0 +1,23 @@
+dataset,condition,policy,status,n_cr_group,n_pr_group,distinct_question_ids,n_records,duplicate_keys,matches_expected_denominator,unparsed_output,non_terminating,status_not_complete,missing_sender_answer,measured_scope,note
+MedQA,No Message,V3,COMPLETE,116,116,58,232,0,YES,0,0,0,0,all_six_directions,
+MedQA,No Message,V4,COMPLETE,116,116,58,232,0,YES,0,0,0,0,all_six_directions,
+MedQA,Full Text,V3,COMPLETE,116,116,58,232,0,YES,0,0,0,0,all_six_directions,
+MedQA,Full Text,V4,COMPLETE,116,116,58,232,0,YES,0,0,0,0,all_six_directions,
+MedQA,StateBridge,V3,COMPLETE,116,116,58,232,0,YES,0,0,0,0,all_six_directions,
+MedQA,StateBridge,V4,COMPLETE,116,116,58,232,0,YES,0,0,0,0,all_six_directions,
+MedQA,LatentMAS,V3,COMPLETE,116,116,58,232,0,YES,0,0,0,0,all_six_directions,
+MedQA,LatentMAS,V4,COMPLETE,116,116,58,232,0,YES,0,0,0,0,all_six_directions,
+MedQA,Answer Only,V3,COMPLETE,116,116,58,232,0,YES,0,0,0,0,mixed_directions_only,
+MedQA,Answer Only,V4,MISSING,,,,,,,,,,,not run
+MedQA,StateBridge seed01,V3,MISSING,,,,,,,,,,,not run
+MedQA,StateBridge seed01,V4,MISSING,,,,,,,,,,,not run
+GPQA-D,No Message,V3,COMPLETE,114,114,57,228,0,YES,1,1,0,0,all_six_directions,
+GPQA-D,No Message,V4,COMPLETE,114,114,57,228,0,YES,5,5,0,0,mixed_directions_only,
+GPQA-D,Full Text,V3,COMPLETE,114,114,57,228,0,YES,1,1,0,0,all_six_directions,
+GPQA-D,Full Text,V4,COMPLETE,114,114,57,228,0,YES,0,0,0,0,mixed_directions_only,
+GPQA-D,StateBridge,V3,COMPLETE,114,114,57,228,0,YES,1,1,0,0,all_six_directions,
+GPQA-D,StateBridge,V4,COMPLETE,114,114,57,228,0,YES,0,0,0,0,mixed_directions_only,
+GPQA-D,LatentMAS,V3,COMPLETE,114,114,57,228,0,YES,4,4,0,0,all_six_directions,
+GPQA-D,LatentMAS,V4,COMPLETE,114,114,57,228,0,YES,5,4,0,0,mixed_directions_only,
+GPQA-D,Answer Only,V3,COMPLETE,114,114,57,228,0,YES,1,1,0,12,mixed_directions_only,
+GPQA-D,Answer Only,V4,MISSING,,,,,,,,,,,not run

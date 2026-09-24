@@ -1,0 +1,14 @@
+"# MedQA StateBridge full-set accuracy, seed_pair_01. ESTIMATED - never report without that label."
+field,value
+denominator_items,300
+directions_per_item,6
+denominator_total,1800
+retained_observed,720
+retained_correct,200
+skipped_sample_measured,MISSING (no all_correct_sample.jsonl in runs/medqa/replication_01)
+skipped_sample_seed00_for_reference,"34/34 correct, artifacts/icr_v3/medqa_full_seed42 - NOT reused"
+unobserved_directions,1080
+assumption,every unobserved direction scored correct (all three agents already correct before communication)
+estimated_full_set_accuracy_pct,71.1111
+status,ESTIMATED
+evidence_note,"the point estimate equals the previously reported 71.11%, but at seed_pair_01 none of the 1080 unobserved directions is measured; at seed_pair_00 34 of them were measured at 34/34. The estimate is therefore less supported at seed_pair_01, not differently valued."

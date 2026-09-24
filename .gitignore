@@ -53,3 +53,7 @@ external/upstreams/
 *.log
 *.pid
 *.tmp
+
+# The repository-root results/ is the authoritative audit deliverable, not
+# generated scratch output. The **/results/ rule above still covers sub-projects.
+!/results/

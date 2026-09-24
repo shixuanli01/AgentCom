@@ -1,7 +1,7 @@
 dataset,condition,initial_answer_acc_num,initial_answer_acc_den,initial_answer_acc_pct,acc_mixed_direction_num,acc_mixed_direction_den,acc_mixed_direction_pct,si_pct,acc_mixed_equals_si,acc_ret_num,acc_ret_den,acc_ret_pct,measured_records,full_set_records,measured_coverage_pct,measured_full_set_acc_pct
 MedQA,No Message,624,900,69.3333,122,232,52.5862,52.5862,YES,185,720,25.6944,754,1800,41.8889,not available (coverage < 100%)
 MedQA,Full Text,,,,142,232,61.2069,61.2069,YES,196,720,27.2222,754,1800,41.8889,not available (coverage < 100%)
-MedQA,StateBridge,,,,154,232,66.3793,66.3793,YES,208,720,28.8889,754,1800,41.8889,not available (coverage < 100%)
+MedQA,StateBridge,,,,146,232,62.9310,62.9310,YES,200,720,27.7778,720,1800,40.0000,not available (coverage < 100%)
 MedQA,LatentMAS,,,,119,232,51.2931,51.2931,YES,178,720,24.7222,754,1800,41.8889,not available (coverage < 100%)
 ARC-C,No Message,3282,3495,93.9056,99,196,50.5102,50.5102,YES,164,588,27.8912,796,6990,11.3877,not available (coverage < 100%)
 ARC-C,Full Text,,,,113,196,57.6531,57.6531,YES,178,588,30.2721,796,6990,11.3877,not available (coverage < 100%)

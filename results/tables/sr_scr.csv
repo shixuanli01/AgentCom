@@ -1,7 +1,7 @@
 dataset,condition,sr_num,sr_den,sr_pct,scr_retained_num,scr_retained_den,scr_retained_pct,scr_skipped_sample_num,scr_skipped_sample_den
 MedQA,No Message,11,436,2.5229,52,52,100.0,34,34
 MedQA,Full Text,2,436,0.4587,52,52,100.0,34,34
-MedQA,StateBridge,2,436,0.4587,52,52,100.0,34,34
+MedQA,StateBridge,2,436,0.4587,52,52,100.0,MISSING,MISSING
 MedQA,LatentMAS,7,436,1.6055,52,52,100.0,34,34
 ARC-C,No Message,5,328,1.5244,60,64,93.75,208,208
 ARC-C,Full Text,1,328,0.3049,64,64,100.0,208,208

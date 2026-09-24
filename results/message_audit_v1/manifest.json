@@ -1,0 +1,2427 @@
+{
+  "name": "icr_message_audit_v1",
+  "generated_at": "2026-09-23",
+  "analysis_seed": 20260923,
+  "bootstrap_resamples": 10000,
+  "scope": "mixed-correctness directed pairs only (correction_opportunity + destruction_risk)",
+  "datasets": {
+    "MedQA": {
+      "benchmark": "medqa300",
+      "dataset_file": "medqa",
+      "dataset_sha256": "ddee8dc64d3b2a1e5061c409c68d626109237640009168838a038db29efe802c",
+      "dataset_rows": 300,
+      "model": "Qwen/Qwen3-4B",
+      "generation": {
+        "do_sample": true,
+        "max_new_tokens": 16384,
+        "temperature": 0.6,
+        "top_k": null,
+        "top_p": 0.95
+      },
+      "protocol": "ICR-V3",
+      "revision_prompt_version": "icr_v3_mid_injection",
+      "solver_prompt_version": "icr_v2_phase1_verbatim",
+      "answer_parser_version": "icr.parsing_v3@ICR-V3",
+      "global_seed": 42,
+      "replication_id": "seed_pair_00",
+      "seed_derivation": "replicated_stable_seed(global_seed, replication_id, item_id, direction); condition NOT included (matched design)",
+      "phase1_artifact_root": "artifacts/icr_v3/medqa_full_seed42",
+      "phase1_trajectory_content_sha256": "56c3379a69a3ea0f1de72b3136eb85e76441cbf0a8cd49b753ad740a80a8fc43",
+      "answer_only_root": "runs/medqa/cr_dnc_v1/icr_root",
+      "answer_only_prebeliefs_symlink": "/workspace/AgentCom/methods/AgentCom-StateBridge/artifacts/icr_v3/medqa_full_seed42/prebeliefs",
+      "config_fingerprint_active": "355c5073cd75bb6fba78bad536a8081cca7855c7263452fe59411417cc2b8f52",
+      "config_fingerprint_superseded": [
+        "96d887fc74fa20233ad0dea5fecb234e265ffe9fb994858e4c3713933ca0446d"
+      ],
+      "superseded_difference": "max_new_tokens 8192 -> 16384 only",
+      "superseded_impact_on_this_scope": "none: no mixed-direction record reached the 8192 cap (max generation_length MedQA 2994, GPQA-D 6098; zero non-terminating)",
+      "included_pairs_count": 232,
+      "included_pairs": [
+        {
+          "item_id": 10,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 10,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 10,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 10,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 23,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 23,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 23,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 23,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 29,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 29,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 29,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 29,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 31,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 31,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 31,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 31,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 38,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 38,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 38,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 38,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 41,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 41,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 41,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 41,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 45,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 45,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 45,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 45,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 46,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 46,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 46,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 46,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 55,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 55,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 55,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 55,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 71,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 71,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 71,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 71,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 75,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 75,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 75,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 75,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 79,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 79,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 79,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 79,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 84,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 84,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 84,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 84,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 89,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 89,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 89,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 89,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 92,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 92,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 92,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 92,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 94,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 94,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 94,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 94,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 97,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 97,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 97,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 97,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 102,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 102,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 102,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 102,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 103,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 103,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 103,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 103,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 106,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 106,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 106,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 106,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 110,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 110,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 110,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 110,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 113,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 113,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 113,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 113,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 119,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 119,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 119,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 119,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 121,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 121,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 121,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 121,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 122,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 122,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 122,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 122,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 127,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 127,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 127,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 127,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 131,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 131,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 131,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 131,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 136,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 136,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 136,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 136,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 137,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 137,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 137,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 137,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 142,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 142,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 142,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 142,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 144,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 144,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 144,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 144,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 145,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 145,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 145,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 145,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 161,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 161,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 161,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 161,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 162,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 162,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 162,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 162,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 168,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 168,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 168,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 168,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 175,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 175,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 175,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 175,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 177,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 177,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 177,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 177,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 179,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 179,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 179,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 179,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 181,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 181,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 181,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 181,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 203,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 203,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 203,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 203,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 211,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 211,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 211,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 211,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 217,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 217,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 217,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 217,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 230,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 230,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 230,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 230,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 237,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 237,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 237,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 237,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 242,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 242,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 242,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 242,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 244,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 244,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 244,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 244,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 246,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 246,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 246,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 246,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 251,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 251,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 251,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 251,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 253,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 253,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 253,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 253,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 260,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 260,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 260,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 260,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 264,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 264,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 264,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 264,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 266,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 266,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 266,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 266,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 274,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 274,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 274,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 274,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 277,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 277,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 277,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 277,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 280,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 280,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 280,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 280,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 289,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 289,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 289,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 289,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 294,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 294,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 294,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 294,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 296,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 296,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 296,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 296,
+          "sender": "C",
+          "receiver": "B"
+        }
+      ]
+    },
+    "GPQA-D": {
+      "benchmark": "gpqa_diamond",
+      "dataset_file": "gpqa",
+      "dataset_sha256": "42cdb10747fbb798116e3b490f470836d6ec1d47d24ae5b06dea7e8cae616f42",
+      "dataset_rows": 198,
+      "model": "Qwen/Qwen3-4B",
+      "generation": {
+        "do_sample": true,
+        "max_new_tokens": 16384,
+        "temperature": 0.6,
+        "top_k": null,
+        "top_p": 0.95
+      },
+      "protocol": "ICR-V3",
+      "revision_prompt_version": "icr_v3_mid_injection",
+      "solver_prompt_version": "icr_v2_phase1_verbatim",
+      "answer_parser_version": "icr.parsing_v3@ICR-V3",
+      "global_seed": 42,
+      "replication_id": "seed_pair_00",
+      "seed_derivation": "replicated_stable_seed(global_seed, replication_id, item_id, direction); condition NOT included (matched design)",
+      "phase1_artifact_root": "artifacts/icr_v3/gpqa_full_seed42",
+      "phase1_trajectory_content_sha256": "c56df2971fb2cbb3f1d715a3349d4859eb53d00daf92c2b1b9f94226f4ed9124",
+      "answer_only_root": "runs/gpqa/hybrid_root",
+      "answer_only_prebeliefs_symlink": "/workspace/AgentCom/methods/AgentCom-StateBridge/artifacts/icr_v3/gpqa_full_seed42/prebeliefs",
+      "config_fingerprint_active": "f3a6568c0975ebe7e0cf9c3d00c827d757363717095bb827c2ae4bf0deea3f2d",
+      "config_fingerprint_superseded": [
+        "cb9f218c2b3571fabd2ab894250af46cf053990d815e1d77bbd5fa897f53af2e"
+      ],
+      "superseded_difference": "max_new_tokens 8192 -> 16384 only",
+      "superseded_impact_on_this_scope": "none: no mixed-direction record reached the 8192 cap (max generation_length MedQA 2994, GPQA-D 6098; zero non-terminating)",
+      "included_pairs_count": 228,
+      "included_pairs": [
+        {
+          "item_id": 0,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 0,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 0,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 0,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 6,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 6,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 6,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 6,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 7,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 7,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 7,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 7,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 8,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 8,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 8,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 8,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 10,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 10,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 10,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 10,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 12,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 12,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 12,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 12,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 15,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 15,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 15,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 15,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 16,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 16,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 16,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 16,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 21,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 21,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 21,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 21,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 22,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 22,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 22,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 22,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 30,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 30,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 30,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 30,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 31,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 31,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 31,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 31,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 35,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 35,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 35,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 35,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 42,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 42,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 42,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 42,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 43,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 43,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 43,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 43,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 44,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 44,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 44,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 44,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 55,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 55,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 55,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 55,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 56,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 56,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 56,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 56,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 58,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 58,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 58,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 58,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 62,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 62,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 62,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 62,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 63,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 63,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 63,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 63,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 65,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 65,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 65,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 65,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 71,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 71,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 71,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 71,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 75,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 75,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 75,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 75,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 82,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 82,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 82,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 82,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 91,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 91,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 91,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 91,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 93,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 93,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 93,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 93,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 94,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 94,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 94,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 94,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 95,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 95,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 95,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 95,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 96,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 96,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 96,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 96,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 99,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 99,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 99,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 99,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 102,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 102,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 102,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 102,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 104,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 104,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 104,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 104,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 105,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 105,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 105,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 105,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 108,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 108,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 108,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 108,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 112,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 112,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 112,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 112,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 114,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 114,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 114,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 114,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 119,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 119,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 119,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 119,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 124,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 124,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 124,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 124,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 130,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 130,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 130,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 130,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 131,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 131,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 131,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 131,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 136,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 136,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 136,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 136,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 139,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 139,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 139,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 139,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 140,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 140,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 140,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 140,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 141,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 141,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 141,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 141,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 142,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 142,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 142,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 142,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 144,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 144,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 144,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 144,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 154,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 154,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 154,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 154,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 155,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 155,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 155,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 155,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 160,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 160,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 160,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 160,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 162,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 162,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 162,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 162,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 163,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 163,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 163,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 163,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 171,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 171,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 171,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 171,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 173,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 173,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 173,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 173,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 174,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 174,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 174,
+          "sender": "C",
+          "receiver": "A"
+        },
+        {
+          "item_id": 174,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 185,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 185,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 185,
+          "sender": "B",
+          "receiver": "C"
+        },
+        {
+          "item_id": 185,
+          "sender": "C",
+          "receiver": "B"
+        },
+        {
+          "item_id": 194,
+          "sender": "A",
+          "receiver": "B"
+        },
+        {
+          "item_id": 194,
+          "sender": "A",
+          "receiver": "C"
+        },
+        {
+          "item_id": 194,
+          "sender": "B",
+          "receiver": "A"
+        },
+        {
+          "item_id": 194,
+          "sender": "C",
+          "receiver": "A"
+        }
+      ]
+    }
+  },
+  "conditions": {
+    "none": {
+      "status": "REUSED",
+      "source": "artifacts/icr_v3/<ds>_full_seed42/revisions/merged.jsonl"
+    },
+    "true_text": {
+      "status": "REUSED",
+      "source": "artifacts/icr_v3/<ds>_full_seed42/revisions/merged.jsonl"
+    },
+    "answer_only": {
+      "status": "COMPLETE",
+      "new_revisions": 460,
+      "message_format": "Sender's final answer: {normalized_answer}",
+      "normalisation": "parser label only; gold answer never used",
+      "missing_marker": "UNPARSEABLE, flagged sender_answer_unparsed=true, pair retained"
+    },
+    "true_statebridge": {
+      "status": "REUSED_REFERENCE_ONLY",
+      "artifact_root": "artifacts/icr_v3/<ds>_full_seed42",
+      "replication_id": "seed_pair_00",
+      "global_seed": 42,
+      "note": "MedQA also has runs/medqa/replication_01 (seed_pair_01). NOT used here. No mixing of runs."
+    },
+    "true_latentmas": {
+      "status": "REUSED_REFERENCE_ONLY",
+      "source": "artifacts/icr_v3/<ds>_full_seed42"
+    },
+    "random_spans": {
+      "status": "BLOCKED",
+      "reason": "E0-E4 span selector, candidate pool and budget config absent from repository; see AUDIT_ISSUES C1"
+    },
+    "selected_spans": {
+      "status": "BLOCKED",
+      "reason": "same as random_spans"
+    }
+  },
+  "compatibility_verification": {
+    "key_sets_identical_to_all_four_baselines": true,
+    "revision_seed_identical_record_by_record": "460/460",
+    "phase1_shared_by_symlink": true,
+    "closed_form_count_check": "MedQA CR=PR=116, GPQA-D CR=PR=114, both match k(3-k) from phase-1 beliefs"
+  },
+  "code": {
+    "commit": "5ef9925016d3bd72955438b24cfbf28312f2c450",
+    "uncommitted_changes": 52,
+    "revision_prompt_file": "icr/prompts_v3.py",
+    "revision_prompt_sha256": "d31e3c61af43e15b6c459ef871a18c8ba6481351b675baa90f57470eb5749b23",
+    "channel_file": "icr/channels.py",
+    "channel_file_sha256": "b9447a3e6b95ea652e2390e7da741f63d92f566f3eca075e0ccfc068a414dc4e"
+  }
+}

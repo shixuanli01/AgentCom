@@ -1,0 +1,26 @@
+dataset,channel,change_rate_pct,cr_pct,pr_pct
+MedQA,No Message,4.31,6.90,98.28
+MedQA,Full Text,68.97,80.17,42.24
+MedQA,StateBridge,41.38,54.31,71.55
+MedQA,LatentMAS,68.53,69.83,32.76
+MedQA,Answer Only,29.31,38.79,80.17
+ARC-C,No Message,9.18,8.16,92.86
+ARC-C,Full Text,72.96,80.61,34.69
+ARC-C,StateBridge,62.24,69.39,44.90
+ARC-C,LatentMAS,56.12,58.16,45.92
+ARC-C,Answer Only,37.76,38.78,63.27
+GSM8K,No Message,11.96,13.04,92.39
+GSM8K,Full Text,50.54,51.09,52.17
+GSM8K,StateBridge,33.15,39.13,73.91
+GSM8K,LatentMAS,56.52,59.78,46.74
+GSM8K,Answer Only,34.78,39.13,70.65
+GPQA-D,No Message,11.84,14.04,96.49
+GPQA-D,Full Text,63.60,74.56,47.37
+GPQA-D,StateBridge,56.14,64.04,51.75
+GPQA-D,LatentMAS,55.26,61.40,50.88
+GPQA-D,Answer Only,47.37,56.14,63.16
+
+# CR = a + b*change_rate,a,1.639,b,1.0834,R2,0.9754,n,20
+
+# PR = a + b*change_rate,a,104.580,b,-0.9628,R2,0.9706,n,20
+# MedQA StateBridge uses replication_id seed_pair_01

@@ -1,0 +1,9 @@
+"# MedQA StateBridge, replication_id=seed_pair_01, root=runs/medqa/replication_01"
+"# bootstrap 2000 resamples, analysis seed 20260921 (matches the other rows of the main table)"
+metric,numerator,denominator,value_pct,ci95_low_pct,ci95_high_pct
+CR,63,116,54.3103,42.6230,65.4545
+PR,83,116,71.5517,61.7021,81.0345
+SR,2,436,0.4587,0.0000,1.2821
+SCR,52,52,100.0000,100.0000,100.0000
+SI,,,62.9310,55.7377,70.0893
+Acc_ret,200,720,27.7778,21.6667,34.1667

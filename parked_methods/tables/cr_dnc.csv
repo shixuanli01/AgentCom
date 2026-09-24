@@ -1,0 +1,7 @@
+dataset,variant,condition_key,completeness,n_records,n_expected,cr_pct,cr_num,cr_den,pr_pct,pr_num,pr_den,si_pct,si_minus_50,dpi,adoption_pi_bar_pct,sr_pct,scr_pct,acc_ret_pct,source_root
+MedQA,CR-DNC alpha=0.25,cr_dnc_a025,INCOMPLETE 138/720,138,720,45.45,10,22,72.73,16,22,59.09,+9.09,18.2,36.4,0.00,100.00,26.09,runs/medqa/cr_dnc_v1/icr_root
+MedQA,CR-DNC alpha=0.50,cr_dnc_a050,INCOMPLETE 138/720,138,720,54.55,12,22,68.18,15,22,61.36,+11.36,22.7,43.2,0.00,100.00,26.81,runs/medqa/cr_dnc_v1/icr_root
+MedQA,CR-DNC alpha=0.75,cr_dnc_a075,INCOMPLETE 138/720,138,720,54.55,12,22,68.18,15,22,61.36,+11.36,22.7,43.2,0.00,100.00,26.81,runs/medqa/cr_dnc_v1/icr_root
+MedQA,CR-DNC alpha=1.00,cr_dnc_a100,INCOMPLETE 138/720,138,720,50.00,11,22,72.73,16,22,61.36,+11.36,22.7,38.6,1.19,100.00,27.54,runs/medqa/cr_dnc_v1/icr_root
+MedQA,CR-DNC random-direction ctrl,cr_dnc_randdir_a100,INCOMPLETE 138/720,138,720,63.64,14,22,77.27,17,22,70.45,+20.45,40.9,43.2,0.00,100.00,29.71,runs/medqa/cr_dnc_v1/icr_root
+MedQA,CR-DNC random-norm ctrl,cr_dnc_randnorm_a100,INCOMPLETE 138/720,138,720,72.73,16,22,77.27,17,22,75.00,+25.00,50.0,47.7,0.00,100.00,31.16,runs/medqa/cr_dnc_v1/icr_root

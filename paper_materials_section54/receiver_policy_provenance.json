@@ -1,0 +1,283 @@
+{
+  "name": "paper_materials_section54",
+  "generated_at": "2026-09-23",
+  "analysis_seed": 20260923,
+  "bootstrap_resamples": 10000,
+  "new_gpu_calls_this_round": 0,
+  "scope": "mixed-correctness directed pairs (CR group + PR group) only",
+  "code": {
+    "commit": "5ef9925016d3bd72955438b24cfbf28312f2c450",
+    "uncommitted_changes": 54,
+    "prompts_v3": "icr/prompts_v3.py",
+    "prompts_v3_sha256": "d31e3c61af43e15b6c459ef871a18c8ba6481351b675baa90f57470eb5749b23",
+    "prompts_v4": "icr/prompts_v4.py",
+    "prompts_v4_sha256": "ef94638977e2b3f38fdd5518296dcd3c19d2e655a05790f5e96af142f28427ad"
+  },
+  "runs": {
+    "MedQA/V3": {
+      "artifact_root": "artifacts/icr_v3/medqa_full_seed42",
+      "replication_id": "seed_pair_00",
+      "global_seed": 42,
+      "revision_prompt_version": "icr_v3_mid_injection",
+      "config_fingerprint": "355c5073cd75bb6fba78bad536a8081cca7855c7263452fe59411417cc2b8f52",
+      "dataset_sha256": "ddee8dc64d3b2a1e5061c409c68d626109237640009168838a038db29efe802c",
+      "dataset_rows": 300,
+      "phase1_trajectory_content_sha256": "56c3379a69a3ea0f1de72b3136eb85e76441cbf0a8cd49b753ad740a80a8fc43",
+      "conditions_present": [
+        "none",
+        "true_text",
+        "true_statebridge",
+        "true_latentmas"
+      ],
+      "n_mixed_per_condition": 232,
+      "model": "Qwen/Qwen3-4B",
+      "generation": {
+        "do_sample": true,
+        "max_new_tokens": 16384,
+        "temperature": 0.6,
+        "top_k": null,
+        "top_p": 0.95
+      },
+      "protocol": "ICR-V3",
+      "solver_prompt_version": "icr_v2_phase1_verbatim",
+      "answer_parser_version": "icr.parsing_v3@ICR-V3",
+      "scorer": "icr.parsing_v3 correctness against gold label",
+      "seed_derivation": "replicated_stable_seed(global_seed, replication_id, item_id, direction); receiver policy and condition are NOT part of the seed"
+    },
+    "MedQA/V4": {
+      "artifact_root": "runs/medqa/v4_verify",
+      "replication_id": "seed_pair_00",
+      "global_seed": 42,
+      "revision_prompt_version": "icr_v4_verify_then_decide",
+      "receiver_policy": "verify",
+      "config_fingerprint": "355c5073cd75bb6fba78bad536a8081cca7855c7263452fe59411417cc2b8f52",
+      "dataset_sha256": "ddee8dc64d3b2a1e5061c409c68d626109237640009168838a038db29efe802c",
+      "prebeliefs_symlink": "/workspace/AgentCom/methods/AgentCom-StateBridge/artifacts/icr_v3/medqa_full_seed42/prebeliefs",
+      "messages_symlink": "/workspace/AgentCom/methods/AgentCom-StateBridge/artifacts/icr_v3/medqa_full_seed42/messages",
+      "phase1_trajectory_content_sha256": "56c3379a69a3ea0f1de72b3136eb85e76441cbf0a8cd49b753ad740a80a8fc43",
+      "conditions_present": [
+        "none",
+        "true_text",
+        "true_statebridge",
+        "true_latentmas"
+      ],
+      "n_mixed_per_condition": 232,
+      "model": "Qwen/Qwen3-4B",
+      "generation": {
+        "do_sample": true,
+        "max_new_tokens": 16384,
+        "temperature": 0.6,
+        "top_k": null,
+        "top_p": 0.95
+      },
+      "protocol": "ICR-V3",
+      "solver_prompt_version": "icr_v2_phase1_verbatim",
+      "answer_parser_version": "icr.parsing_v3@ICR-V3",
+      "scorer": "icr.parsing_v3 correctness against gold label",
+      "seed_derivation": "replicated_stable_seed(global_seed, replication_id, item_id, direction); receiver policy and condition are NOT part of the seed"
+    },
+    "GPQA-D/V3": {
+      "artifact_root": "artifacts/icr_v3/gpqa_full_seed42",
+      "replication_id": "seed_pair_00",
+      "global_seed": 42,
+      "revision_prompt_version": "icr_v3_mid_injection",
+      "config_fingerprint": "f3a6568c0975ebe7e0cf9c3d00c827d757363717095bb827c2ae4bf0deea3f2d",
+      "dataset_sha256": "42cdb10747fbb798116e3b490f470836d6ec1d47d24ae5b06dea7e8cae616f42",
+      "phase1_trajectory_content_sha256": "c56df2971fb2cbb3f1d715a3349d4859eb53d00daf92c2b1b9f94226f4ed9124",
+      "conditions_present": [
+        "none",
+        "true_text",
+        "true_statebridge",
+        "true_latentmas"
+      ],
+      "n_mixed_per_condition": 228,
+      "model": "Qwen/Qwen3-4B",
+      "generation": {
+        "do_sample": true,
+        "max_new_tokens": 16384,
+        "temperature": 0.6,
+        "top_k": null,
+        "top_p": 0.95
+      },
+      "protocol": "ICR-V3",
+      "solver_prompt_version": "icr_v2_phase1_verbatim",
+      "answer_parser_version": "icr.parsing_v3@ICR-V3",
+      "scorer": "icr.parsing_v3 correctness against gold label",
+      "seed_derivation": "replicated_stable_seed(global_seed, replication_id, item_id, direction); receiver policy and condition are NOT part of the seed"
+    },
+    "GPQA-D/V4": {
+      "status": "COMPLETE",
+      "artifact_root": "runs/gpqa/v4_verify",
+      "executed": "2026-09-23T07:50Z to 09:43Z, 684 revisions, 0 failures",
+      "replication_id": "seed_pair_00",
+      "global_seed": 42,
+      "revision_prompt_version": "icr_v4_verify_then_decide",
+      "receiver_policy": "verify",
+      "config_fingerprint": "f3a6568c0975ebe7e0cf9c3d00c827d757363717095bb827c2ae4bf0deea3f2d",
+      "dataset_sha256": "42cdb10747fbb798116e3b490f470836d6ec1d47d24ae5b06dea7e8cae616f42",
+      "prebeliefs_symlink": "/workspace/AgentCom/methods/AgentCom-StateBridge/artifacts/icr_v3/gpqa_full_seed42/prebeliefs",
+      "messages_symlink": "/workspace/AgentCom/methods/AgentCom-StateBridge/artifacts/icr_v3/gpqa_full_seed42/messages",
+      "phase1_trajectory_content_sha256": "c56df2971fb2cbb3f1d715a3349d4859eb53d00daf92c2b1b9f94226f4ed9124",
+      "conditions_present": [
+        "none",
+        "true_text",
+        "true_statebridge"
+      ],
+      "conditions_absent": [
+        "true_latentmas",
+        "true_answer"
+      ],
+      "n_mixed_per_condition": 228,
+      "measured_scope": "mixed_directions_only",
+      "scope_note": "run with --pair-classes correction_opportunity,destruction_risk. SR, SCR, Acc_ret and full-set accuracy are NOT MEASURED for this arm. MedQA/V4 by contrast covers all six directions; all Section 5.4 analysis uses the mixed subset of both, so the comparison is on a common scope.",
+      "model": "Qwen/Qwen3-4B",
+      "generation": {
+        "do_sample": true,
+        "max_new_tokens": 16384,
+        "temperature": 0.6,
+        "top_p": 0.95,
+        "top_k": null
+      },
+      "protocol": "ICR-V3",
+      "solver_prompt_version": "icr_v2_phase1_verbatim",
+      "answer_parser_version": "icr.parsing_v3@ICR-V3",
+      "seed_derivation": "replicated_stable_seed(global_seed, replication_id, item_id, direction); receiver policy and condition are NOT part of the seed",
+      "stale_config_corrected": "the pre-existing config.json carried revision_prompt_version=icr_v3_mid_injection while receiver_policy=verify. icr/revisions.py:173-175 rewrote it to icr_v4_verify_then_decide at launch; verified after a two-item smoke test."
+    },
+    "MedQA/V4/StateBridge@seed_pair_01": {
+      "status": "COMPLETE",
+      "artifact_root": "runs/medqa/v4_verify_seed01",
+      "executed": "2026-09-24T01:07Z to 01:20Z, 232 revisions, 0 failures",
+      "replication_id": "seed_pair_01",
+      "global_seed": 42,
+      "revision_prompt_version": "icr_v4_verify_then_decide",
+      "receiver_policy": "verify",
+      "config_fingerprint": "355c5073cd75bb6fba78bad536a8081cca7855c7263452fe59411417cc2b8f52",
+      "measured_scope": "mixed_directions_only",
+      "n": 232,
+      "purpose": "closes the cross-seed gap: the MedQA StateBridge V3/V4 comparison is now revision-seed controlled",
+      "verification": {
+        "revision_seed_identical_to_replication_01_V3": "232/232",
+        "payload_identical": "232/232",
+        "prompt_sha256_identical": "0/232"
+      }
+    }
+  },
+  "comparability_checks_MedQA_V3_vs_V4": {
+    "No Message": {
+      "n_v3": 232,
+      "n_v4": 232,
+      "n_common": 232,
+      "revision_seed_identical": "232/232",
+      "receiver_prior_sha_identical": "232/232",
+      "payload_identical_excluding_timing": "232/232",
+      "prompt_sha_identical": "0/232"
+    },
+    "Full Text": {
+      "n_v3": 232,
+      "n_v4": 232,
+      "n_common": 232,
+      "revision_seed_identical": "232/232",
+      "receiver_prior_sha_identical": "232/232",
+      "payload_identical_excluding_timing": "232/232",
+      "prompt_sha_identical": "0/232"
+    },
+    "StateBridge": {
+      "n_v3": 232,
+      "n_v4": 232,
+      "n_common": 232,
+      "revision_seed_identical": "232/232",
+      "receiver_prior_sha_identical": "232/232",
+      "payload_identical_excluding_timing": "232/232",
+      "prompt_sha_identical": "0/232"
+    },
+    "LatentMAS": {
+      "n_v3": 232,
+      "n_v4": 232,
+      "n_common": 232,
+      "revision_seed_identical": "232/232",
+      "receiver_prior_sha_identical": "232/232",
+      "payload_identical_excluding_timing": "232/232",
+      "prompt_sha_identical": "0/232"
+    }
+  },
+  "comparability_summary": {
+    "dataset_and_option_order": "identical: same dataset file and sha256, same selected_item_ids",
+    "sender_and_receiver_phase1_trajectories": "identical: v4_verify/prebeliefs is a symlink to the V3 artifact, unmodified",
+    "sender_message_content": "identical: v4_verify/messages is a symlink to the V3 artifact; per-record payload metadata matches for every condition once the wall-clock field communication_seconds is excluded",
+    "message_injection_position": "identical: V4 reuses icr.prompts_v3.external_block() and the same five-block order",
+    "generation_and_scoring": "identical: same model, temperature 0.6, top_p 0.95, max_new_tokens 16384, same parser and scorer",
+    "revision_seed": "identical record by record: MedQA 232/232 in all four conditions, GPQA-D 228/228 in all three conditions. The V3/V4 comparison IS revision-seed controlled on both datasets.",
+    "what_differs": "the receiver integration block only (see receiver_policy_prompts.md)"
+  },
+  "statebridge_payload_question": {
+    "question": "did the receiver prompt change cause the payload or alignment to be recomputed?",
+    "answer": "NO",
+    "evidence": [
+      "runs/medqa/v4_verify/messages is a symlink to artifacts/icr_v3/medqa_full_seed42/messages, so prefixes are read, not rebuilt",
+      "per-record communication_payload for true_statebridge is byte-identical across V3 and V4 in 232/232 records: {dtype bfloat16, hidden_dimension 2560, modality statebridge, payload_bytes 327680, states 64}",
+      "for true_latentmas every substantive field matches (source_generation_seed, source_prompt_sha256, cache_positions, kv_payload_bytes, generated_latent_steps); only communication_seconds, a wall-clock measurement, differs"
+    ],
+    "conclusion": "the claim 'only the receiver instruction changed' is supported for StateBridge and LatentMAS message content"
+  },
+  "seed_grouping_warning": {
+    "policy_2026-09-23": "MedQA StateBridge is reported from seed_pair_01 everywhere. seed_pair_00 is WITHDRAWN from all reported results.",
+    "adopted_source": {
+      "artifact_root": "runs/medqa/replication_01",
+      "replication_id": "seed_pair_01",
+      "cr": "63/116",
+      "pr": "83/116",
+      "si_pct": 62.931,
+      "acc_ret": "200/720 = 27.7778%"
+    },
+    "withdrawn_source": {
+      "artifact_root": "artifacts/icr_v3/medqa_full_seed42",
+      "replication_id": "seed_pair_00",
+      "cr": "67/116",
+      "pr": "87/116",
+      "si_pct": 66.3793,
+      "note": "records remain on disk for provenance only; must not be cited"
+    },
+    "ACCEPTED_CONFOUND": {
+      "status": "RESOLVED 2026-09-24",
+      "what_it_was": "the V4 arm was seed_pair_00 while V3 was seed_pair_01, so revision_seed matched 0/232",
+      "how_resolved": "runs/medqa/v4_verify_seed01 was run; both arms are now seed_pair_01 and revision_seed matches 232/232",
+      "consequence_of_the_fix": "MedQA StateBridge delta_SI moved from -6.47 [-11.64, -1.29] (cross-seed, interval excluded zero) to -5.60 [-12.07, +0.86] (controlled, interval includes zero). The cross-seed version was a false positive; the controlled comparison gives no interval support.",
+      "superseded_run": "runs/medqa/v4_verify true_statebridge (seed_pair_00) is no longer cited for MedQA"
+    }
+  },
+  "comparability_checks_GPQA_V3_vs_V4": {
+    "No Message": {
+      "n_v3": 228,
+      "n_v4": 228,
+      "n_common": 228,
+      "revision_seed_identical": "228/228",
+      "receiver_prior_sha_identical": "228/228",
+      "payload_identical_excluding_timing": "228/228",
+      "prompt_sha_identical": "0/228"
+    },
+    "Full Text": {
+      "n_v3": 228,
+      "n_v4": 228,
+      "n_common": 228,
+      "revision_seed_identical": "228/228",
+      "receiver_prior_sha_identical": "228/228",
+      "payload_identical_excluding_timing": "228/228",
+      "prompt_sha_identical": "0/228"
+    },
+    "StateBridge": {
+      "n_v3": 228,
+      "n_v4": 228,
+      "n_common": 228,
+      "revision_seed_identical": "228/228",
+      "receiver_prior_sha_identical": "228/228",
+      "payload_identical_excluding_timing": "228/228",
+      "prompt_sha_identical": "0/228"
+    }
+  },
+  "scope_asymmetry": {
+    "MedQA/V4": "all six directions (720 records per condition)",
+    "GPQA-D/V4": "mixed directions only (228 records per condition)",
+    "impact": "none on Section 5.4, which evaluates the mixed subset on both. It does mean GPQA-D/V4 cannot report SR, SCR or Acc_ret."
+  }
+}

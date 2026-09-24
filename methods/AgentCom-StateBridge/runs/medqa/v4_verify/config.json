@@ -9,8 +9,6 @@
     "skip_all_correct_items": false
   },
   "completed_revision_conditions": [],
-  "cr_dnc_note": "isolated root for CR-DNC method development; prebeliefs symlinked to the published artifact, revisions written here so the baseline config is never modified",
-  "cr_dnc_source_artifact": "artifacts/icr_v3/medqa_full_seed42",
   "dataset": "medqa",
   "dataset_rows": 300,
   "dataset_sha256": "ddee8dc64d3b2a1e5061c409c68d626109237640009168838a038db29efe802c",
@@ -34,14 +32,8 @@
   ],
   "model": "Qwen/Qwen3-4B",
   "other_mapping_offset": 137,
-  "pair_class_scope": {
-    "true_answer": [
-      "correction_opportunity",
-      "destruction_risk"
-    ]
-  },
-  "protocol": "ICR-V3",
-  "receiver_policy": "revise",
+  "protocol": "ICR-V4",
+  "receiver_policy": "verify",
   "replication_id": "seed_pair_00",
   "revision_conditions": [
     "none",
@@ -59,21 +51,12 @@
     "other_latentmas"
   ],
   "revision_conditions_requested": [
-    "cr_dnc_a100",
-    "cr_dnc_a025",
-    "cr_dnc_a050",
-    "cr_dnc_a075",
-    "cr_dnc_randdir_a100",
-    "cr_dnc_randnorm_a100",
-    "true_evidence",
-    "other_evidence",
-    "true_evidence_v2",
-    "true_hybrid",
-    "true_rawhybrid",
-    "true_hybrid_v3",
-    "true_answer"
+    "none",
+    "true_text",
+    "true_statebridge",
+    "true_latentmas"
   ],
-  "revision_prompt_version": "icr_v3_mid_injection",
+  "revision_prompt_version": "icr_v4_verify_then_decide",
   "selected_item_ids": [
     0,
     1,
@@ -396,5 +379,6 @@
   },
   "superseded_fingerprints": [
     "96d887fc74fa20233ad0dea5fecb234e265ffe9fb994858e4c3713933ca0446d"
-  ]
+  ],
+  "v4_note": "factorial arm: the four frozen channels rerun under the V4 verify-then-decide receiver policy. Beliefs and StateBridge prefixes are the frozen V3 artifacts, symlinked. V3 and V4 results are not comparable across the policy, so every channel is rerun."
 }

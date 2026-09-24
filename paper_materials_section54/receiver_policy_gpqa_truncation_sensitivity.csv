@@ -1,0 +1,31 @@
+# GPQA-D common-valid-mask sensitivity. Events excluded if ANY of the six cells truncated.
+# POST-TREATMENT SELECTION: the mask depends on revision outcomes. Does NOT replace the main analysis.
+# excluded events,6,common valid events,222,main analysis,228
+
+kind,condition,policy,cr_num,cr_den,cr_pct,pr_num,pr_den,pr_pct,si_pct,si_ci_low,si_ci_high,si_main,si_minus_main
+metric,No Message,V3,14,111,12.6126,107,111,96.3964,54.5045,50.8888,58.4821,55.2632,-0.7587
+metric,No Message,V4,8,111,7.2072,110,111,99.0991,53.1532,50.8888,55.8036,52.1930,+0.9602
+metric,Full Text,V3,82,111,73.8739,53,111,47.7477,60.8108,52.4406,69.3694,60.9649,-0.1541
+metric,Full Text,V4,60,111,54.0541,68,111,61.2613,57.6577,48.1982,67.0698,58.3333,-0.6756
+metric,StateBridge,V3,71,111,63.9640,56,111,50.4505,57.2072,49.3082,65.1269,57.8947,-0.6875
+metric,StateBridge,V4,55,111,49.5495,77,111,69.3694,59.4595,51.7127,66.9574,60.5263,-1.0668
+
+kind,channel,,G_v3,G_v4,delta_G,ci_low,ci_high,covers_zero,invalid_resamples,delta_G_main
+delta_G,Full Text,,6.3063,4.5045,-1.8018,-9.9099,+6.2500,YES,0,+0.4386
+delta_G,StateBridge,,2.7027,6.3063,+3.6036,-3.8961,+11.2449,YES,0,+5.7018
+
+kind,diff_v3,diff_v4,interaction_I,ci_low,ci_high,covers_zero,invalid_resamples,I_main,I_main_ci
+interaction,-3.6036,+1.8018,+5.4054,-4.5127,+15.3875,YES,0,+5.2632,"[-4.3860, +14.9123]"
+
+excluded_item_id,direction,pair_classification,cells_truncated
+21,B_to_C,correction_opportunity,No Message/V4
+63,A_to_B,correction_opportunity,StateBridge/V3;No Message/V4
+63,B_to_A,destruction_risk,No Message/V4
+63,B_to_C,destruction_risk,Full Text/V3
+63,C_to_B,correction_opportunity,No Message/V3;No Message/V4
+71,C_to_B,destruction_risk,No Message/V4
+
+kind,condition,delta_cr_pp,delta_pr_pp,delta_si_pp,ci_low,ci_high,covers_zero,delta_si_main,delta_si_main_ci
+delta_SI,No Message,-5.4054,+2.7027,-1.3514,-4.9067,+2.2321,YES,-3.0702,"[-7.0175, +0.8772]"
+delta_SI,Full Text,-19.8198,+13.5135,-3.1532,-9.9501,+3.6036,YES,-2.6316,"[-9.2105, +4.3860]"
+delta_SI,StateBridge,-14.4144,+18.9189,+2.2523,-4.6753,+9.0909,YES,+2.6316,"[-4.3860, +9.2105]"

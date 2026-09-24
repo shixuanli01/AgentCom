@@ -1,0 +1,343 @@
+{
+  "name": "paper_materials_section53",
+  "generated_at": "2026-09-23",
+  "analysis_seed": 20260923,
+  "bootstrap_resamples": 10000,
+  "scope": "mixed-correctness directed pairs only",
+  "new_gpu_calls_this_round": 0,
+  "code": {
+    "commit": "5ef9925016d3bd72955438b24cfbf28312f2c450",
+    "uncommitted_changes": 53,
+    "revision_prompt_file": "icr/prompts_v3.py",
+    "channels_file": "icr/channels.py"
+  },
+  "datasets": {
+    "MedQA": {
+      "benchmark": "medqa300",
+      "dataset_file": "medqa",
+      "dataset_sha256": "ddee8dc64d3b2a1e5061c409c68d626109237640009168838a038db29efe802c",
+      "dataset_rows": 300,
+      "model": "Qwen/Qwen3-4B",
+      "generation": {
+        "do_sample": true,
+        "max_new_tokens": 16384,
+        "temperature": 0.6,
+        "top_k": null,
+        "top_p": 0.95
+      },
+      "protocol": "ICR-V3",
+      "revision_prompt_version": "icr_v3_mid_injection",
+      "solver_prompt_version": "icr_v2_phase1_verbatim",
+      "answer_parser_version": "icr.parsing_v3@ICR-V3",
+      "scorer": "icr.parsing_v3 correctness against gold label",
+      "global_seed": 42,
+      "seed_derivation": "replicated_stable_seed(global_seed, replication_id, item_id, direction); condition NOT in the seed",
+      "phase1_artifact_root": "artifacts/icr_v3/medqa_full_seed42",
+      "phase1_trajectory_content_sha256": "56c3379a69a3ea0f1de72b3136eb85e76441cbf0a8cd49b753ad740a80a8fc43",
+      "config_fingerprint_active": "355c5073cd75bb6fba78bad536a8081cca7855c7263452fe59411417cc2b8f52",
+      "config_fingerprint_superseded": [
+        "96d887fc74fa20233ad0dea5fecb234e265ffe9fb994858e4c3713933ca0446d"
+      ],
+      "conditions": {
+        "No Message": {
+          "condition_key": "none",
+          "status": "REUSED_EXISTING",
+          "source_root": "artifacts/icr_v3/medqa_full_seed42",
+          "prebeliefs_symlink": "artifacts/icr_v3/medqa_full_seed42/prebeliefs",
+          "replication_id": [
+            "seed_pair_00"
+          ],
+          "config_fingerprints": [
+            "355c5073cd75bb6fba78bad536a8081cca7855c7263452fe59411417cc2b8f52",
+            "96d887fc74fa20233ad0dea5fecb234e265ffe9fb994858e4c3713933ca0446d"
+          ],
+          "n_records": 232
+        },
+        "Answer Only": {
+          "condition_key": "true_answer",
+          "status": "REUSED_EXISTING",
+          "source_root": "runs/medqa/cr_dnc_v1/icr_root",
+          "prebeliefs_symlink": "/workspace/AgentCom/methods/AgentCom-StateBridge/artifacts/icr_v3/medqa_full_seed42/prebeliefs",
+          "replication_id": [
+            "seed_pair_00"
+          ],
+          "config_fingerprints": [
+            "355c5073cd75bb6fba78bad536a8081cca7855c7263452fe59411417cc2b8f52"
+          ],
+          "n_records": 232
+        },
+        "Full Text": {
+          "condition_key": "true_text",
+          "status": "REUSED_EXISTING",
+          "source_root": "artifacts/icr_v3/medqa_full_seed42",
+          "prebeliefs_symlink": "artifacts/icr_v3/medqa_full_seed42/prebeliefs",
+          "replication_id": [
+            "seed_pair_00"
+          ],
+          "config_fingerprints": [
+            "355c5073cd75bb6fba78bad536a8081cca7855c7263452fe59411417cc2b8f52",
+            "96d887fc74fa20233ad0dea5fecb234e265ffe9fb994858e4c3713933ca0446d"
+          ],
+          "n_records": 232
+        }
+      }
+    },
+    "ARC-C": {
+      "benchmark": "arc_challenge",
+      "dataset_file": "arc_challenge",
+      "dataset_sha256": "e5f26d489a59a1cf0e77ed86ce732a321026a13d294d25582bfcff2129372be6",
+      "dataset_rows": 1172,
+      "model": "Qwen/Qwen3-4B",
+      "generation": {
+        "do_sample": true,
+        "max_new_tokens": 16384,
+        "temperature": 0.6,
+        "top_k": null,
+        "top_p": 0.95
+      },
+      "protocol": "ICR-V3",
+      "revision_prompt_version": "icr_v3_mid_injection",
+      "solver_prompt_version": "icr_v2_phase1_verbatim",
+      "answer_parser_version": "icr.parsing_v3@ICR-V3",
+      "scorer": "icr.parsing_v3 correctness against gold label",
+      "global_seed": 42,
+      "seed_derivation": "replicated_stable_seed(global_seed, replication_id, item_id, direction); condition NOT in the seed",
+      "phase1_artifact_root": "artifacts/icr_v3/arc_challenge_full_seed42",
+      "phase1_trajectory_content_sha256": "c6b2c13758d0a55a44d62e3d118be7ce7f9cd05bf7e56edf763ae17fa5d1fa63",
+      "config_fingerprint_active": "6f992a8ecbda97101e4902c39ef710f195315dac31f18e3cbc04f30f40e537a4",
+      "config_fingerprint_superseded": [
+        "d93cc43d9029c74276e8561d8efdea57eac309a249fb8aff68ede869799df27a",
+        "2e3f2d9ad36a4b9bdc6de44ddd4542d21736627976faa6cb300a0024d0a3b4fd",
+        "4acc0c993442d54cbea67385410ca854e20415a164531c40d62a07053a601d99"
+      ],
+      "conditions": {
+        "No Message": {
+          "condition_key": "none",
+          "status": "REUSED_EXISTING",
+          "source_root": "artifacts/icr_v3/arc_challenge_full_seed42",
+          "prebeliefs_symlink": "artifacts/icr_v3/arc_challenge_full_seed42/prebeliefs",
+          "replication_id": [
+            "seed_pair_00"
+          ],
+          "config_fingerprints": [
+            "6f992a8ecbda97101e4902c39ef710f195315dac31f18e3cbc04f30f40e537a4",
+            "d93cc43d9029c74276e8561d8efdea57eac309a249fb8aff68ede869799df27a"
+          ],
+          "n_records": 196
+        },
+        "Answer Only": {
+          "condition_key": "true_answer",
+          "status": "REUSED_EXISTING",
+          "source_root": "runs/arc_challenge/hybrid_root",
+          "prebeliefs_symlink": "/workspace/AgentCom/methods/AgentCom-StateBridge/artifacts/icr_v3/arc_challenge_full_seed42/prebeliefs",
+          "replication_id": [
+            "seed_pair_00"
+          ],
+          "config_fingerprints": [
+            "6f992a8ecbda97101e4902c39ef710f195315dac31f18e3cbc04f30f40e537a4"
+          ],
+          "n_records": 196
+        },
+        "Full Text": {
+          "condition_key": "true_text",
+          "status": "REUSED_EXISTING",
+          "source_root": "artifacts/icr_v3/arc_challenge_full_seed42",
+          "prebeliefs_symlink": "artifacts/icr_v3/arc_challenge_full_seed42/prebeliefs",
+          "replication_id": [
+            "seed_pair_00"
+          ],
+          "config_fingerprints": [
+            "6f992a8ecbda97101e4902c39ef710f195315dac31f18e3cbc04f30f40e537a4",
+            "d93cc43d9029c74276e8561d8efdea57eac309a249fb8aff68ede869799df27a"
+          ],
+          "n_records": 196
+        }
+      }
+    },
+    "GSM8K": {
+      "benchmark": "gsm8k_test",
+      "dataset_file": "gsm8k",
+      "dataset_sha256": "14dbb509584329a3fe0aff683f095cc9a951e1dd8d7fbe024a60351ee4be5a45",
+      "dataset_rows": 1319,
+      "model": "Qwen/Qwen3-4B",
+      "generation": {
+        "do_sample": true,
+        "max_new_tokens": 16384,
+        "temperature": 0.6,
+        "top_k": null,
+        "top_p": 0.95
+      },
+      "protocol": "ICR-V3",
+      "revision_prompt_version": "icr_v3_mid_injection",
+      "solver_prompt_version": "icr_v2_phase1_verbatim",
+      "answer_parser_version": "icr.parsing_v3@ICR-V3",
+      "scorer": "icr.parsing_v3 correctness against gold label",
+      "global_seed": 42,
+      "seed_derivation": "replicated_stable_seed(global_seed, replication_id, item_id, direction); condition NOT in the seed",
+      "phase1_artifact_root": "artifacts/icr_v3/gsm8k_full_seed42",
+      "phase1_trajectory_content_sha256": "1e9459474dca38bc901ae7080ea9f1b33b3b699c3b96260cab0e6119e0c90f87",
+      "config_fingerprint_active": "54423e26f7e585a72ce00775aada36bfe96341e0480f57dbac36f36ca412c7ba",
+      "config_fingerprint_superseded": [
+        "060aadffeca190b23e9adef02f643b66e3cd274815a49fa294e4aa5dbfaa9e14",
+        "2256105b1a29f3088c730194e7fbe71bda5f9f6b751941d22c4f9b5591c7fd60",
+        "42cd924cbd5bc7c642348e37ea651f78cc28852923e189707c6d7a4641276ba5"
+      ],
+      "conditions": {
+        "No Message": {
+          "condition_key": "none",
+          "status": "REUSED_EXISTING",
+          "source_root": "artifacts/icr_v3/gsm8k_full_seed42",
+          "prebeliefs_symlink": "artifacts/icr_v3/gsm8k_full_seed42/prebeliefs",
+          "replication_id": [
+            "seed_pair_00"
+          ],
+          "config_fingerprints": [
+            "2256105b1a29f3088c730194e7fbe71bda5f9f6b751941d22c4f9b5591c7fd60",
+            "54423e26f7e585a72ce00775aada36bfe96341e0480f57dbac36f36ca412c7ba"
+          ],
+          "n_records": 184
+        },
+        "Answer Only": {
+          "condition_key": "true_answer",
+          "status": "REUSED_EXISTING",
+          "source_root": "runs/gsm8k/hybrid_root",
+          "prebeliefs_symlink": "/workspace/AgentCom/methods/AgentCom-StateBridge/artifacts/icr_v3/gsm8k_full_seed42/prebeliefs",
+          "replication_id": [
+            "seed_pair_00"
+          ],
+          "config_fingerprints": [
+            "54423e26f7e585a72ce00775aada36bfe96341e0480f57dbac36f36ca412c7ba"
+          ],
+          "n_records": 184
+        },
+        "Full Text": {
+          "condition_key": "true_text",
+          "status": "REUSED_EXISTING",
+          "source_root": "artifacts/icr_v3/gsm8k_full_seed42",
+          "prebeliefs_symlink": "artifacts/icr_v3/gsm8k_full_seed42/prebeliefs",
+          "replication_id": [
+            "seed_pair_00"
+          ],
+          "config_fingerprints": [
+            "2256105b1a29f3088c730194e7fbe71bda5f9f6b751941d22c4f9b5591c7fd60",
+            "54423e26f7e585a72ce00775aada36bfe96341e0480f57dbac36f36ca412c7ba"
+          ],
+          "n_records": 184
+        }
+      }
+    },
+    "GPQA-D": {
+      "benchmark": "gpqa_diamond",
+      "dataset_file": "gpqa",
+      "dataset_sha256": "42cdb10747fbb798116e3b490f470836d6ec1d47d24ae5b06dea7e8cae616f42",
+      "dataset_rows": 198,
+      "model": "Qwen/Qwen3-4B",
+      "generation": {
+        "do_sample": true,
+        "max_new_tokens": 16384,
+        "temperature": 0.6,
+        "top_k": null,
+        "top_p": 0.95
+      },
+      "protocol": "ICR-V3",
+      "revision_prompt_version": "icr_v3_mid_injection",
+      "solver_prompt_version": "icr_v2_phase1_verbatim",
+      "answer_parser_version": "icr.parsing_v3@ICR-V3",
+      "scorer": "icr.parsing_v3 correctness against gold label",
+      "global_seed": 42,
+      "seed_derivation": "replicated_stable_seed(global_seed, replication_id, item_id, direction); condition NOT in the seed",
+      "phase1_artifact_root": "artifacts/icr_v3/gpqa_full_seed42",
+      "phase1_trajectory_content_sha256": "c56df2971fb2cbb3f1d715a3349d4859eb53d00daf92c2b1b9f94226f4ed9124",
+      "config_fingerprint_active": "f3a6568c0975ebe7e0cf9c3d00c827d757363717095bb827c2ae4bf0deea3f2d",
+      "config_fingerprint_superseded": [
+        "cb9f218c2b3571fabd2ab894250af46cf053990d815e1d77bbd5fa897f53af2e"
+      ],
+      "conditions": {
+        "No Message": {
+          "condition_key": "none",
+          "status": "REUSED_EXISTING",
+          "source_root": "artifacts/icr_v3/gpqa_full_seed42",
+          "prebeliefs_symlink": "artifacts/icr_v3/gpqa_full_seed42/prebeliefs",
+          "replication_id": [
+            "seed_pair_00"
+          ],
+          "config_fingerprints": [
+            "cb9f218c2b3571fabd2ab894250af46cf053990d815e1d77bbd5fa897f53af2e",
+            "f3a6568c0975ebe7e0cf9c3d00c827d757363717095bb827c2ae4bf0deea3f2d"
+          ],
+          "n_records": 228
+        },
+        "Answer Only": {
+          "condition_key": "true_answer",
+          "status": "REUSED_EXISTING",
+          "source_root": "runs/gpqa/hybrid_root",
+          "prebeliefs_symlink": "/workspace/AgentCom/methods/AgentCom-StateBridge/artifacts/icr_v3/gpqa_full_seed42/prebeliefs",
+          "replication_id": [
+            "seed_pair_00"
+          ],
+          "config_fingerprints": [
+            "f3a6568c0975ebe7e0cf9c3d00c827d757363717095bb827c2ae4bf0deea3f2d"
+          ],
+          "n_records": 228
+        },
+        "Full Text": {
+          "condition_key": "true_text",
+          "status": "REUSED_EXISTING",
+          "source_root": "artifacts/icr_v3/gpqa_full_seed42",
+          "prebeliefs_symlink": "artifacts/icr_v3/gpqa_full_seed42/prebeliefs",
+          "replication_id": [
+            "seed_pair_00"
+          ],
+          "config_fingerprints": [
+            "cb9f218c2b3571fabd2ab894250af46cf053990d815e1d77bbd5fa897f53af2e",
+            "f3a6568c0975ebe7e0cf9c3d00c827d757363717095bb827c2ae4bf0deea3f2d"
+          ],
+          "n_records": 228
+        }
+      }
+    }
+  },
+  "incompatibilities": [
+    {
+      "id": "I1",
+      "severity": "resolved",
+      "what": "MedQA and GPQA-D baseline records carry two config_fingerprints",
+      "detail": "the superseded fingerprint differs only in max_new_tokens 8192 -> 16384",
+      "impact": "none in this scope: no mixed-direction record reached the 8192 cap (max generation_length MedQA 2994, GPQA-D 6098); zero non-terminating among them"
+    },
+    {
+      "id": "I2",
+      "severity": "must_be_declared",
+      "what": "StateBridge MedQA reference uses seed_pair_01 while all three core conditions use seed_pair_00",
+      "impact": "StateBridge row is not paired with the core conditions; no paired difference or bootstrap is computed against it"
+    },
+    {
+      "id": "I3",
+      "severity": "must_be_declared",
+      "what": "Answer Only covers mixed directions only",
+      "impact": "SR, SCR, Acc_ret and full-set accuracy are NOT MEASURED for Answer Only and are not reported anywhere in this folder"
+    },
+    {
+      "id": "I4",
+      "severity": "must_be_declared",
+      "what": "GPQA-D Answer Only has 12 records and ARC-C has 2 where the sender had no parseable answer",
+      "impact": "message was the fixed marker UNPARSEABLE; pairs retained, flagged missing_sender_answer, and given their own exclusive transition category"
+    }
+  ],
+  "statebridge_reference": {
+    "MedQA": {
+      "artifact_root": "runs/medqa/replication_01",
+      "replication_id": "seed_pair_01",
+      "global_seed": 42,
+      "cr": "63/116",
+      "pr": "83/116",
+      "si_pct": 62.93,
+      "WARNING": "seed_pair_01 uses a different revision_seed than No Message / Answer Only / Full Text (all seed_pair_00). It is NOT matched-design comparable to them and is exported as a reference row only."
+    },
+    "ARC-C/GSM8K/GPQA-D": {
+      "artifact_root": "artifacts/icr_v3/<ds>_full_seed42",
+      "replication_id": "seed_pair_00",
+      "WARNING": "different replication_id from the MedQA StateBridge reference row; do not pool across datasets"
+    }
+  }
+}

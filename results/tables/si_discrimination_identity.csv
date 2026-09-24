@@ -1,0 +1,28 @@
+dataset,channel,si_minus_50,dpi_over_2,residual,third_answer_pct,identity_defined
+ARC-C,Answer Only,+1.020,+1.020,-0.000,0.00,yes
+ARC-C,Full Text,+7.653,+7.653,+0.000,0.00,yes
+ARC-C,LatentMAS,+2.041,+2.041,+0.000,0.00,yes
+ARC-C,No Message,+0.510,+0.510,+0.000,1.53,yes
+ARC-C,StateBridge,+7.143,+8.163,-1.020,1.02,yes
+GPQA-D,Answer Only,+9.649,+11.404,-1.754,2.63,yes
+GPQA-D,Full Text,+10.965,+11.404,-0.439,0.44,yes
+GPQA-D,LatentMAS,+6.140,+6.140,+0.000,0.00,yes
+GPQA-D,No Message,+5.263,+6.579,-1.316,4.39,yes
+GPQA-D,StateBridge,+7.895,+8.772,-0.877,0.88,yes
+GSM8K,Answer Only,+4.891,+7.065,-2.174,2.72,yes
+GSM8K,Full Text,+1.630,+2.174,-0.543,1.63,yes
+GSM8K,LatentMAS,+3.261,+3.804,-0.543,0.54,yes
+GSM8K,No Message,+2.717,+3.804,-1.087,2.72,yes
+GSM8K,StateBridge,+6.522,+7.609,-1.087,1.63,yes
+HumanEval+,Full Text,+33.929,UNDEFINED,UNDEFINED,UNDEFINED,no_free_form_output
+HumanEval+,LatentMAS,+23.214,UNDEFINED,UNDEFINED,UNDEFINED,no_free_form_output
+HumanEval+,No Message,+25.000,UNDEFINED,UNDEFINED,UNDEFINED,no_free_form_output
+HumanEval+,StateBridge,+32.143,UNDEFINED,UNDEFINED,UNDEFINED,no_free_form_output
+MedQA,Answer Only,+9.483,+9.483,-0.000,0.00,yes
+MedQA,Full Text,+11.207,+11.207,+0.000,0.00,yes
+MedQA,LatentMAS,+1.293,+1.293,+0.000,0.00,yes
+MedQA,No Message,+2.586,+3.017,-0.431,0.43,yes
+MedQA,StateBridge,+12.931,+12.931,-0.000,0.00,yes
+
+# pearson r over the 20 non-code conditions,0.9855
+# MedQA StateBridge uses replication_id seed_pair_01
