@@ -36,7 +36,7 @@ The active method and frozen control both start from StateBridge release
 ## Quick Start
 
 ```bash
-git clone git@github.com:shixuanli01/AgentCom.git
+git clone git@github.com:
 cd AgentCom
 bash scripts/bootstrap_remote.sh cu128
 source .venv-agentcom/bin/activate
